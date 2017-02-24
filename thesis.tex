@@ -1,6 +1,9 @@
 \documentclass[11pt]{report}
 \usepackage{common}
 \usepackage[round]{natbib}
+\usepackage[strings]{underscore}
+\usepackage{url}
+
 \title{Document Summarization (draft)}
 \author{Jeffrey Ling}
 %\date{}
@@ -17,26 +20,40 @@ We evaluate our model on the CNN/Dailymail document summarization task. As of th
 
 
 
-\chapter{Introduction}
 
+\chapter{Introduction}
 
 \section{Natural Language Processing}
 
 Natural language processing is a field with a long history. 
 
+% what are the goals of the field?
+
 The first methods were rule-based. % discuss SYSTRAN and linguistics
 
-Previous methods were mainly statistical. The main algorithms for problems such as machine translation  relied on collecting counts over large corpuses of data \citep{Brown1993}. Google Translate has relied on such methods since it was created.
+Previous methods were mainly statistical. The main algorithms for problems such as machine translation  relied on collecting counts over large corpuses of data \citep{Brown1993}. Google Translate has relied on such methods to build state-of-the-art systems.
 
-However, we are now in the age of deep learning. For the first time, neural networks effectively learning structure and features from language almost completely from scratch. The success of neural methods has been adopted by Google Translate to build stronger 
+However, we are now in the age of deep learning. For the first time, neural networks effectively learning structure and features from language almost completely from scratch. The success of neural methods has been adopted by Google Translate to build even better systems \cite{GoogleTranslate2016}. These methods have attracted attention from the press % NYTimes???
 
 \section{Deep Learning}
 
-% intro to deep learning
-% \cite{Krizhevsky2012, Zeiler2014}
+% intro to deep learning - from basics
 
-% neural NLP: \cite{goldberg2015primer}
+\cite{Krizhevsky2012} won the ImageNet competition in ASDF year, beating the competition by a significant margin. This led to a new wave of research in neural networks.
 
+\cite{Zeiler2014} show that deep networks such as the AlexNet can learn intermediate representations.
+
+% image?
+
+\cite{mikolov2013word2vec} show that training deep networks can also work on language.  % and maybe more?
+
+% diagram of vectors, perhaps an example of the analogy (king man woman queen)
+
+Deep learning methods have since come to bear in NLP. \cite{goldberg2015primer} provides a nice summary. % more here? talk about LSTMs?
+
+Deeper and deeper networks become more and more feasible as modern computing power increases. Today, GPUs are leveraged to rapidly train networks at 10 or 20 times the speed of standard CPUs.
+
+% cite some numbers here
 
 \section{Our problem}
 
@@ -46,9 +63,6 @@ We can frame summarization as a sequence to sequence task: given a news article 
 
 Existing seq2seq methods are limited by the length of source and target sequences; for a problem such as document summary, the source sequence is too long for seq2seq models to be effective (in both a computational sense and correctness sense). In order to scale these methods for this application, we are experimenting with reinforcement learning methods that aim to prune down the length of the source sequence in an intelligent way.
 
-\section{Our contribution}
-
-Novel architecture??? Lol
 
 
 \subsection{Motivation}
@@ -78,11 +92,13 @@ It is not yet clear if a purely neural method can achieve the same success. This
 
 \section{Summarization}
 
-Originated with \cite{luhn1958automatic}
+Originated with \cite{luhn1958automatic} % expand
 
 Summarization has historically been a difficult problem. To standardize the task, NIST released data for DUC (Document Understanding Conferences) between 2001-2007 \citep{over2007duc}. The DUC tasks involved producing summaries for both single- and multiple-document sets of news articles. DUC 2001 and 2002 ask for general summaries of these articles documents and summaries, while DUC 2003-2006 also evaluate summaries based on their usefulness for certain question-answer tasks. While a single most effective metric for summarization may not exist, the DUC conferences established several important criteria, including grammaticality, non-redundancy, and content coverage (for which metrics like ROUGE \citep{lin2004rouge} were created).
 
-\subsection{Methods}
+\section{Methods}
+
+\subsection{Classical}
 
 A variety of approaches have been used to solve summarization. Some of the most popular methods have been \emph{extractive}, where sentences and words are pulled from documents based on relevance and pasted together (usually in document order). Some examples are \cite{carbonell1998MMR}, which uses a simple information metric for ranking sentences, and \cite{svore2007ranknet}, which uses a simple neural network for the same purpose.
 
@@ -97,6 +113,13 @@ While extraction has proven to be successful, the method is inherently limited i
 With the onset of deep learning and sequence-to-sequence models, the abstractive approach has been reconsidered, as the only bottleneck for these methods is the quantity of data. \cite{rush2015neural} proposed a data-driven, completely abstractive model for summarizing short sentences by training a seq2seq model with attention. More recent work \citep{nallapati2016seq2seq, ramachandran2016} scale the models to full documents, demonstrating that such methods are feasible.
 
 These new models require a large amount of supervised training data, which now exist thanks to annotated CNN and Dailymail news stories (DUC data are limited in size and only suitable for evaluation). The task has not yet been fully standardized in this context, and researchers continue to debate what datasets are useful and what evaluation metrics to use \citep{toutanova2016summarymetrics}. 
+
+\subsection{In the wild}
+
+Reddit bot: \url{smmry.com}. Extractive, uses a ranking of sentences based on words (perhaps tf-idf?)
+
+%%%%%%%
+\chapter{Background}
 
 \section{Neural Architectures}
 
@@ -121,15 +144,19 @@ We will discuss one approach to sparseness in detail: reinforcement learning.
 
 These methods are designed to be fully differentiable and hence compatible with standard backpropagation. Reinforcement learning, however, is an alternative method for obtaining ``hard'' attention. In traditional reinforcement learning, an agent is trained to maximize the total expected reward for performing a series of actions. Such methods can be applied to deep neural networks by backpropagating an unbiased gradient at the action step, which is commonly known as the REINFORCE algorithm or policy gradient \citep{williams1992reinforce, schulman2015backprop}.
 
+\subsection{Q-learning, SARSA}
 % talk about: Q-learning, other algorithms (SARSA?)
 
+\subsection{Deep reinforcement learning}
 %% deep learning in vision: \cite{deepatari2015}
 
 Deep reinforcement learning has been tried in the context of NLP \citep{zaremba2015rlntm, ranzato2015, li2016dialogueRL} with varying degrees of success so far. We experiment with this in our paper.
 
 %% TODO: new work here. \cite{Yogatama2017, xu2015captioning, narasimhan2016, andreas2016}, ... missing a lot here
 
-Inspired by these ideas, we aim to improve on previous work for document summarization by (1) strengthening the hierarchical assumption with coarse features at the sentence level, and (2) including reinforcement learning, or one of recent sparse attention methods, for sparse attention.
+% explain policy gradient here
+
+Inspired by these ideas, we aim to improve on previous work for document summarization by (1) strengthening the hierarchical assumption with coarse features at the sentence level, and (2) including reinforcement learning for sparse attention.
 
 In the next chapter we describe our models in detail.
 
@@ -137,10 +164,13 @@ In the next chapter we describe our models in detail.
 
 \chapter{Models}
 % figures needed!!!
+% also I should start from the beginning probably
 
 \section{Sequence-to-sequence (seq2seq)}
 
 We first describe the neural network architecture of the seq2seq models, also known as encoder-decoder models.
+
+\subsection{Recurrent encoder and decoder}
 
 As described in \cite{bahdanau2014neural}, an \emph{encoder} recurrent neural network (RNN) reads the source sequence as input to produce a vector known as the \emph{context}, and a \emph{decoder} RNN generates the output sequence using the context as input.  One popular RNN choice is the long-short term memory (LSTM) network \citep{hochreiter1997long}.
 
@@ -265,6 +295,14 @@ While we found this to be helpful for single sample hard attention, it was not n
 
 \section{Data}
 % if we do other experiments, include more here.
+
+\subsection{Yuntian's stuff}
+
+% asdf
+
+Table ???? for Yuntian
+
+\subsection{CNN/Dailymail}
 
 Experiments were performed on the CNN/Dailymail dataset from \cite{hermann2015read}. While the dataset was created for a question-answering task, the dataset format is suited for summary. Each data point is a news document accompanied by up to 4 ``highlights'', and we take the first of these as our target summary. Train, validation, and test splits are provided along with document tokenization and sentence splitting. We do additional preprocessing by replacing all numbers with \# and appending end of sentence tokens to each sentence. We limit our vocabulary size to 50000 most frequent words, replacing the rest with \texttt{<unk>} tokens. We dropped the documents which had an empty source (which came from photo articles).
 
