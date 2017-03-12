@@ -11,9 +11,9 @@
 \maketitle{}
 
 \begin{abstract} % needs work
-We propose a novel coarse-to-fine attention method to modify the standard sequence-to-sequence (seq2seq) attention model. By organizing the source sequence into a 2-dimensional image, we hierarchically apply attention, using a coarse stochastic mechanism for the first layer to select a row sequence for the second soft attention layer. While the computation for training standard seq2seq models scales linearly with source sequence length, our method is invariant to length and thus can scale arbitrarily.
+Standard sequence-to-sequence (seq2seq) attention models have seen great success in NLP, but do not scale well to tasks with long sequences. We propose a novel coarse-to-fine attention method to reduce the number of computations necessary in standard attention. By organizing the source sequence into a 2-dimensional image, we hierarchically apply attention, using a coarse mechanism for the first layer to select a row sequence, and a finer mechanism for the second soft attention layer. While the computation for training standard seq2seq models scales linearly with source sequence length, our method is invariant to length and thus can scale arbitrarily.
 
-We evaluate our model on the CNN/Dailymail document summarization task. As of this report we are able to match the performance of soft attention baselines using our new hierarchical method.
+We evaluate our model on the CNN/Dailymail document summarization task.
 \end{abstract}
 
 \tableofcontents{}
@@ -25,7 +25,7 @@ We evaluate our model on the CNN/Dailymail document summarization task. As of th
 
 \section{Natural Language Processing}
 
-Natural language processing is a field with a long history. 
+Natural language processing is a field with a variety of interesting structured prediction problems. 
 
 % what are the goals of the field?
 
@@ -33,39 +33,27 @@ The first methods were rule-based. % discuss SYSTRAN and linguistics
 
 Previous methods were mainly statistical. The main algorithms for problems such as machine translation  relied on collecting counts over large corpuses of data \citep{Brown1993}. Google Translate has relied on such methods to build state-of-the-art systems.
 
-However, we are now in the age of deep learning. For the first time, neural networks effectively learning structure and features from language almost completely from scratch. The success of neural methods has been adopted by Google Translate to build even better systems \cite{GoogleTranslate2016}. These methods have attracted attention from the press % NYTimes???
+Recently, researchers found that deep learning works effectively for many NLP tasks. For the first time, neural networks were able learning structure and features from language almost completely from scratch \cite{Collobert2011} % \cite{Bengio2003} language model
+The success of neural methods has been adopted by Google Translate to build even better systems \cite{GoogleTranslate2016}. These methods have attracted attention from the press % NYTimes???
 
 \section{Deep Learning}
 
-% intro to deep learning - from basics
+% intro to deep learning
 
-\cite{Krizhevsky2012} won the ImageNet competition in ASDF year, beating the competition by a significant margin. This led to a new wave of research in neural networks.
+\citet{Krizhevsky2012} won the ImageNet competition in ??? year, beating the competition by a significant margin. This led to a new wave of research in neural networks.
 
-\cite{Zeiler2014} show that deep networks such as the AlexNet can learn intermediate representations.
+\citet{Zeiler2014} show that deep networks such as the AlexNet can learn intermediate representations.
 
 % image?
 
-\cite{mikolov2013word2vec} show that training deep networks can also work on language.  % and maybe more?
-
-% diagram of vectors, perhaps an example of the analogy (king man woman queen)
+\citet{mikolov2013word2vec} show that training deep networks can also work on language. They were able to map words in the English language to a vector of real numbers using purely unsupervised methods on a Google News corpus. % diagram of vectors, perhaps an example of the analogy (king man woman queen)
 
 Deep learning methods have since come to bear in NLP. \cite{goldberg2015primer} provides a nice summary. % more here? talk about LSTMs?
 
-Deeper and deeper networks become more and more feasible as modern computing power increases. Today, GPUs are leveraged to rapidly train networks at 10 or 20 times the speed of standard CPUs.
-
-% cite some numbers here
-
-\section{Our problem}
-
-Text summarization is an important problem for compressing large bodies of natural text into a more easily digestable form. Document summarization is one of the most challenging formulations of this problem, where given a document with several sentences of text, the goal is to produce a coherent summary that captures most or all of its salient points. To accomplish this, we use the most recent advances in deep learning to automatically produce summaries by iterating over a large dataset of given examples.
-
-We can frame summarization as a sequence to sequence task: given a news article (the source sequence of words), we desire to produce a summary (the target sequence). Existing methods in deep learning have been developed and proven to be highly effective for this kind of task, especially the sequence-to-sequence (seq2seq) model applied to machine translation \citep{sutskever2014sequence, bahdanau2014neural}.
-
-Existing seq2seq methods are limited by the length of source and target sequences; for a problem such as document summary, the source sequence is too long for seq2seq models to be effective (in both a computational sense and correctness sense). In order to scale these methods for this application, we are experimenting with reinforcement learning methods that aim to prune down the length of the source sequence in an intelligent way.
+Deeper and deeper networks become more and more feasible as modern computing power increases. Today, GPUs are leveraged to rapidly train networks at 10 or 20 times the speed of standard CPUs.  % cite some numbers here
 
 
-
-\subsection{Motivation}
+\section{Motivation}
 
 % should this go under deep learning?
 % this could be a hard section to write
@@ -77,46 +65,131 @@ On the other hand, a purely data-driven system forgoes these details, using high
 In the past, NLP was done with handcrafted features. However, \cite{Collobert2011} showed that this is an unnecessary assumption: %%%????
 
 
-There are ??? reasons why deep networks are desirable. First, they allow us to more easily automate the process of machine learning -- by removing the human in the loop, we can develop more flexible models that save us from hard-coding in assumptions about the task at hand. %% ???
+There are a few reasons why deep networks are desirable. First, they allow us to more easily automate the process of machine learning -- by removing the human in the loop, we can develop more flexible models that save us from hard-coding in assumptions about the task at hand. %??
 
-Second, removing assumptions about the input to a system allows us to build more general models -- this has already proven to be useful in machine translation, where one system can be applied to many different settings. If we used a system of parsers  %% not sure this argument works. seq2seq can't be trained on low resource languages.
+Second, removing assumptions about the input to a system allows us to build more general models -- this has already proven to be useful in machine translation, where one system can be trained on multiple languages \cite{Firat2016}. If we used a system of parsers  %% not sure this argument works. seq2seq can't be trained on low resource languages.
 
-The vast majority of work so far in summarization has relied on simple, linguistically-motivated methods -- ILP solvers, parsers / coref / asdfasdfasdfasdfasdf
+Third, we find that trained models can discover structure in language without our help. As an example, attention (and maybe others?)
 
-It is not yet clear if a purely neural method can achieve the same success. This is the question we set out to resolve.
+It is not yet clear, however, to what extent neural methods can replace models with hard-coded linguistic assumptions. This is one of the questions we set out to resolve.
+
+
+\section{Our problem}
+
+Text summarization is an important problem for compressing large bodies of natural text into a more easily digestable form. Document summarization is one of the most challenging formulations of this problem, where given a document with several sentences of text, the goal is to produce a coherent summary that captures most or all of its salient points.
+
+To accomplish this, we use the most recent advances in deep learning to automatically produce summaries by iterating over a large dataset of given examples.
+
+We can frame summarization as a sequence to sequence task: given a news article (the source sequence of words), we desire to produce a summary (the target sequence). Existing methods in deep learning have been developed and proven to be highly effective for this kind of task, especially the sequence-to-sequence (seq2seq) model applied to machine translation \citep{sutskever2014sequence, bahdanau2014neural}.
+
+Existing seq2seq methods are limited by the length of source and target sequences. For a problem such as document summarization, the source sequence of length $N$ requires $O(N)$ seq2seq model computations. However, it makes sense intuitively that not every word of the document will be necessary for generating a summary, and so we would like to reduce the number of computations necessary.
+
+Therefore, in order to scale seq2seq methods for this problem, we aim to prune down the length of the source sequence in an intelligent way. To this end, we introduce the coarse-to-fine attention mechanism that sparsely selects subsets of the source document for processing.
+
+We provide an outline for the rest of this thesis.
+In section ? we cover related work in summarization and deep learning.
+In section ? we describe our models.
+In section ? we show results and discussion.
+
 
 
 %%%%%%%%%%
 
 \chapter{Related Work}
 
-\section{Summarization}
+\section{Automatic Summarization}
 
-Originated with \cite{luhn1958automatic} % expand
+One of the first considerations of automatically producing summaries was \cite{luhn1958automatic}, which ranks sentences based on the occurrence of frequently appearing words.
 
-Summarization has historically been a difficult problem. To standardize the task, NIST released data for DUC (Document Understanding Conferences) between 2001-2007 \citep{over2007duc}. The DUC tasks involved producing summaries for both single- and multiple-document sets of news articles. DUC 2001 and 2002 ask for general summaries of these articles documents and summaries, while DUC 2003-2006 also evaluate summaries based on their usefulness for certain question-answer tasks. While a single most effective metric for summarization may not exist, the DUC conferences established several important criteria, including grammaticality, non-redundancy, and content coverage (for which metrics like ROUGE \citep{lin2004rouge} were created).
+%% transition?
+
+\citet{Nenkova2011} give an overview of the field. In particular, they provide a taxonomy of methods that researchers have used to frame summarization:
+
+\paragraph{Extractive vs. Abstractive} Extractive summaries extract certain sentences or phrases from the document, while abstractive summaries take a more holistic view and can in practice be anything (similar to how humans produce summaries). 
+
+\paragraph{Single- vs. Multi-document} Summarization was first posed as the problem of producing a summary for a single document. However, with the onset of the Internet and the information explosion, there 
+
+\paragraph{indicative (style) vs informative (facts)} % ???
+
+\paragraph{keyword (words) vs headline (sentence)} %
+
+\paragraph{generic vs query focused vs update (multi-doc only)} %
+
+Before elaborating on specific methods, it is important to highlight these differences to understand how people thought about the problem. For example, we will see that extractive methods are by far more popular due to their simplicity and success rate. 
+
+Based on this taxonomy, the deep model we set out to build would be classified as 1) abstractive, 2) single-document, 3) indicative, 4) headline, 5) generic.
+
+In the rest of this thesis, we will limit the scope of the summarization problem to the \emph{single-document}, \emph{informative}, \emph{headline}, and \emph{generic} categories in order to focus on the application of deep learning in the problem.
+
+In the next section, we highlight some of the methods used to .
 
 \section{Methods}
 
+\subsection{Datasets}
+
+To standardize the task, NIST released data for DUC (Document Understanding Conferences) between 2001-2007 \citep{over2007duc}. The DUC tasks involved producing summaries for both single- and multiple-document sets of news articles. DUC 2001 and 2002 ask for general summaries of these articles documents and summaries, while DUC 2003-2006 also evaluate summaries based on their usefulness for certain question-answer tasks. % more details?
+
+While a single most effective metric for summarization may not exist, the DUC conferences established several important criteria, including grammaticality, non-redundancy, and content coverage (for which metrics like ROUGE \citep{lin2004rouge} were created).
+
+DUC overall was found not to have the best impact. For many of the news summary tasks, it was found that taking the first sentence of each article could not be beaten by more sophisticated methods, and so the task was somewhat abandoned.
+
+CNN/Dailymail is much larger, and is the one we use to train our deep models.
+
 \subsection{Classical}
 
-A variety of approaches have been used to solve summarization. Some of the most popular methods have been \emph{extractive}, where sentences and words are pulled from documents based on relevance and pasted together (usually in document order). Some examples are \cite{carbonell1998MMR}, which uses a simple information metric for ranking sentences, and \cite{svore2007ranknet}, which uses a simple neural network for the same purpose.
+A variety of approaches have been used to solve summarization. We highlight some notable work in both the extractive and abstractive framework.
 
-Extractive: CRF \cite{Shen2004}
+\subsubsection{Extractive}
 
-Another approach has been to relax general document summarization into the easier problem of sentence compression, where the source document consists of a single source. \cite{knight2002summarization} employs a noisy channel model, similar to machine translation, to deduce the ``most probable'' compression, while \cite{clarke2008global} uses an integer linear program. \cite{cohn2008sentence} extend the tree-based methods to allow for insertions and substitutions during compression, whereas prior methods were purely deletion based. \cite{zajic2004topiary} successfully use a sentence compression algorithm along with an unsupervised topic model on the DUC 2004 task.
+The most popular methods for document summarization have generally been extractive. One natural procedure for an extractive summarization is to score sentences based on some relevance metric and return the highest scoring sentences (perhaps reordering them as well).
 
-While extraction has proven to be successful, the method is inherently limited in its ability to summarize. The more challenging method, and also the closest to what humans do, is \emph{abstractive} summarization. Instead of strictly requiring that all words of the summary come from the source document, any coherent text is allowed. In the past, such methods were limited to sentence compression tasks, as capturing inter-sentence dependencies and using a general vocabulary were beyond the scope of most statistical methods.
+Some examples are \cite{carbonell1998MMR}, which uses a simple information metric for ranking sentences, and \cite{svore2007}, which uses a simple neural network for the same purpose.
+
+CRF \cite{Shen2004}
+
+
+
+\subsubsection{Abstractive}
+
+While extraction has proven to be successful, the method is inherently limited in its ability to summarize. The more challenging method, and also the closest to what humans do, is \emph{abstractive} summarization. Instead of strictly requiring that all words of the summary come from the source document, any coherent text is allowed.
+
+Two methods used to produce abstractive summaries are sentence compression and sentence fusion. Compression removes less useful information from sentences, while fusion is harder and combines information from sentences. % cite Barzilay, MCkeown
+
+Compression: \cite{knight2002summarization} employs a noisy channel model, similar to machine translation, to deduce the ``most probable'' compression, while \cite{clarke2008global} uses an integer linear program. \cite{cohn2008sentence} extend the tree-based methods to allow for insertions and substitutions during compression, whereas prior methods were purely deletion based. \cite{zajic2004topiary} successfully use a sentence compression algorithm along with an unsupervised topic model on the DUC 2004 task.
+
+Fusion: align parse trees and combine phrases that are similar % more needed
+
 
 \subsection{Deep Learning}
 
-With the onset of deep learning and sequence-to-sequence models, the abstractive approach has been reconsidered, as the only bottleneck for these methods is the quantity of data. \cite{rush2015neural} proposed a data-driven, completely abstractive model for summarizing short sentences by training a seq2seq model with attention. More recent work \citep{nallapati2016seq2seq, ramachandran2016} scale the models to full documents, demonstrating that such methods are feasible.
+With the onset of deep learning, learning an end-to-end abstractive model for summarization has become more feasible. \citet{rush2015neural} propose a data-driven, completely abstractive model for summarizing short sentences by training a sequence-to-sequence model with attention. More recent work in deep learning has been done for both extractive \citep{} %% citation needed
+and abstractive \citep{nallapati2016seq2seq, ramachandran2016} methods that scale the models to full documents, demonstrating the feasibility of end-to-end models.
 
-These new models require a large amount of supervised training data, which now exist thanks to annotated CNN and Dailymail news stories (DUC data are limited in size and only suitable for evaluation). The task has not yet been fully standardized in this context, and researchers continue to debate what datasets are useful and what evaluation metrics to use \citep{toutanova2016summarymetrics}. 
+These new models require a large amount of supervised training data, which the DUC data are not suitable for due to their small scale. However, thanks to annotated CNN/Dailymail news stories \cite{hermann2015read}, %%
+
+The task has not yet been fully standardized in this context, and research in the area is still largely preliminary.
+
+
+
+\subsection{Evaluation}
+
+Evaluating a good summary is inherently ambiguous, and probably one of the hardest parts of the problem.
+
+For extractive summaries, people have proposed simple metrics such as precision and recall on selected sentences. These naturally do not work too well since 1) not all sentences are equally informative, and 2) not all parts of a sentence are relevant.
+
+DUC really pushed forward understanding on evaluation. They came up with recall on elementary discourse units (EDUs), based on clauses within a summary that ought to be captured. ROUGE \cite{lin2004rouge} is cheap and fast. Pyramid method is a complicated human evaluation method based on summary content units (SCUs). 
+
+None of these methods directly address the grammaticality of the output. Aside from using human evaluation, meaningful metrics for summaries is still very much an open question \citep{toutanova2016summarymetrics}. In our work, we settle for ROUGE due to its cheapness and ease of use in evaluating our models.
+
 
 \subsection{In the wild}
 
-Reddit bot: \url{smmry.com}. Extractive, uses a ranking of sentences based on words (perhaps tf-idf?)
+Summarization is an important real-world problem due to the explosion of available data. Thus, there are many practical methods that have been developed and deployed in real-world settings. One of the most notable examples is on Reddit\footnote{\url{reddit.com}}: in order to summarize long forum discussions, Reddit uses technology from \textsc{smmry}\footnote{\url{smmry.com}}.
+
+Smmry's algorithm is a simple extractive summarization method. It counts word occurrences, splits discussions by sentence, and ranks the sentences based on the sum of their word scores (perhaps tf-idf?). This algorithm is reminiscent of %%% the first guy?
+
+Other examples include a SUMMLY app thing acquired by Yahoo - it had a lot of hype but it's unclear if it had any real content.
+
 
 %%%%%%%
 \chapter{Background}
@@ -200,7 +273,7 @@ In essence, $g$ computes a probability distribution $\alpha$ over the encoder hi
 
 Going forward, we call this \emph{Model 0}.
 
-\subsection{Model 1 and 2: Hierarchical seq2seq}
+\subsection{Model 1 and 2: Coarse-to-Fine Soft Attention}
 
 For a large source input like a document, it may be computationally inefficient to run an RNN over the entire source. Instead, we can consider organizing the document into distinct sentences and run an RNN separately over each. Specifically, assuming we have sentences $s_1, \ldots, s_m$ with words $w_{i,1}, \ldots, w_{i,n_i}$ for sentence $s_i$, we can apply an RNN to get corresponding hidden states $h_{i,j}$.
 
@@ -220,7 +293,7 @@ following the interpretation of $\alpha_{i,j}$ as the probability mass on $w_{i,
 
 We call this method of attention \emph{Model 2}.
 
-\section{Model 3: Hard Attention}
+\section{Model 3: Coarse-to-Fine Sparse Attention}
 
 With hierarchical attention, we still do not obtain significant gains in efficiency, since we have to compute RNN states for all words in the source document. Therefore, the idea that underlies this project is to apply stochastic sampling methods to the attention distribution $\alpha$.
 
@@ -231,6 +304,10 @@ Known in the literature as ``hard attention'' \citep{xu2015captioning}, this mod
 We take Model 2 and apply hard attention at the sentence level, but keep the word level attention per sentence as is. That is, we sample from the attention weights $\alpha_1, \ldots, \alpha_m$ to obtain a one-hot encoding for the sentence attention, and apply the same multiplication with this one-hot vector on the word-level attention weights $\widetilde{\alpha}_{i,1}, \ldots, \widetilde{\alpha}_{i,n_i}$. We call this \emph{Model 3}.
 
 % better notation needed: perhaps \alpha^{sent}?
+
+% more needed here. sparsemax
+
+% write the factorization assumption
 
 \subsection{Multiple Samples}
 
@@ -290,6 +367,10 @@ Since training using policy gradients tends to be noisy and slow to converge, we
 
 While we found this to be helpful for single sample hard attention, it was not necessary for effective training with multisampled hard attention. We prefer to train solely with hard attention when possible, as we are able to save computation at training time.
 
+\section{Sparsemax}
+
+% describe
+
 
 \chapter{Experiments}
 
@@ -298,9 +379,7 @@ While we found this to be helpful for single sample hard attention, it was not n
 
 \subsection{Yuntian's stuff}
 
-% asdf
-
-Table ???? for Yuntian
+% need table
 
 \subsection{CNN/Dailymail}
 
@@ -329,6 +408,10 @@ Average words per summary & 13 & 15 \\
 
 % examples of data needed
 
+
+% is it even worth mentioning this?
+%\cite{Chen2016} argue that the CNN/Dailymail is not the best dataset for 
+
 \section{Synthetic Pretraining} % are we still doing this???
 
 We found that unsupervised pretraining on the given dataset is beneficial to learning. For each document, we randomly sample 2 sentences and concatenate to form the target sentence in a new synthetic dataset. We can sample multiple times to have multiple targets for a given source document, and we found that 5 samples was most beneficial to learning (performance drops with significantly more samples). We then train on the synthetic dataset for 5 epochs and initialize future training with the learned weights.
@@ -346,6 +429,7 @@ Ideally, we would prefer to not truncate documents, especially since later conte
 For a baseline, we take the first 15 words of the document (chosen as the average length of a sentence in the training dataset). We call this \textsc{First}. 
 
 % Need way more here...
+% ideas: berkeley system (if it works), look for others - sentence fusion?
 
 
 \subsection{Our models}
