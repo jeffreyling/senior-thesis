@@ -3,6 +3,7 @@
 \usepackage[round]{natbib}
 \usepackage[strings]{underscore}
 \usepackage{url}
+\usepackage{todonotes}
 
 \title{Document Summarization (draft)}
 \author{Jeffrey Ling}
@@ -25,32 +26,38 @@ We evaluate our model on the CNN/Dailymail document summarization task.
 
 \section{Natural Language Processing}
 
-Natural language processing is a field with a variety of interesting structured prediction problems. 
+Natural language processing is a field with a variety of interesting structured prediction problems. The essential goal of NLP is to build a model of language so that computers can automatically process substantial quantities of text --- a highly relevant problem in today's information age.
 
-% what are the goals of the field?
+While humans have no trouble understanding and using language, even the simplest language tasks can be impossible for computers. Some classical NLP problems include part-of-speech tagging, parsing, language modeling, and machine translation. %%
 
-The first methods were rule-based. % discuss SYSTRAN and linguistics
+It is informative to consider the history of machine translation. The first methods were rule-based linguistics systems, and the company SYSTRAN provided one of the first \citep{}.
 
-Previous methods were mainly statistical. The main algorithms for problems such as machine translation  relied on collecting counts over large corpuses of data \citep{Brown1993}. Google Translate has relied on such methods to build state-of-the-art systems.
+In the 90s, statistical methods for NLP became increasingly popular. By considering language generation as a probabilistic process, one can collect statistics over large corpuses of data to automatically deduce the parameters of the model. In machine translation, this idea was used to great effect in \citet{Brown1993}, whose count-based methods form the core of state-of-the-art systems like Google Translate.
 
-Recently, researchers found that deep learning works effectively for many NLP tasks. For the first time, neural networks were able learning structure and features from language almost completely from scratch \cite{Collobert2011} % \cite{Bengio2003} language model
-The success of neural methods has been adopted by Google Translate to build even better systems \cite{GoogleTranslate2016}. These methods have attracted attention from the press % NYTimes???
+Recently, researchers found that deep learning works effectively for many NLP tasks. For the first time, neural networks were able learning structure and features from language almost completely from scratch \citep{Collobert2011}. % \cite{Bengio2003} language model
+The success of neural methods has been adopted by Google Translate to build even better systems \citep{GoogleTranslate2016}. Research in applying deep learning to NLP is ongoing.
 
 \section{Deep Learning}
 
-% intro to deep learning
+The history of neural networks dates back to the perceptron \citep{Rosenblatt1958}, a simple model that assumes data can be linearly separated. Due to this strict requirement, the machine learning community dismissed the idea as impractical, and research was sidelined for most of the 20th century.
 
-\citet{Krizhevsky2012} won the ImageNet competition in ??? year, beating the competition by a significant margin. This led to a new wave of research in neural networks.
+%While some work continued \citet{Rumelhart1986} showed that the backpropagation algorithm could be used to efficiently train neural networks, 
 
-\citet{Zeiler2014} show that deep networks such as the AlexNet can learn intermediate representations.
+Recently, neural networks have made a resurgence. In the ImageNet image classification competition in 2012, \citet{Krizhevsky2012} won using \emph{convolutional neural networks} \citep{LeCun1995}, beating the competition by a significant margin. This led to a renewed wave of research, especially due to the advancement of modern computing power and GPUs, which can train networks at 10 or 20 times the speed of standard CPUs. Today, deep models are used to successfully play Go \citep{Silver2016}, play Atari games from pixels \citep{deepatari2015}, and %???
+
+%%% break
+
+While neural networks are often treated as black box classifiers, \citet{Zeiler2014} show that the intermediate layers of deep convolutional networks contain abstracted qualities of the input, such as patterns, textures, and objects of the input. This suggests that neural networks are discovering features of the input and building generalized \emph{representations} of their inputs.
 
 % image?
 
-\citet{mikolov2013word2vec} show that training deep networks can also work on language. They were able to map words in the English language to a vector of real numbers using purely unsupervised methods on a Google News corpus. % diagram of vectors, perhaps an example of the analogy (king man woman queen)
+The idea of learning representations of the input is highly general, and so it comes as no surprise that deep networks soon found applications in NLP. \citet{mikolov2013word2vec} show that by training a neural network on a Google News text corpus, the network learned to map words in the English language to a vector of real numbers known as \emph{word embeddings}. These word embeddings are actually able to capture semantic properties of the words --- for example, taking the vectors for \emph{king}, \emph{man}, and \emph{woman}, we find that $v_{king} - v_{man} + v_{woman} \approx v_{queen}$, preserving the analogy that we usually make with text.
 
-Deep learning methods have since come to bear in NLP. \cite{goldberg2015primer} provides a nice summary. % more here? talk about LSTMs?
+% diagram of vectors
 
-Deeper and deeper networks become more and more feasible as modern computing power increases. Today, GPUs are leveraged to rapidly train networks at 10 or 20 times the speed of standard CPUs.  % cite some numbers here
+Since the onset of deep learning, deep models have found their way into nearly every corner of NLP. Much of their success relies on the ubiquity of the \emph{long short-term memory} (LSTM) recurrent neural network \citep{hochreiter1997long}, a model used to both process and generate sequences of text. State-of-the-art systems for many problems, including machine translation, now use deep learning as their core algorithm. %???
+
+% While there is much to cover  \cite{goldberg2015primer} provides a nice summary.
 
 
 \section{Motivation}
@@ -62,14 +69,12 @@ Why deep models? There is a debate in the deep learning community about the exte
 
 On the other hand, a purely data-driven system forgoes these details, using highly general models for the task at hand.
 
-In the past, NLP was done with handcrafted features. However, \cite{Collobert2011} showed that this is an unnecessary assumption: %%%????
+In the past, NLP was done with handcrafted features. However, \citet{Collobert2011} shows that this is an unnecessary assumption. They build a neural network for classical NLP tasks (e.g. part-of-speech tagging, named entity recognition) that can learn to do the task without any feature extraction.
 
 
-There are a few reasons why deep networks are desirable. First, they allow us to more easily automate the process of machine learning -- by removing the human in the loop, we can develop more flexible models that save us from hard-coding in assumptions about the task at hand. %??
-
-Second, removing assumptions about the input to a system allows us to build more general models -- this has already proven to be useful in machine translation, where one system can be trained on multiple languages \cite{Firat2016}. If we used a system of parsers  %% not sure this argument works. seq2seq can't be trained on low resource languages.
-
-Third, we find that trained models can discover structure in language without our help. As an example, attention (and maybe others?)
+There are a few reasons why deep networks are desirable for NLP. First, they are remarkably powerful and practically easier to train than complicated rule-based systems (assuming enough computational power is available), and are not mutually exclusive with standard feature extraction methods.
+Second, they allow for non-domain experts to make progress on relevant problems.
+Third, we find that trained models can discover latent structure in language automatically, which is an interesting phenomenon that may reveal more about how language is used. As an example, sequence-to-sequence models with attention \citep{bahdanau2014neural} learn the concept of a word alignment in translation without any supervision.
 
 It is not yet clear, however, to what extent neural methods can replace models with hard-coded linguistic assumptions. This is one of the questions we set out to resolve.
 
@@ -78,17 +83,20 @@ It is not yet clear, however, to what extent neural methods can replace models w
 
 Text summarization is an important problem for compressing large bodies of natural text into a more easily digestable form. Document summarization is one of the most challenging formulations of this problem, where given a document with several sentences of text, the goal is to produce a coherent summary that captures most or all of its salient points.
 
-To accomplish this, we use the most recent advances in deep learning to automatically produce summaries by iterating over a large dataset of given examples.
+To accomplish this, we use the most recent advances in deep learning to automatically produce summaries by training on a large dataset of given examples.
 
-We can frame summarization as a sequence to sequence task: given a news article (the source sequence of words), we desire to produce a summary (the target sequence). Existing methods in deep learning have been developed and proven to be highly effective for this kind of task, especially the sequence-to-sequence (seq2seq) model applied to machine translation \citep{sutskever2014sequence, bahdanau2014neural}.
+We can frame summarization as a supervised sequence-to-sequence task: given a news article (the source sequence of words), we desire to produce a summary (the target sequence). Existing methods in deep learning have been developed and proven to be highly effective for this kind of task, especially the sequence-to-sequence (seq2seq) model applied to machine translation \citep{sutskever2014sequence, bahdanau2014neural}. \citet{rush2015neural} uses the seq2seq model to summarize sentences into shorter headlines, but we consider the more general problem of arbitrarily long documents.
 
-Existing seq2seq methods are limited by the length of source and target sequences. For a problem such as document summarization, the source sequence of length $N$ requires $O(N)$ seq2seq model computations. However, it makes sense intuitively that not every word of the document will be necessary for generating a summary, and so we would like to reduce the number of computations necessary.
+Existing seq2seq methods are limited by the length of source and target sequences. For a problem such as document summarization, the source sequence of length $N$ requires $O(N)$ seq2seq model computations. However, it makes sense intuitively that not every word of the document will be necessary for generating a summary, and so we would like to reduce the amount of necessary computations over the source document.
 
-Therefore, in order to scale seq2seq methods for this problem, we aim to prune down the length of the source sequence in an intelligent way. To this end, we introduce the coarse-to-fine attention mechanism that sparsely selects subsets of the source document for processing.
+Therefore, in order to scale seq2seq methods for this problem, we aim to prune down the length of the source sequence in an intelligent way. In the problem of image captioning, \citet{xu2015captioning} show that when generating words of the caption, the model places attention on the relevant part of the image.
+Inspired by this idea, we introduce the coarse-to-fine attention mechanism that sparsely selects subsets of the source document for processing.
+
 
 We provide an outline for the rest of this thesis.
 In section ? we cover related work in summarization and deep learning.
-In section ? we describe our models.
+In section ? we give the necessary background for our models.
+In section ? we describe our models in detail.
 In section ? we show results and discussion.
 
 
@@ -99,31 +107,69 @@ In section ? we show results and discussion.
 
 \section{Automatic Summarization}
 
-One of the first considerations of automatically producing summaries was \cite{luhn1958automatic}, which ranks sentences based on the occurrence of frequently appearing words.
-
-%% transition?
-
 \citet{Nenkova2011} give an overview of the field. In particular, they provide a taxonomy of methods that researchers have used to frame summarization:
 
 \paragraph{Extractive vs. Abstractive} Extractive summaries extract certain sentences or phrases from the document, while abstractive summaries take a more holistic view and can in practice be anything (similar to how humans produce summaries). 
 
-\paragraph{Single- vs. Multi-document} Summarization was first posed as the problem of producing a summary for a single document. However, with the onset of the Internet and the information explosion, there 
+\paragraph{Single- vs. Multi-document} Summarization was originally posed as the problem of producing a summary for a single document. However, with the onset of the Internet and search engines, there are often multiple documents on the same topic, and so a summarization system should be able to use all of them to produce a summary.
 
-\paragraph{indicative (style) vs informative (facts)} % ???
+\paragraph{Indicative (style) vs. informative (facts)} Indicative summaries provide a sense for what a certain document is about without necessarily giving all of its details, while informative summaries are meant to replace the original document in terms of content.
 
-\paragraph{keyword (words) vs headline (sentence)} %
+\paragraph{Keyword (words) vs. headline (sentence)} Keyword summaries are allowed to simply be a bag-of-words of important keywords from the document, while headline summaries must form a coherent sentence.
 
-\paragraph{generic vs query focused vs update (multi-doc only)} %
+\paragraph{Generic vs. query focused} Generic summaries have no assumptions on the reader and are meant to be generally informative, while query focused summaries take into consideration a query and only return relevant information. The contrast between these two methods highlights an important question in summarization: to what end are we summarizing documents? If we can answer this question more precisely, we will be better able to build systems to accomplish our desired tasks.
 
-Before elaborating on specific methods, it is important to highlight these differences to understand how people thought about the problem. For example, we will see that extractive methods are by far more popular due to their simplicity and success rate. 
+\vspace{0.5cm}
 
-Based on this taxonomy, the deep model we set out to build would be classified as 1) abstractive, 2) single-document, 3) indicative, 4) headline, 5) generic.
+Before elaborating on specific methods, it is important to highlight these differences to understand how people thought about the problem. For example, extractive methods are by far more popular due to the simplicity of building an extraction algorithm, while abstractive methods have been difficult as we do not have a fully working model of language generation.
+
+Based on this taxonomy, the deep model we set out to build would be classified as 1) abstractive, 2) single-document, 3) informative, 4) headline, 5) generic.
 
 In the rest of this thesis, we will limit the scope of the summarization problem to the \emph{single-document}, \emph{informative}, \emph{headline}, and \emph{generic} categories in order to focus on the application of deep learning in the problem.
 
-In the next section, we highlight some of the methods used to .
+In the next section, we give a brief overview of some of the relevant methods used in summarization.
 
 \section{Methods}
+
+
+
+\subsection{Classical}
+
+One of the first considerations of automatically producing summaries was \cite{luhn1958automatic}, which aimed to summarize scientific articles using a sentence-ranking method. The algorithm gives each sentence a score based on the occurrence of frequently appearing words.
+
+
+Since then, a variety of approaches have been used to solve summarization. We highlight some notable work in both the extractive and abstractive framework.
+
+\subsubsection{Extractive}
+
+The most popular methods for document summarization have generally been extractive due to their simplicity. One natural procedure for an extractive summarization is to score sentences based on some relevance metric and return the highest scoring sentences (perhaps reordering them as well).
+
+Some examples are \cite{carbonell1998MMR}, which uses a simple information metric for ranking sentences, and \cite{svore2007}, which uses a simple neural network for the same purpose.
+
+\citet{Shen2004} models sentence extraction as a sequential decision problem, using a linear-chain conditional random field to find the best subset of sentences.
+
+
+
+\subsubsection{Abstractive}
+
+While extraction has proven to be successful, the method is inherently limited in its ability to summarize. The more challenging method, and also the closest to what humans do, is \emph{abstractive} summarization. Instead of strictly requiring that all words of the summary come from the source document, any coherent text is allowed.
+
+Two methods used to produce abstractive summaries are sentence compression and sentence fusion. Compression removes less useful information from sentences, while fusion is harder and combines information from sentences. % cite Barzilay, MCkeown
+
+Compression: \citet{knight2002summarization} employs a noisy channel model, similar to machine translation, to deduce the ``most probable'' compression, while \citet{clarke2008global} uses an integer linear program. \citet{cohn2008sentence} extend the tree-based methods to allow for insertions and substitutions during compression, whereas prior methods were purely deletion based. \cite{zajic2004topiary} successfully use a sentence compression algorithm along with an unsupervised topic model on the DUC 2004 task.
+
+Fusion: align parse trees and combine phrases that are similar % more needed
+
+
+\subsection{Deep Learning}
+
+With the onset of deep learning, learning an end-to-end abstractive model for summarization has become more feasible. \citet{rush2015neural} propose a data-driven, completely abstractive model for summarizing short sentences by training a sequence-to-sequence model with attention. More recent work in deep learning has been done for both extractive \citep{} %% citation needed
+and abstractive \citep{nallapati2016seq2seq, ramachandran2016} methods that scale the models to full documents, demonstrating the feasibility of end-to-end models.
+
+These new models require a large amount of supervised training data, which the DUC data are unsuitable for due to their small scale. However, thanks to the large-scale annotated CNN/Dailymail news stories dataset \cite{Hermann2015}, we now have the necessary data to train our deep models.
+
+The task has not yet been fully standardized in this context, and research in the area is still largely preliminary. While CNN/Dailymail may not be the most suitable dataset for the task \citep{Chen2016}, a better alternative is yet to exist.
+
 
 \subsection{Datasets}
 
@@ -134,41 +180,6 @@ While a single most effective metric for summarization may not exist, the DUC co
 DUC overall was found not to have the best impact. For many of the news summary tasks, it was found that taking the first sentence of each article could not be beaten by more sophisticated methods, and so the task was somewhat abandoned.
 
 CNN/Dailymail is much larger, and is the one we use to train our deep models.
-
-\subsection{Classical}
-
-A variety of approaches have been used to solve summarization. We highlight some notable work in both the extractive and abstractive framework.
-
-\subsubsection{Extractive}
-
-The most popular methods for document summarization have generally been extractive. One natural procedure for an extractive summarization is to score sentences based on some relevance metric and return the highest scoring sentences (perhaps reordering them as well).
-
-Some examples are \cite{carbonell1998MMR}, which uses a simple information metric for ranking sentences, and \cite{svore2007}, which uses a simple neural network for the same purpose.
-
-CRF \cite{Shen2004}
-
-
-
-\subsubsection{Abstractive}
-
-While extraction has proven to be successful, the method is inherently limited in its ability to summarize. The more challenging method, and also the closest to what humans do, is \emph{abstractive} summarization. Instead of strictly requiring that all words of the summary come from the source document, any coherent text is allowed.
-
-Two methods used to produce abstractive summaries are sentence compression and sentence fusion. Compression removes less useful information from sentences, while fusion is harder and combines information from sentences. % cite Barzilay, MCkeown
-
-Compression: \cite{knight2002summarization} employs a noisy channel model, similar to machine translation, to deduce the ``most probable'' compression, while \cite{clarke2008global} uses an integer linear program. \cite{cohn2008sentence} extend the tree-based methods to allow for insertions and substitutions during compression, whereas prior methods were purely deletion based. \cite{zajic2004topiary} successfully use a sentence compression algorithm along with an unsupervised topic model on the DUC 2004 task.
-
-Fusion: align parse trees and combine phrases that are similar % more needed
-
-
-\subsection{Deep Learning}
-
-With the onset of deep learning, learning an end-to-end abstractive model for summarization has become more feasible. \citet{rush2015neural} propose a data-driven, completely abstractive model for summarizing short sentences by training a sequence-to-sequence model with attention. More recent work in deep learning has been done for both extractive \citep{} %% citation needed
-and abstractive \citep{nallapati2016seq2seq, ramachandran2016} methods that scale the models to full documents, demonstrating the feasibility of end-to-end models.
-
-These new models require a large amount of supervised training data, which the DUC data are not suitable for due to their small scale. However, thanks to annotated CNN/Dailymail news stories \cite{hermann2015read}, %%
-
-The task has not yet been fully standardized in this context, and research in the area is still largely preliminary.
-
 
 
 \subsection{Evaluation}
@@ -186,39 +197,120 @@ None of these methods directly address the grammaticality of the output. Aside f
 
 Summarization is an important real-world problem due to the explosion of available data. Thus, there are many practical methods that have been developed and deployed in real-world settings. One of the most notable examples is on Reddit\footnote{\url{reddit.com}}: in order to summarize long forum discussions, Reddit uses technology from \textsc{smmry}\footnote{\url{smmry.com}}.
 
-Smmry's algorithm is a simple extractive summarization method. It counts word occurrences, splits discussions by sentence, and ranks the sentences based on the sum of their word scores (perhaps tf-idf?). This algorithm is reminiscent of %%% the first guy?
+Smmry's algorithm is a simple extractive summarization method. It counts word occurrences, splits discussions by sentence, and ranks the sentences based on the sum of their word scores (perhaps tf-idf?). This algorithm bears extraordinary similarity to \citet{luhn1958automatic} --- although a variety of methods have been invented since then, the simplest approaches turn out to be the most practical.
 
-Other examples include a SUMMLY app thing acquired by Yahoo - it had a lot of hype but it's unclear if it had any real content.
+% Other examples include a SUMMLY app thing acquired by Yahoo - it had a lot of hype but it's unclear if it had any real content.
 
 
 %%%%%%%
 \chapter{Background}
 
-\section{Neural Architectures}
+In this chapter, we set up the relevant background ideas for our models.
 
-Sequence-to-sequence methods have been highly successful in many tasks, including machine translation \citep{sutskever2014sequence, bahdanau2014neural}, question answering \citep{hermann2015read}, dialogue \citep{li2016persona}, caption generation \citep{xu2015captioning}, and in particular summarization \citep{rush2015neural}.
+\section{Sequence-to-Sequence Attention Models}
 
-\cite{li2015autoencoder} envisions a hierarchical LSTM system, where a neural autoencoder combines sentence representations into a paragraph representation. The idea of separating text into levels of abstraction is also used in various forms of ``hierarchical attention''.
-\cite{nallapati2016seq2seq} applies the idea to summarization, 
+The sequence-to-sequence architecture \citep{sutskever2014sequence}, also known as the encoder-decoder architecture, forms the backbone of many successful models in NLP. A popular variant of sequence-to-sequence models are \emph{attention} models \citep{bahdanau2014neural}. The key idea is to keep an encoded representation of all parts of the input, attending to the relevant part each time we produce an output from the decoder.
+These models have been used to great effect in a variety of NLP tasks, including machine translation \citep{sutskever2014sequence, bahdanau2014neural}, question answering \citep{Hermann2015}, dialogue \citep{li2016persona}, caption generation \citep{xu2015captioning}, and in particular summarization \citep{rush2015neural}.
+
+\citet{xu2015captioning} show how attention models can be used to ``summarize'' an image and produce a caption. 
+By analyzing where in the image their models attend to when generating each word of the caption, they qualitatively find that the model is essentially describing that region of the image. 
+Figure~\ref{} shows some examples.
+
+% image?
+
+We can leverage the same idea for text summarization, assuming we have a suitable representation of our input document. The simplest method for doing so would be to run an LSTM over the document.
+
+However, the attention step becomes computationally difficult --- for each word we generate, we need to compare it to every word of the document in order to determine which part to attend to. Therefore, we propose a hierarchical method of attending to the document by first attending to sentences, then to the words within sentences. We call this method \emph{coarse-to-fine attention}
+\footnote{The term coarse-to-fine attention has previously been introduced in the literature \citep{mei2016}. However, their idea is different: they use coarse attention to reweight the fine attention computed over the entire input. Similar ideas have also been called hierarchical attention \citep{nallapati2016seq2seq}.}.
 
 
-The problem of full document summarization, however, is still very open. In order to make the models work, \cite{nallapati2016seq2seq} use a variety of tricks: limiting the decoder vocabulary to the document, the use of pointer attention for \texttt{<unk>} tokens, etc. Our goal in this paper is not necessarily to optimize performance, but to understand how to scale up existing seq2seq methods in an efficient way, and so we attempt to eliminate the use of these ad-hoc tricks whenever possible. We aim to find the best implementation of ``hard'' attention, in which a discrete subset of the source document is selected at any given time, to satisfy the scalability condition.
 
-%% coarse to fine: nallapati is not the same!,  \cite{mei2016}
+To be able to attend to both sentences and words in a hierarchical manner, we need to construct encodings of the document at both levels. Thus, we run a low-level LSTM encoder on the words of each sentence for a fine-grained representation of the text, and a simpler encoder model (e.g. bag of words) for coarse-grained sentence representations.
+\citet{Sukhbaatar2015} demonstrate how coarse representations can be useful by using memory networks to access information for simple question-answering tasks.
+\citet{li2015autoencoder} use the idea of coarse and fine encodings to develop a hierarchical autoencoder for representing paragraphs of text.
+%by using low-level LSTMs on words to build sentence representations, then a high-level LSTM on the sentences for the final paragraph representation.
+
+Therefore, if we can make our model first use coarse attention to choose sentences, then use fine attention to choose words only from that sentence, then we avoid the computational cost of searching over the entire document. This idea runs into a very serious problem, however: by posing the attention as a discrete selection process, the neural network is no longer differentiable.
 
 
-Many techniques have been recently invented to handle the problem of scale. \cite{martins2016sparsemax} propose the sparsemax function as a sparse alternative to softmax, and \cite{rae2016sparsememory} use a nearest neighbors approach in ``sparse access memory'' to train a large-scale neural Turing machine.
+\citet{xu2015captioning} suggest ``hard'' attention as one possible solution to the discrete selection problem. While standard ``soft'' attention actually averages the representations of where the model attends to, for hard attention we make a hard decision and choose only one location. Such models can be trained using reinforcement learning. Before we elaborate on this method, we survey some other methods invented to overcome this discrete attention problem.
 
-%% outrageous: \cite{Shazeer2017}
+\section{Conditional Computation}
 
-We will discuss one approach to sparseness in detail: reinforcement learning.
+
+%The problem of full document summarization, however, is still very open. In order to make the models work, \cite{nallapati2016seq2seq} use a variety of tricks: limiting the decoder vocabulary to the document, the use of pointer attention for \texttt{<unk>} tokens, etc. Our goal in this paper is not necessarily to optimize performance, but to understand how to scale up existing seq2seq methods in an efficient way, and so we attempt to eliminate the use of these ad-hoc tricks whenever possible. We aim to find the best implementation of ``hard'' attention, in which a discrete subset of the source document is selected at any given time, to satisfy the scalability condition.
+
+\todo{elaboration needed}
+
+Many techniques have been proposed in the literature to handle the problem of large inputs to deep neural networks.
+
+The term ``conditional computation'' was coined by \citet{BengioLC13}, where the idea is to compute a subset of units for a given network per input. This would have the advantage of being much more efficient, especially for networks that need to handle extremely large inputs as is common in vision and NLP.
+
+While standard deep models use the softmax function $\mathrm{softmax}(\boldz)_i = \exp(z_i) / \sum_j \exp(z_j)$ to produce differentiable probability distributions, \citet{martins2016sparsemax} propose the sparsemax function as a sparse alternative to softmax that still has a useful gradient.
+
+\citet{rae2016sparsememory} use a nearest neighbors approach in ``sparse access memory'' to train a large-scale neural Turing machine.
+
+\citet{Shazeer2017} introduces a mixture-of-experts model that selectively chooses some ``expert'' subnetworks in the spirit of conditional computation.
+
+These methods are all promising and merit further research in the future. In this work, we limit our scope to the hard attention model of \citet{xu2015captioning}. In the next section, we explain reinforcement learning and how it can be used to train the hard attention model.
 
 \section{Reinforcement Learning}
 
-These methods are designed to be fully differentiable and hence compatible with standard backpropagation. Reinforcement learning, however, is an alternative method for obtaining ``hard'' attention. In traditional reinforcement learning, an agent is trained to maximize the total expected reward for performing a series of actions. Such methods can be applied to deep neural networks by backpropagating an unbiased gradient at the action step, which is commonly known as the REINFORCE algorithm or policy gradient \citep{williams1992reinforce, schulman2015backprop}.
+Standard backpropagation training of neural networks assumes that the output is a differentiable function of the input. Reinforcement learning, however, is a general framework that makes no such assumptions.
 
-\subsection{Q-learning, SARSA}
-% talk about: Q-learning, other algorithms (SARSA?)
+The traditional setup of reinforcement learning assumes some agent is navigating an environment and earning rewards. We assume the agent is at state $s_t$ in time $t$, makes an action $a_t$, earns a reward $r_t$, and transitions to the next state $s_{t+1}$. Assuming there is randomness in the reward and the transition $s_{t+1} \sim p(s_{t+1} | s_t, a_t)$, the agent wants to maximize total expected reward $\mathbb{E}_{s_t, r_t} [\sum_{t=0}^\infty \gamma^t r_t]$ where $\gamma$ is a future discount factor.
+
+% diagram
+
+It turns out that such a framework can be applied to deep neural networks to obtain gradients for backpropagation. 
+
+%by backpropagating an unbiased gradient at the action step, which is commonly known as the REINFORCE algorithm or policy gradient \citep{williams1992reinforce, schulman2015backprop}.
+
+%%%%% 
+\todo{transition}
+
+To train Model 3, we must apply techniques from the reinforcement learning literature. We cast our learning problem with the neural network as stochastic agent and log probability as reward, and thus are able to apply reinforcement learning to train the network.
+
+In our setup, where our agent is a parameterized model, computing the gradients for the model in this setup is known as the REINFORCE algorithm \citep{williams1992reinforce} or policy gradient, and has been well-explained in recent work \citep{mnih2014visualattention, ba2015visualattention, schulman2015backprop}.
+
+Specifically, assuming we have a probability distribution $p(\alpha)$ from which we sample, and subsequently receive reward $r$, the gradient that is backpropagated from $p(\alpha)$ is
+\begin{equation}
+\label{policygrad}
+\frac{\partial \mcL}{\partial w}  = r \frac{\partial \log p(\alpha)}{\partial w}
+\end{equation}
+i.e. the reward multiplied by the gradient of the log probability. A proof of this can be found in \cite{williams1992reinforce}.
+
+In our framework, we use the log probability of the correct word at each time step as the reward $r_t$. Since samples at time $t$ of the RNN decoder can also affect future rewards, we use a discount factor of $\gamma = 0.5$, so that the reward is $r = \sum_{s = t}^n \gamma^{n-s}r_s$ for the decoding sampler at time $t$.
+
+\subsection{Variance Reduction}
+
+While the policy gradient of equation~\ref{policygrad} is proven to be unbiased, in practice it has such high variance that training converges far too slowly.
+
+One of the most common ways to reduce the variance of the gradient estimator is to introduce a baseline reward $b$, which we subtract from our reward. Including a baseline is proven to reduce the variance of the estimator \citep{mnih2014belief}. We also normalize the rewards to a common scale by dividing by the reward variance in a given minibatch.
+
+
+Our policy gradient equation then becomes
+\begin{equation}
+\label{policygradbaseline}
+\nabla_\theta \mathcal{L}(\theta) = \frac{r-b}{\sigma} \nabla_\theta \log p(\alpha)
+\end{equation}
+
+There are a few methods for producing the baseline; as in \cite{mnih2014belief}, we can keep an exponentially moving average of the reward
+$$b_j = (1 - \beta) b_{j-1} + \beta r_j$$
+where $r_j$ is the average minibatch reward and $\beta$ is a hyperparameter (set to 0.9).
+Similarly, we keep a moving average of the variance for normalization:
+$$\sigma^2_j = (1 - \beta) \sigma^2_{j-1} + \beta v_j$$
+where $v_t$ is the variance of the minibatch rewards for batch $j$. Since we have rewards at each time step of the decoder LSTM, we keep a separate moving average for the baseline for each time step, but we keep a single moving variance for all time steps.
+
+While several papers suggest using a learned baseline from the RNN state (e.g. \cite{ranzato2015}), we have not found this to be more effective.
+
+We also use an entropy term to reduce the variance. Our policy gradient equation then becomes
+\begin{equation}
+\label{policygradbaselineentropy}
+\nabla_\theta \mathcal{L}(\theta) = \frac{r-b}{\sigma} \nabla_\theta \log p(\alpha) - \lambda_{ent} \nabla_\alpha(\alpha \log \alpha)
+\end{equation}
+where $\lambda_{ent}$ is a hyperparameter. This has the effect of increasing the entropy of our sampling distribution, hence encouraging more exploration and faster convergence of learning.
+
 
 \subsection{Deep reinforcement learning}
 %% deep learning in vision: \cite{deepatari2015}
@@ -236,8 +328,8 @@ In the next chapter we describe our models in detail.
 
 
 \chapter{Models}
-% figures needed!!!
-% also I should start from the beginning probably
+
+In this chapter, we describe our models in full mathematical detail.
 
 \section{Sequence-to-sequence (seq2seq)}
 
@@ -316,50 +408,6 @@ From our initial experiments with Model 3, we found that taking a single sample 
 We sample based on the multinomial distribution $\mathrm{Mult}(k, \{\alpha_i\}_{i=1}^n)$ to produce the sentence-level attention vector $\alpha$ of length $n$, with $\alpha_i = x_i / k$, where $x_i$ is the number of times index $i$ was sampled. $k$ is a hyperparameter which can be tuned, and we found that $k=5$ works well in our experiments.
 
 The intuition here is for the hard attention model to more closely approximate the soft attention model, as it can select more sentences to produce the context.
-
-\section{Reinforcement Learning}
-
-To train Model 3, we must apply techniques from the reinforcement learning literature. We cast our learning problem with the neural network as stochastic agent and log probability as reward, and thus are able to apply reinforcement learning to train the network.
-
-In our setup, where our agent is a parameterized model, computing the gradients for the model in this setup is known as the REINFORCE algorithm \citep{williams1992reinforce} or policy gradient, and has been well-explained in recent work \citep{mnih2014visualattention, ba2015visualattention, schulman2015backprop}.
-
-Specifically, assuming we have a probability distribution $p(\alpha)$ from which we sample, and subsequently receive reward $r$, the gradient that is backpropagated from $p(\alpha)$ is
-\begin{equation}
-\label{policygrad}
-\nabla_\theta \mathcal{L}(\theta) = r \nabla_\theta \log p(\alpha)
-\end{equation}
-i.e. the reward multiplied by the gradient of the log probability. A proof of this can be found in \cite{williams1992reinforce}.
-
-In our framework, we use the log probability of the correct word at each time step as the reward $r_t$. Since samples at time $t$ of the RNN decoder can also affect future rewards, we use a discount factor of $\gamma = 0.5$, so that the reward is $r = \sum_{s = t}^n \gamma^{n-s}r_s$ for the decoding sampler at time $t$.
-
-\subsection{Variance Reduction}
-
-While the policy gradient of equation~\ref{policygrad} is proven to be unbiased, in practice it has such high variance that training converges far too slowly.
-
-One of the most common ways to reduce the variance of the gradient estimator is to introduce a baseline reward $b$, which we subtract from our reward. Including a baseline is proven to reduce the variance of the estimator \citep{mnih2014belief}. We also normalize the rewards to a common scale by dividing by the reward variance in a given minibatch.
-
-
-Our policy gradient equation then becomes
-\begin{equation}
-\label{policygradbaseline}
-\nabla_\theta \mathcal{L}(\theta) = \frac{r-b}{\sigma} \nabla_\theta \log p(\alpha)
-\end{equation}
-
-There are a few methods for producing the baseline; as in \cite{mnih2014belief}, we can keep an exponentially moving average of the reward
-$$b_j = (1 - \beta) b_{j-1} + \beta r_j$$
-where $r_j$ is the average minibatch reward and $\beta$ is a hyperparameter (set to 0.9).
-Similarly, we keep a moving average of the variance for normalization:
-$$\sigma^2_j = (1 - \beta) \sigma^2_{j-1} + \beta v_j$$
-where $v_t$ is the variance of the minibatch rewards for batch $j$. Since we have rewards at each time step of the decoder LSTM, we keep a separate moving average for the baseline for each time step, but we keep a single moving variance for all time steps.
-
-While several papers suggest using a learned baseline from the RNN state (e.g. \cite{ranzato2015}), we have not found this to be more effective.
-
-We also use an entropy term to reduce the variance. Our policy gradient equation then becomes
-\begin{equation}
-\label{policygradbaselineentropy}
-\nabla_\theta \mathcal{L}(\theta) = \frac{r-b}{\sigma} \nabla_\theta \log p(\alpha) - \lambda_{ent} \nabla_\alpha(\alpha \log \alpha)
-\end{equation}
-where $\lambda_{ent}$ is a hyperparameter. This has the effect of increasing the entropy of our sampling distribution, hence encouraging more exploration and faster convergence of learning.
 
 \subsection{Curriculum}
 
@@ -500,13 +548,17 @@ We notice that Model 2 has the best performance, while multisampling is comparab
 
 \chapter{Discussion}
 
-This method probably doesn't work.
 
 \chapter{Conclusion}
 
-We tried a new neural architecture that failed.
 
 \bibliographystyle{plainnat}
 \bibliography{../papers/Mendeley/library}
+
+\appendix
+
+\section{Attention Visualizations}
+
+hi
 
 \end{document}
