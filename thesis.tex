@@ -29,11 +29,11 @@ We evaluate our model on the CNN/Dailymail document summarization task.
 
 Natural language processing is a field with a variety of interesting structured prediction problems. The essential goal of NLP is to build a model of language so that computers can automatically process substantial quantities of text --- a highly relevant problem in today's information age.
 
-While humans have no trouble understanding and using language, even the simplest language tasks can be impossible for computers. Some classical NLP problems include part-of-speech tagging, parsing, language modeling, and machine translation. %%
+While humans have no trouble understanding and using language, even the simplest language tasks can be impossible for computers. Researchers developed the field of linguistics as they tried to build a formal model of how language works, and as the number of rules grew, computational methods for processing text soon became relevant. Today, NLP has transformed into its own subfield --- some classical linguistic problems still remain relevant, such as part-of-speech tagging, parsing, and semantic modeling, but more computational approaches are also used to tackle problems like language modeling and machine translation. %% 
 
-It is informative to consider the history of machine translation. The first methods were rule-based linguistics systems, and the company SYSTRAN provided one of the first \citep{}.
+It is informative to consider the history of machine translation. The first methods were rule-based linguistics systems, and the company SYSTRAN provided one of the first widely available translation tools. %% citation
 
-In the 90s, statistical methods for NLP became increasingly popular. By considering language generation as a probabilistic process, one can collect statistics over large corpuses of data to automatically deduce the parameters of the model. In machine translation, this idea was used to great effect in \citet{Brown1993}, whose count-based methods form the core of state-of-the-art systems like Google Translate.
+Later, statistical methods for NLP became increasingly popular. By considering language generation as a probabilistic process, one can collect statistics over large corpuses of data to automatically deduce the parameters of the model. In machine translation, this idea was used to great effect in \citet{Brown1993}, whose count-based methods form the core of state-of-the-art systems like Google Translate.
 
 Recently, researchers found that deep learning works effectively for many NLP tasks. For the first time, neural networks were able learning structure and features from language almost completely from scratch \citep{Collobert2011}. % \cite{Bengio2003} language model
 The success of neural methods has been adopted by Google Translate to build even better systems \citep{GoogleTranslate2016}. Research in applying deep learning to NLP is ongoing.
@@ -42,23 +42,21 @@ The success of neural methods has been adopted by Google Translate to build even
 
 The history of neural networks dates back to the perceptron \citep{Rosenblatt1958}, a simple model that assumes data can be linearly separated. Due to this strict requirement, the machine learning community dismissed the idea as impractical, and research was sidelined for most of the 20th century.
 
-%While some work continued \citet{Rumelhart1986} showed that the backpropagation algorithm could be used to efficiently train neural networks, 
+Some other work continued: \citet{Rumelhart1986} showed that the backpropagation algorithm could be used to efficiently train general neural networks, but this was before the era of GPUs and modern computing, and so the algorithm could not be practically used.
 
-Recently, neural networks have made a resurgence. In the ImageNet image classification competition in 2012, \citet{Krizhevsky2012} won using \emph{convolutional neural networks} \citep{LeCun1995}, beating the competition by a significant margin. This led to a renewed wave of research, especially due to the advancement of modern computing power and GPUs, which can train networks at 10 or 20 times the speed of standard CPUs. Today, deep models are used to successfully play Go \citep{Silver2016}, play Atari games from pixels \citep{deepatari2015}, and %???
+Recently, neural networks have made a resurgence. In the ImageNet image classification competition in 2012, \citet{Krizhevsky2012} won using \emph{deep convolutional neural networks} \citep{LeCun1995}, beating the competition by a significant margin. This led to a renewed wave of research, especially due to the advancement of modern computing power and GPUs, which can train networks at 10 or 20 times the speed of standard CPUs. Today, deep models are used to successfully play Go \citep{Silver2016}, play Atari games from pixels \citep{deepatari2015}, and ...... %%%??
 
 %%% break
 
 While neural networks are often treated as black box classifiers, \citet{Zeiler2014} show that the intermediate layers of deep convolutional networks contain abstracted qualities of the input, such as patterns, textures, and objects of the input. This suggests that neural networks are discovering features of the input and building generalized \emph{representations} of their inputs.
 
-% image?
+\todo{figure}
 
 The idea of learning representations of the input is highly general, and so it comes as no surprise that deep networks soon found applications in NLP. \citet{mikolov2013word2vec} show that by training a neural network on a Google News text corpus, the network learned to map words in the English language to a vector of real numbers known as \emph{word embeddings}. These word embeddings are actually able to capture semantic properties of the words --- for example, taking the vectors for \emph{king}, \emph{man}, and \emph{woman}, we find that $v_{king} - v_{man} + v_{woman} \approx v_{queen}$, preserving the analogy that we usually make with text.
 
 % diagram of vectors
 
-Since the onset of deep learning, deep models have found their way into nearly every corner of NLP. Much of their success relies on the ubiquity of the \emph{long short-term memory} (LSTM) recurrent neural network \citep{hochreiter1997long}, a model used to both process and generate sequences of text. State-of-the-art systems for many problems, including machine translation, now use deep learning as their core algorithm. %???
-
-% While there is much to cover  \cite{goldberg2015primer} provides a nice summary.
+Since the onset of deep learning, deep models have found their way into nearly every corner of NLP. Much of their success relies on the ubiquity of the \emph{long short-term memory} (LSTM) recurrent neural network \citep{hochreiter1997long}, a model used to both process and generate sequences of text. State-of-the-art systems for many problems, including machine translation, now use deep learning as their core algorithm. While there is too much to cover here, \citet{goldberg2015primer} provides a concise summary of the models that have had the greatest impact on NLP. % weak
 
 
 \section{Motivation}
@@ -66,18 +64,16 @@ Since the onset of deep learning, deep models have found their way into nearly e
 % should this go under deep learning?
 % this could be a hard section to write
 
-Why deep models? There is a debate in the deep learning community about the extent to which human inductive biases ought to be incorporated into deep networks. On one hand, machine learning systems often incorporate handcrafted features or assumptions in the model to solve the problem. Examples % references? c
+Why deep models? There are two general approaches for solving NLP problems today: one is to use as much as linguistic theory as possible to reduce the problem, and another is to apply black box models such as deep neural networks.
 
-On the other hand, a purely data-driven system forgoes these details, using highly general models for the task at hand.
+On one hand, systems with handcrafted features can perform extremely well if domain specific knowledge can be built in. \todo{Examples?}
+On the other hand, a purely data-driven system can forgo most of these details, using highly general models for the task at hand.
 
-In the past, NLP was done with handcrafted features. However, \citet{Collobert2011} shows that this is an unnecessary assumption. They build a neural network for classical NLP tasks (e.g. part-of-speech tagging, named entity recognition) that can learn to do the task without any feature extraction.
-
-
-There are a few reasons why deep networks are desirable for NLP. First, they are remarkably powerful and practically easier to train than complicated rule-based systems (assuming enough computational power is available), and are not mutually exclusive with standard feature extraction methods.
-Second, they allow for non-domain experts to make progress on relevant problems.
+There are a few reasons why deep networks are desirable for NLP. First, they work remarkably well without any feature engineering, and are state-of-the-art in many existing tasks.
+Second, they are not mutually exclusive with standard feature extraction methods.
 Third, we find that trained models can discover latent structure in language automatically, which is an interesting phenomenon that may reveal more about how language is used. As an example, sequence-to-sequence models with attention \citep{bahdanau2014neural} learn the concept of a word alignment in translation without any supervision.
 
-It is not yet clear, however, to what extent neural methods can replace models with hard-coded linguistic assumptions. This is one of the questions we set out to resolve.
+It is not yet clear, however, to what extent neural methods can replace models with hard-coded linguistic assumptions. We set out to understand this question by analyzing and extending a particular deep neural model for the task of document summarization.
 
 
 \section{Our problem}
@@ -108,15 +104,15 @@ In section ? we show results and discussion.
 
 \section{Automatic Summarization}
 
-\citet{Nenkova2011} give an overview of the field. In particular, they provide a taxonomy of methods that researchers have used to frame summarization:
+\citet{Nenkova2011} give a detailed overview of the problem of summarization. In particular, they provide a taxonomy of methods that researchers have used to tackle the task:
 
-\paragraph{Extractive vs. Abstractive} Extractive summaries extract certain sentences or phrases from the document, while abstractive summaries take a more holistic view and can in practice be anything (similar to how humans produce summaries). 
+\paragraph{Extractive vs. abstractive} Extractive summaries extract certain sentences or phrases from the document, while abstractive summaries take a more holistic view and can in practice be anything (similar to how humans produce summaries). 
 
-\paragraph{Single- vs. Multi-document} Summarization was originally posed as the problem of producing a summary for a single document. However, with the onset of the Internet and search engines, there are often multiple documents on the same topic, and so a summarization system should be able to use all of them to produce a summary.
+\paragraph{Single- vs. multi-document} Summarization was originally posed as the problem of producing a summary for a single document. However, with the onset of the Internet and search engines, there are often multiple documents on the same topic, and so a summarization system should be able to use all of them to produce a summary.
 
-\paragraph{Indicative (style) vs. informative (facts)} Indicative summaries provide a sense for what a certain document is about without necessarily giving all of its details, while informative summaries are meant to replace the original document in terms of content.
+%\paragraph{Indicative (style) vs. informative (facts)} Indicative summaries provide a sense for what a certain document is about without necessarily giving all of its details, while informative summaries are meant to replace the original document in terms of content.
 
-\paragraph{Keyword (words) vs. headline (sentence)} Keyword summaries are allowed to simply be a bag-of-words of important keywords from the document, while headline summaries must form a coherent sentence.
+\paragraph{Keyword vs. headline} Keyword summaries are allowed to simply be a bag-of-words of important keywords from the document, while headline summaries must form a coherent sentence.
 
 \paragraph{Generic vs. query focused} Generic summaries have no assumptions on the reader and are meant to be generally informative, while query focused summaries take into consideration a query and only return relevant information. The contrast between these two methods highlights an important question in summarization: to what end are we summarizing documents? If we can answer this question more precisely, we will be better able to build systems to accomplish our desired tasks.
 
@@ -124,11 +120,10 @@ In section ? we show results and discussion.
 
 Before elaborating on specific methods, it is important to highlight these differences to understand how people thought about the problem. For example, extractive methods are by far more popular due to the simplicity of building an extraction algorithm, while abstractive methods have been difficult as we do not have a fully working model of language generation.
 
-Based on this taxonomy, the deep model we set out to build would be classified as 1) abstractive, 2) single-document, 3) informative, 4) headline, 5) generic.
+Based on this taxonomy, the deep model we set out to build would be classified as: abstractive, single-document, headline, and generic. While there is value to exploring other branches of this taxonomy, this combination of categories is the simplest for a deep model to handle.
 
-In the rest of this thesis, we will limit the scope of the summarization problem to the \emph{single-document}, \emph{informative}, \emph{headline}, and \emph{generic} categories in order to focus on the application of deep learning in the problem.
+In the rest of this thesis, we will limit the scope of the summarization problem to the single-document,  headline, and generic summarization problem. In the next section, we give a brief overview of some of the relevant methods used.
 
-In the next section, we give a brief overview of some of the relevant methods used in summarization.
 
 \section{Methods}
 
@@ -143,12 +138,13 @@ Since then, a variety of approaches have been used to solve summarization. We hi
 
 \subsubsection{Extractive}
 
-The most popular methods for document summarization have generally been extractive due to their simplicity. One natural procedure for an extractive summarization is to score sentences based on some relevance metric and return the highest scoring sentences (perhaps reordering them as well).
+The most popular methods for document summarization have generally been extractive due to their simplicity. One natural procedure for an extractive summarization is to score sentences based on some relevance metric and return the highest scoring sentences.
 
-Some examples are \cite{carbonell1998MMR}, which uses a simple information metric for ranking sentences, and \cite{svore2007}, which uses a simple neural network for the same purpose.
+Some examples are \cite{carbonell1998MMR}, which uses a simple information metric for ranking sentences, and \cite{svore2007}, which uses a basic neural network for the same purpose.
 
 \citet{Shen2004} models sentence extraction as a sequential decision problem, using a linear-chain conditional random field to find the best subset of sentences.
 
+\todo{details}
 
 
 \subsubsection{Abstractive}
@@ -165,36 +161,37 @@ Fusion: align parse trees and combine phrases that are similar \todo{finish}
 \subsection{Deep Learning}
 
 With the onset of deep learning, learning an end-to-end abstractive model for summarization has become more feasible. \citet{rush2015neural} propose a data-driven, completely abstractive model for summarizing short sentences by training a sequence-to-sequence model with attention. More recent work in deep learning has been done for both extractive \citep{} %% citation needed
-and abstractive \citep{nallapati2016seq2seq, ramachandran2016} methods that scale the models to full documents, demonstrating the feasibility of end-to-end models.
+and abstractive \citep{nallapati2016seq2seq} methods that scale the models to full documents, demonstrating the feasibility of end-to-end models.
 
-These new models require a large amount of supervised training data, which the DUC data are unsuitable for due to their small scale. However, thanks to the large-scale annotated CNN/Dailymail news stories dataset \cite{Hermann2015}, we now have the necessary data to train our deep models.
-
-The task has not yet been fully standardized in this context, and research in the area is still largely preliminary. While CNN/Dailymail may not be the most suitable dataset for the task due to its noisiness \citep{Chen2016}, a better alternative is yet to exist.
+These new models require a large amount of supervised training data, which previously was not available. However, thanks to the Internet, the web can easily be scraped to produce large-scale annotated datasets to train our deep models.
 
 
-\subsection{Datasets}
+\section{Datasets}
 
-To standardize the task, NIST released data for DUC (Document Understanding Conferences) between 2001-2007 \citep{over2007duc}. The DUC tasks involved producing summaries for both single- and multiple-document sets of news articles. DUC 2001 and 2002 ask for general summaries of these articles documents and summaries, while DUC 2003-2006 also evaluate summaries based on their usefulness for certain question-answer tasks. % more details?
+To standardize the summarization task, NIST released data for DUC (Document Understanding Conferences) between 2001-2007 \citep{over2007duc}. The DUC tasks involved producing summaries for both single- and multiple-document sets of news articles. DUC 2001 and 2002 ask for general summaries of these articles documents and summaries, while DUC 2003-2006 also evaluate summaries based on their usefulness for certain question-answer tasks. \todo{double check this}
 
-While a single most effective metric for summarization may not exist, the DUC conferences established several important criteria, including grammaticality, non-redundancy, and content coverage (for which metrics like ROUGE \citep{lin2004rouge} were created).
 
 DUC overall was found not to have the best impact. For many of the news summary tasks, it was found that taking the first sentence of each article could not be beaten by more sophisticated methods, and so the task was somewhat abandoned.
 
-CNN/Dailymail is much larger, and is the one we use to train our deep models.
+\citet{Hermann2015} recently released a much larger dataset: CNN/Dailymail for question answering, which can be adapted for summarization. Each document is a news article accompanied by three or four ``highlight'' bullet points, which we use as the summaries.
+This dataset is much larger, and is the one we use to train our deep models.
 
+The task has not yet been fully standardized in this context, and research in the area is still largely preliminary. While CNN/Dailymail may not be the most suitable dataset for the task due to its noisiness \citep{Chen2016}, a better alternative is yet to exist.
 
-\subsection{Evaluation}
+\section{Evaluation}
 
 Evaluating a good summary is inherently ambiguous, and probably one of the hardest parts of the problem.
 
 For extractive summaries, people have proposed simple metrics such as precision and recall on selected sentences. These naturally do not work too well since 1) not all sentences are equally informative, and 2) not all parts of a sentence are relevant.
 
-DUC really pushed forward understanding on evaluation. They came up with recall on elementary discourse units (EDUs), based on clauses within a summary that ought to be captured. ROUGE \cite{lin2004rouge} is cheap and fast. Pyramid method is a complicated human evaluation method based on summary content units (SCUs). 
+The DUC conferences really pushed forward understanding on evaluation. While a single most effective metric for summarization may not exist, DUC established several important criteria, including grammaticality, non-redundancy, and content coverage.
+
+In response, people came up with recall on elementary discourse units (EDUs), based on clauses within a summary that ought to be captured. ROUGE \cite{lin2004rouge} is cheap and fast. Pyramid method is a complicated human evaluation method based on summary content units (SCUs). 
 
 None of these methods directly address the grammaticality of the output. Aside from using human evaluation, meaningful metrics for summaries is still very much an open question \citep{toutanova2016summarymetrics}. In our work, we settle for ROUGE due to its cheapness and ease of use in evaluating our models.
 
 
-\subsection{In the wild}
+\section{In the wild}
 
 Summarization is an important real-world problem due to the explosion of available data. Thus, there are many practical methods that have been developed and deployed in real-world settings. One of the most notable examples is on Reddit\footnote{\url{reddit.com}}: in order to summarize long forum discussions, Reddit uses technology from \textsc{smmry}\footnote{\url{smmry.com}}.
 
