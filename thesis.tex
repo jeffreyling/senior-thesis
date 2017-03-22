@@ -5,6 +5,8 @@
 \usepackage{url}
 \usepackage{todonotes}
 \usepackage[toc]{appendix}
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
 
 \title{Document Summarization (draft)}
 \author{Jeffrey Ling}
@@ -96,8 +98,6 @@ In section ? we give the necessary background for our models.
 In section ? we describe our models in detail.
 In section ? we show results and discussion.
 
-
-
 %%%%%%%%%%
 
 \chapter{Related Work}
@@ -131,14 +131,13 @@ In the rest of this thesis, we will limit the scope of the summarization problem
 
 \subsection{Classical}
 
-One of the first considerations of automatically producing summaries was \cite{luhn1958automatic}, which aimed to summarize scientific articles using a sentence-ranking method. The algorithm gives each sentence a score based on the occurrence of frequently appearing words.
+One of the first considerations of automatically producing summaries was \citet{luhn1958automatic}, which pioneered work in the field. At the time, computers still ran on punch cards, so automating the summarization process was no easy feat.
 
+\citet{luhn1958automatic} proposed a sentence-ranking method to produce summaries. The algorithm gives each sentence a score based on the occurrence of frequently appearing words. This is one of the first examples of an \emph{extractive} summarization method.
 
 Since then, a variety of approaches have been used to solve summarization. We highlight some notable work in both the extractive and abstractive framework.
 
-\subsubsection{Extractive}
-
-The most popular methods for document summarization have generally been extractive due to their simplicity. One natural procedure for an extractive summarization is to score sentences based on some relevance metric and return the highest scoring sentences.
+\paragraph{Extractive} The most popular methods for document summarization have generally been extractive due to their simplicity. One natural procedure for an extractive summarization is to score sentences based on some relevance metric and return the highest scoring sentences.
 
 Some examples are \cite{carbonell1998MMR}, which uses a simple information metric for ranking sentences, and \cite{svore2007}, which uses a basic neural network for the same purpose.
 
@@ -147,9 +146,7 @@ Some examples are \cite{carbonell1998MMR}, which uses a simple information metri
 \todo{details}
 
 
-\subsubsection{Abstractive}
-
-While extraction has proven to be successful, the method is inherently limited in its ability to summarize. The more challenging method, and also the closest to what humans do, is \emph{abstractive} summarization. Instead of strictly requiring that all words of the summary come from the source document, any coherent text is allowed.
+\paragraph{Abstractive} While extraction has proven to be successful, the method is inherently limited in its ability to summarize. The more challenging method, and also the closest to what humans do, is \emph{abstractive} summarization. Instead of strictly requiring that all words of the summary come from the source document, any coherent text is allowed.
 
 Two methods used to produce abstractive summaries are sentence compression and sentence fusion. Compression removes less useful information from sentences, while fusion is harder and combines information from sentences. % cite Barzilay, MCkeown
 
@@ -168,15 +165,14 @@ These new models require a large amount of supervised training data, which previ
 
 \section{Datasets}
 
-To standardize the summarization task, NIST released data for DUC (Document Understanding Conferences) between 2001-2007 \citep{over2007duc}. The DUC tasks involved producing summaries for both single- and multiple-document sets of news articles. DUC 2001 and 2002 ask for general summaries of these articles documents and summaries, while DUC 2003-2006 also evaluate summaries based on their usefulness for certain question-answer tasks. \todo{double check this}
+To standardize the summarization task, NIST released data for DUC (Document Understanding Conferences) between 2001-2007 \citep{over2007duc}. The DUC tasks involved producing summaries for both single- and multiple-document sets of news articles. DUC 2001 and 2002 ask for general summaries of these articles documents and summaries, while DUC 2003-2006 also evaluate summaries based on their usefulness for certain question-answer tasks.
 
 
-DUC overall was found not to have the best impact. For many of the news summary tasks, it was found that taking the first sentence of each article could not be beaten by more sophisticated methods, and so the task was somewhat abandoned.
+DUC overall was not particularly impactful. For many of the news summary tasks, it was found that taking the first sentence of each article was a strong baseline that more sophisticated methods found hard to beat. However, DUC inspired a lot of thinking on the best way to evaluate summaries (see below).
 
-\citet{Hermann2015} recently released a much larger dataset: CNN/Dailymail for question answering, which can be adapted for summarization. Each document is a news article accompanied by three or four ``highlight'' bullet points, which we use as the summaries.
-This dataset is much larger, and is the one we use to train our deep models.
+Recent datasets are much larger thanks to the power of scraping the Internet. \citet{Hermann2015} released the CNN/Dailymail for question answering, which can also be adapted for summarization. Each document is a news article accompanied by three or four ``highlight'' bullet points, which we can treat as the summaries. We will use the CNN/Dailymail dataset to train our deep models.
 
-The task has not yet been fully standardized in this context, and research in the area is still largely preliminary. While CNN/Dailymail may not be the most suitable dataset for the task due to its noisiness \citep{Chen2016}, a better alternative is yet to exist.
+In the context of these new datasets, the summarization task has not yet been fully standardized. Research in the area is still largely preliminary, with only a few papers reporting results \citep{nallapati2016seq2seq}. While CNN/Dailymail may not be the most suitable dataset for the task due to its noisiness \citep{Chen2016}, a better alternative is yet to exist.
 
 \section{Evaluation}
 
@@ -193,11 +189,9 @@ None of these methods directly address the grammaticality of the output. Aside f
 
 \section{In the wild}
 
-Summarization is an important real-world problem due to the explosion of available data. Thus, there are many practical methods that have been developed and deployed in real-world settings. One of the most notable examples is on Reddit\footnote{\url{reddit.com}}: in order to summarize long forum discussions, Reddit uses technology from \textsc{smmry}\footnote{\url{smmry.com}}.
+Summarization is an important real-world problem due to the explosion of available data. Thus, there are many practical methods that have been developed and deployed in real-world settings. One example is on Reddit\footnote{\url{reddit.com}}: in order to summarize long forum discussions, Reddit uses technology from \textsc{smmry}\footnote{\url{smmry.com}}.
 
 Smmry's algorithm is a simple extractive summarization method. It counts word occurrences, splits discussions by sentence, and ranks the sentences based on the sum of their word scores (perhaps tf-idf?). This algorithm bears extraordinary similarity to \citet{luhn1958automatic} --- although a variety of methods have been invented since then, the simplest approaches turn out to be the most practical.
-
-% Other examples include a SUMMLY app thing acquired by Yahoo - it had a lot of hype but it's unclear if it had any real content.
 
 
 %%%%%%%
@@ -208,13 +202,15 @@ In this chapter, we set up the relevant background ideas for our models.
 \section{Sequence-to-Sequence Attention Models}
 
 The sequence-to-sequence architecture \citep{sutskever2014sequence}, also known as the encoder-decoder architecture, forms the backbone of many successful models in NLP. A popular variant of sequence-to-sequence models are \emph{attention} models \citep{bahdanau2014neural}. The key idea is to keep an encoded representation of all parts of the input, attending to the relevant part each time we produce an output from the decoder.
-These models have been used to great effect in a variety of NLP tasks, including machine translation \citep{sutskever2014sequence, bahdanau2014neural}, question answering \citep{Hermann2015}, dialogue \citep{li2016persona}, caption generation \citep{xu2015captioning}, and in particular summarization \citep{rush2015neural}. In particular these works show that learning an accurate attention function is important for good performance. %%???
+These models have been used to great effect in a variety of NLP tasks, including machine translation \citep{sutskever2014sequence, bahdanau2014neural}, question answering \citep{Hermann2015}, dialogue \citep{li2016persona}, caption generation \citep{xu2015captioning}, and in particular summarization \citep{rush2015neural}. In particular, these works show that learning an accurate attention function is important for good performance. %%???
 
 \citet{xu2015captioning} show how attention models can be used to ``summarize'' an image and produce a caption. 
 By analyzing where in the image their models attend to when generating each word of the caption, they qualitatively find that the model is essentially describing that region of the image. 
-Figure~\ref{} shows some examples.
+Figure~\ref{fig:caption} shows some examples.
 
-% image?
+\begin{figure}
+\label{fig:caption}
+\end{figure}
 
 We can leverage the same idea for text summarization, assuming we have a suitable representation of our input document. The simplest method for doing so would be to run an LSTM over the document.
 
@@ -228,7 +224,7 @@ To be able to attend to both sentences and words in a hierarchical manner, we ne
 \citet{li2015autoencoder} use the idea of coarse and fine encodings to develop a hierarchical autoencoder for representing paragraphs of text.
 %by using low-level LSTMs on words to build sentence representations, then a high-level LSTM on the sentences for the final paragraph representation.
 
-Therefore, if we can make our model first use coarse attention to choose sentences, then use fine attention to choose words only from that sentence, then we avoid the computational cost of searching over the entire document. This idea runs into a very serious problem, however: by posing the attention as a discrete selection process, the neural network is no longer differentiable.
+Therefore, if we can make our model first use coarse attention to choose sentences, then use fine attention to choose words only from that sentence, then we avoid the computational cost of searching over the entire document. This idea runs into a very serious problem, however: by posing the attention as a discrete selection process, the neural network loses the key property of being differentiable, and so standard backpropagation no longer applies.
 
 
 \citet{xu2015captioning} suggest ``hard'' attention as one possible solution to the discrete selection problem. While standard ``soft'' attention actually averages the representations of where the model attends to, for hard attention we make a hard decision and choose only one location. Such models can be trained using reinforcement learning. Before we elaborate on this method, we survey some other methods invented to overcome this discrete attention problem.
@@ -244,13 +240,28 @@ Many techniques have been proposed in the literature to handle the problem of la
 
 The term ``conditional computation'' was coined by \citet{BengioLC13}, where the idea is to compute a subset of units for a given network per input. This would have the advantage of being much more efficient, especially for networks that handle extremely large inputs as is common in vision and NLP.
 
-While standard deep models use the softmax function $\mathrm{softmax}(\boldz)_i = \exp(z_i) / \sum_j \exp(z_j)$ to produce differentiable probability distributions, \citet{martins2016sparsemax} propose the sparsemax function as a sparse alternative to softmax that still has a useful gradient.
+Several ideas have been proposed to conditionally compute on large inputs. 
+\citet{rae2016sparsememory} use an approximate nearest neighbors approach for their ``sparse access memory'' model to train a large-scale neural Turing machine. \citet{Shazeer2017} introduces a mixture-of-experts model that selectively chooses a subset of ``expert'' networks at any given time during training. In the spirit of conditional computation, they only train $K$ experts at a time using a sparse gating function.
 
-\citet{rae2016sparsememory} use an approximate nearest neighbors approach for their ``sparse access memory'' model to train a large-scale neural Turing machine.
 
-\citet{Shazeer2017} introduces a mixture-of-experts model that selectively chooses a subset of ``expert'' networks at any given time during training. In the spirit of conditional computation, they only train $K$ experts at a time using a sparse gating function.
+\subsection{Discrete units}
 
-These methods are all promising and merit further research in the future. In this work, we limit our scope to the hard attention model of \citet{xu2015captioning}. In the next section, we explain reinforcement learning and how it can be used to train the hard attention model.
+One particular class of methods to perform conditional computation relies on the use of discrete units within our deep network. Discrete units can be produced using stochastic gates to select certain parts of the network for computation.
+Unfortunately, discrete variables cannot be backpropagated through as they are not differentiable. Several techniques have been proposed to get around this problem.
+
+\citet{BengioLC13} propose the \emph{straight-through} estimator for binary stochastic gates. We simply sample from the stochastic gates in the forward step, and backpropagate the gradient as if we had not sampled. While this works for simple binary gates, it is theoretically unjustified.
+
+In general, we usually want to sample from multinomial distributions given by the output of a softmax function. The function $\operatorname{softmax} : \reals^m \to [0,1]^m$ produces a normalized probability distribution, where for $\boldz \in \reals^m$,
+\begin{equation}
+\operatorname{softmax}(\boldz)_i = \frac{\exp(z_i)}{\sum_j \exp(z_j)}
+\end{equation}
+
+\citet{martins2016sparsemax} propose an alternative to softmax called the \emph{sparsemax} function. For a given $\boldz$, sparsemax projects the point to the probability simplex. It turns out that this function has a useful gradient while having a sparse output. The downside is that we are not guaranteed to have a one-hot vector as we get from sampling the multinomial distribution.
+
+\citet{Maddison2017} apply a smoothed version of the Gumbel max trick in order to approximate the sampling process. The Gumbel max trick is an alternative method for sampling multinomial random variables: by drawing i.i.d. uniform variables $U_i \sim \mathrm{Unif}(0,1)$, taking the argmax of $z_i - \log(-\log(U_i))$ gives us a sample with the correct probability. While this process is still discrete and has no gradient, \citet{Maddison2017} use a softmax instead of a max to obtain a smooth approximation that can be differentiated.
+
+
+Reinforcement learning has also been proposed as an approach to handling discrete units in a network. In this thesis, we focus on the hard attention method of \citet{xu2015captioning}. In the next section, we explain reinforcement learning and how it can be used to train the hard attention model.
 
 \section{Reinforcement Learning}
 
@@ -300,6 +311,7 @@ This is known as the SARSA update rule.
 
 In both cases, if we have a large state space, we may not want to record $Q(s,a)$ for every pair of $s,a$. We can instead parametrize $Q(s,a)$ with weights $w$, and maximizing reward using backpropagation gives us the update rule
 \begin{equation}
+\label{eq:reinforce}
 w \gets w + \eta \left(r + \gamma \max_{a' \in \mcA} Q(s', a') - Q(s,a) \right) \frac{\partial Q(s,a)}{\partial w}
 \end{equation}
 
@@ -308,10 +320,11 @@ w \gets w + \eta \left(r + \gamma \max_{a' \in \mcA} Q(s', a') - Q(s,a) \right) 
 w \gets w + \eta \mathbb{E}_a \left[ r \cdot \frac{\partial \log p(a | s ; w)}{\partial w}  \right]
 \end{equation}
 
-This is known as the policy gradient update or REINFORCE algorithm \citep{williams1992reinforce}. In practice, the expectation is replaced by a single Monte Carlo sample. \todo{should I give the derivation?}
+This is known as the policy gradient update or REINFORCE algorithm \citep{williams1992reinforce}. We give the derivation in the next section.
 
 If we have a full trajectory of states $s_t$ and rewards $r_t$, then we can assume our action $a_t$ at time $t$ led to future discounted reward $R_t = \sum_{k=t}^\infty \gamma^{k-t} r_k$. We then have the update rule
 \begin{equation}
+\label{eq:reinforce1}
 w^{(t+1)} \gets w^{(t)} + \eta \mathbb{E}_{a_t} \left[ R_t \cdot \frac{\partial \log p(a_t | s_t ; w)}{\partial w}  \right]
 \end{equation}
 
@@ -334,17 +347,57 @@ w^{(t+1)} \gets w^{(t)} + \eta \mathbb{E}_{a_t} \left[ R_t \cdot \frac{\partial 
 \section{Deep reinforcement learning}
 
 Reinforcement learning and deep learning have successfully been combined to play Go \citep{Silver2016}, 
-control robots \citep{Lillicrap2016}, and play Atari games from pixels \citep{deepatari2015}.
+control robots \citep{Levine2016}, and play Atari games from pixels \citep{deepatari2015}.
 
 Aside from these classical applications of RL, the RL framework can be applied to train deep neural networks with stochastic units. We cast our learning problem with the neural network as an agent with a parametrized policy function $\pi : \mcS \to \mcA$, where the states $\mcS$ are the inputs and the actions $\mcA$ are the possible outputs of each stochastic unit. The rewards are then negative loss (e.g. from regression or classification).
 
 More concretely, consider a sequential classification problem such as summarization, and consider the sequence-to-sequence model with attention. At each time step $t$ of the decoder, our state $s_t$ is given by the LSTM state and the encoded context, and our action $a_t$ is where in the encoder context to attend to. The reward $r_t$ is then the log-likelihood of predicting the gold word (according to some supervised dataset).
 
-% diagram?
+\todo{diagram}
 
-To obtain gradients for backpropagation, we can apply policy gradient methods for the nondifferentiable stochastic units. Because our network has both differentiable and nondifferentiable weights on the pathways to the output, we can consider it as a \emph{stochastic computation graph} \citep{schulman2015backprop}. To train the weights directly connected to the loss function, we backpropagate the standard gradient $\partial \mcL / \partial w$. To train weights that are not directly connected, but precede an intermediate stochastic unit with distribution $p(a | s ; w)$, we backpropagate the policy gradient $\partial \log p(a | s; w) / \partial w$.
+To obtain gradients for backpropagation, we can apply policy gradient methods for the nondifferentiable stochastic units. Because our network has both differentiable and nondifferentiable weights on the pathways to the output, we can consider it as a \emph{stochastic computation graph} \citep{schulman2015backprop}.
 
-% diagram?
+Suppose that, given input $x$, our network has stochastic units drawn from some parametrized distribution $z \sim p(z | x; \phi)$. Then, a parametrized deterministic scalar function $f(z ; \theta)$ gives us the output, and we want to maximize the expectation $\mathbb{E}_{z \sim p(z | x; \phi)} [ f(z ; \theta) ]$.
+
+To train the weights directly connected to the loss function (i.e. $\theta$) we backpropagate the standard gradient:
+\begin{equation}
+\frac{\partial \mcL}{\partial \theta} = \frac{\partial}{\partial \theta} \mathbb{E}_{z \sim p(z | x; \phi)} [ f(z ; \theta) ] =  \mathbb{E}_{z \sim p(z | x; \phi)} \left[ \frac{\partial f(z ; \theta)}{\partial \theta} \right]
+\end{equation}
+To train weights that are not directly connected, but precede an intermediate stochastic unit (i.e. $\phi$), we backpropagate the weighted policy gradient:
+\begin{align*}
+\frac{\partial \mcL}{\partial \phi} &= \frac{\partial}{\partial \phi} \sum_z p(z | x; \phi) f(z ; \theta) \\
+& = \sum_z \frac{ \partial  p(z | x; \phi) } {\partial \phi} \cdot f(z ; \theta) \\
+&= \sum_z p(z | x; \phi) \frac{1}{p(z|x;\phi)}\frac{ \partial  p(z | x; \phi) } {\partial \phi} f(z ; \theta) \\
+&= \sum_z p(z | x; \phi) \frac{ \partial  \log p(z | x; \phi) } {\partial \phi} f(z ; \theta) \\
+\frac{\partial \mcL}{\partial \phi} &= \mathbb{E}_{z \sim p(z | x; \phi)} \left[ \frac{ \partial  \log p(z | x; \phi) } {\partial \phi} f(z ; \theta) \right] \numberthis
+\end{align*}
+For a given $x$, we perform Monte Carlo sampling to obtain the gradients, e.g.
+\begin{equation}
+\frac{\partial \mcL}{\partial \phi} \approx \frac{1}{N} \sum_{i=1}^N \frac{ \partial  \log p(z_i | x; \phi) } {\partial \phi} f(z_i ; \theta)
+\end{equation}
+where $z_i \sim p(z | x; \phi)$ i.i.d. for $i = 1, \ldots, N$. In practice, $N$ is set to 1 for computational reasons.
+
+Note that this generalizes the REINFORCE algorithm in equation~\ref{eq:reinforce}, where $f(z ; \theta)$ is the reward.
+
+
+\subsection{Baseline reward}
+In practice, the variance of the Monte Carlo gradient can be very high. One of the simplest ways to reduce the variance of the gradient estimator is to introduce a baseline reward $b$ which we subtract from our reward. This works because
+\begin{equation}
+\mathbb{E}_z \left[ (f(z; \theta) - b) \frac{\partial \log p(z | x; \phi)}{\partial \phi} \right] = \mathbb{E}_z \left[ f(z ; \theta) \frac{\partial \log p(z | x; \phi)}{\partial \phi} \right] - b \mathbb{E}_z \left[ \frac{\partial \log p(z | x; \phi)}{\partial \phi} \right]
+\end{equation}
+The second term vanishes as
+\begin{align*}
+\mathbb{E}_z \left[ \frac{\partial \log p(z | x; \phi)}{\partial \phi} \right] &= \sum_z p(z | x; \phi) \frac{\partial \log p(z | x; \phi)}{\partial \phi} =  \sum_z p(z | x; \phi) \frac{1}{p(z | x; \phi)} \frac{\partial  p(z | x; \phi)}{\partial \phi}  \\
+&= \frac{\partial}{\partial \phi} \sum_z p(z | x; \phi) =  \frac{\partial}{\partial \phi} [1] = 0
+\end{align*}
+Thus, the gradient with baseline is unbiased.
+
+Including a baseline is proven to reduce the variance of the estimator \citep{Weaver2001}. Intuitively, we can think of it as an estimate of the value function $V(s)$ for a state $s$. There are a few ways to produce a baseline for a given reward, which we describe in section ????.
+
+Our policy gradient update from equation~\ref{eq:reinforce1} can therefore be summarized as
+\begin{equation}
+w^{(t+1)} \gets w^{(t)} + \eta \mathbb{E}_{a_t} \left[ (R_t - b) \frac{\partial \log p(a_t | s_t; w)}{\partial w} \right]
+\end{equation}
 
 
 \subsection{Deep RL in NLP}
@@ -353,15 +406,15 @@ In computer vision, deep reinforcement learning has been applied with some succe
 \citep{mnih2014visualattention, ba2015visualattention, xu2015captioning}.
 
 In NLP, RL has been attempted with varying degrees of success so far.
-\citet{ranzato2015} 
-\citet{li2016dialogueRL} uses RL to train a dialogue system.
-\citet{narasimhan2016} uses RL to improve information extraction on scarce data.
+\citet{ranzato2015} apply RL to improve sequential estimation by e.g. training on BLEU rewards for machine translation.
 \citet{Narasimhan2015} uses RL play text-based games.
+\citet{li2016dialogueRL} uses RL to train an end-to-end dialogue system.
+\citet{narasimhan2016} uses RL to improve information extraction on scarce data.
 %\citet{Andreas2016} uses RL to compose 
-Most interestingly, \citet{Yogatama2017} uses RL along with an architecture called a tree LSTM that produces a tree latent variable on a sentence using \textsc{Shift} and \textsc{Reduce} actions. They show that the actions that the tree LSTM learn produce reasonable parse structures on the input sentences.
+\citet{Yogatama2017} uses RL along with an architecture called a tree LSTM that produces a tree-structured latent variable on a sentence using \textsc{Shift} and \textsc{Reduce} actions. They show that the tree LSTM can produce reasonable parse structures by solely using RL methods.
 
 
-Inspired by these ideas, we aim to improve on previous work for document summarization by (1) implementing conditional computation using coarse-to-fine attention at the sentence level, and (2) including reinforcement learning for a sparse coarse attention layer.
+Inspired by these ideas, we handle the document summarization problem by (1) implementing conditional computation using coarse-to-fine attention at the sentence level, and (2) including reinforcement learning for a sparse coarse attention layer.
 
 In the next chapter we describe our models in detail.
 
@@ -466,9 +519,9 @@ Our final output is given by
 \end{equation}
 where $\mathrm{max-over-time}$ takes the maximum along the $j$-indexing dimension.
 
-% include convolution equations?
 
-Thus, using the sentence representations, we can compute attention over the sentences and over the words in each sentence in the same way as \textsc{Model 0}. Using attention on word $w_{i,j}$ as  $\alpha_{i,j} = \alpha_i^s \cdot \alpha_{i,j}^w$, we can proceed exactly as in \textsc{Model 0} by computing the weighted average over hidden states $\boldh_{i,j}$.
+Thus, using the sentence representations, we can compute attention over the sentences.
+For the words in each sentence, we run an LSTM over each sentence separately, and create attention weights over each sentence in the same way as \textsc{Model 0}. Using attention on word $w_{i,j}$ as  $\alpha_{i,j} = \alpha_i^s \cdot \alpha_{i,j}^w$, we can proceed exactly as in \textsc{Model 0} by computing the weighted average over hidden states $\boldh_{i,j}$.
 
 We call this method of attention \textsc{Model 2}.
 
@@ -497,35 +550,44 @@ Since samples from $\balpha_t$ at time $t$ of the RNN decoder can also affect fu
 
 While this gradient is theoretically unbiased, because the gradient is sampled through a stochastic process, it tends to have high variance in practice. Thus, we implement a few variance reduction techniques to stabilize training.
 
-\paragraph{Baseline reward}
-One of the simplest ways to reduce the variance of the gradient estimator is to introduce a baseline reward $b$ which we subtract from our reward. Including a baseline is proven to reduce the variance of the estimator \citep{mnih2014belief}. \todo{should we prove this?}
+\paragraph{Baseline reward} As described in section ???, we subtract a baseline from the reward to reduce variance while keeping the gradient unbiased.
 
-%We also normalize the rewards to a common scale by dividing by the reward variance in a given minibatch.
-
+In practice, we keep a separate baseline $b_t$ for each decoder time step $t$. Then our total discounted reward at time $t$ becomes
+\begin{equation}
+R_t = \sum_{s=t}^n \gamma^{n-s}(r_s - b_s)
+\end{equation}
 
 Our policy gradient update then becomes
 \begin{equation}
-w \gets w + (R_t - b) \frac{\partial \log p(\balpha_t | y_1, \ldots, y_{t-1})}{\partial w}
+w \gets w + R_t \frac{\partial \log p(\balpha_t | y_1, \ldots, y_{t-1})}{\partial w}
 \end{equation}
 
-There are a few methods for producing the baseline; as in \cite{xu2015captioning}, we can keep an exponentially moving average of the reward
+There are a few methods for producing the baseline. We follow \citet{xu2015captioning} and keep an exponentially moving average of the reward for each time step $t$:
 \begin{equation}
-b \gets b + \beta (R_t - b)
+b_t \gets b_t + \beta (r_t - b_t)
 \end{equation}
-where $R_t$ is the average minibatch reward and $\beta$ is a learning rate (set to 0.9).
+where $r_t$ is the average minibatch reward and $\beta$ is a learning rate (set to 0.1).
 
 %Similarly, we keep a moving average of the variance for normalization:
 %$$\sigma^2_j = (1 - \beta) \sigma^2_{j-1} + \beta v_j$$
 %where $v_t$ is the variance of the minibatch rewards for batch $j$. Since we have rewards at each time step of the decoder LSTM, we keep a separate moving average for the baseline for each time step, but we keep a single moving variance for all time steps.
 
-While several papers suggest using a learned baseline from the RNN state \citep{ranzato2015} in RL tasks, we have not found this to be more effective.
+While several papers suggest using a learned baseline from the RNN state in RL tasks  \citep[e.g.][]{mnih2014visualattention, ranzato2015}, we have not found this to be effective. In our experiments, we found that attempting to learn the baseline failed to converge, most likely because there is not enough correlation between the RNN state and the reward.
 
-We also include an entropy-increasing term to encourage exploration during the training process, which is important to speed up convergence of learning. Our policy gradient equation then becomes
-\begin{equation}
-w \gets w + (R_t - b) \frac{\partial \log p(\balpha_t | y_1, \ldots, y_{t-1})}{\partial w}
- + \lambda_{ent} \frac{\partial H(\balpha_t)}{\partial \balpha_t}
-\end{equation}
-where $H(\balpha_t) = -\sum_{i=1}^n \alpha_t \log \alpha_t$ is the entropy function and $\lambda_{ent}$ is a hyperparameter.
+
+In addition to including a baseline, we also scale the rewards by a tuned hyperparameter --- we found that scaling helped to stabilize training. We empirically set this scale to 0.3.
+
+\paragraph{Randomly training using soft attention} \citet{xu2015captioning} explain that training hard attention with REINFORCE has very high variance, even when including a baseline. Thus, for every minibatch of training, they randomly use soft attention instead of hard attention with some probability (they use 0.5).
+The backpropagated gradient is then the standard soft attention gradient instead of the REINFORCE gradient.
+
+While this method helps stabilize training, it's aesthetically not very pleasing. Our goal in coarse-to-fine attention is to reduce computation over the encoded hidden states, while this method requires that we perform the full amount of computation as soft attention for a random subset of minibatches. However, we include this training method in our experiments to test how feasible hard attention is.
+
+%We also include an entropy-increasing term to encourage exploration during the training process, which is important to speed up convergence of learning. Our policy gradient equation then becomes
+%\begin{equation}
+%w \gets w + (R_t - b) \frac{\partial \log p(\balpha_t | y_1, \ldots, y_{t-1})}{\partial w}
+% + \lambda_{ent} \frac{\partial H(\balpha_t)}{\partial \balpha_t}
+%\end{equation}
+%where $H(\balpha_t) = -\sum_{i=1}^n \alpha_t \log \alpha_t$ is the entropy function and $\lambda_{ent}$ is a hyperparameter.
 
 
 %\subsection{Multiple Samples}
@@ -554,7 +616,7 @@ where $H(\balpha_t) = -\sum_{i=1}^n \alpha_t \log \alpha_t$ is the entropy funct
 
 \subsection{CNN/Dailymail}
 
-Experiments were performed on the CNN/Dailymail dataset from \cite{hermann2015read}. While the dataset was created for a question-answering task, the dataset format is suited for summary. Each data point is a news document accompanied by up to 4 ``highlights'', and we take the first of these as our target summary. Train, validation, and test splits are provided along with document tokenization and sentence splitting. We do additional preprocessing by replacing all numbers with \# and appending end of sentence tokens to each sentence. We limit our vocabulary size to 50000 most frequent words, replacing the rest with \texttt{<unk>} tokens. We dropped the documents which had an empty source (which came from photo articles).
+Experiments were performed on the CNN/Dailymail dataset from \cite{Hermann2015}. While the dataset was created for a question-answering task, the dataset format is suited for summary. Each data point is a news document accompanied by up to 4 ``highlights'', and we take the first of these as our target summary. Train, validation, and test splits are provided along with document tokenization and sentence splitting. We do additional preprocessing by replacing all numbers with \# and appending end of sentence tokens to each sentence. We limit our vocabulary size to 50000 most frequent words, replacing the rest with \texttt{<unk>} tokens. We dropped the documents which had an empty source (which came from photo articles).
 
  Table~\ref{data_stats} lists statistics for the CNN/Dailymail dataset.
 
@@ -578,16 +640,14 @@ Average words per summary & 13 & 15 \\
 \end{table}
 
 % examples of data needed
+\todo{examples of data}
 
 
-% is it even worth mentioning this?
-%\cite{Chen2016} argue that the CNN/Dailymail is not the best dataset for 
+%\section{Synthetic Pretraining} % are we still doing this???
+%
+%We found that unsupervised pretraining on the given dataset is beneficial to learning. For each document, we randomly sample 2 sentences and concatenate to form the target sentence in a new synthetic dataset. We can sample multiple times to have multiple targets for a given source document, and we found that 5 samples was most beneficial to learning (performance drops with significantly more samples). We then train on the synthetic dataset for 5 epochs and initialize future training with the learned weights.
 
-\section{Synthetic Pretraining} % are we still doing this???
-
-We found that unsupervised pretraining on the given dataset is beneficial to learning. For each document, we randomly sample 2 sentences and concatenate to form the target sentence in a new synthetic dataset. We can sample multiple times to have multiple targets for a given source document, and we found that 5 samples was most beneficial to learning (performance drops with significantly more samples). We then train on the synthetic dataset for 5 epochs and initialize future training with the learned weights.
-
-\section{Implementation Details}
+\section{Implementation details}
 
 A few implementation details were necessary to make minibatch training possible. First, instead of taking attention over each individual sentence, we arrange the first 400 words of the document into a 10 by 40 image, and take each row to be a sentence. Second, we pad short documents to the maximum length with a special padding word, and allow the model to attend to it. However, we zero out word embeddings for the padding states and also zero out their corresponding LSTM states. We found in practice that very little of the attention ended up on the padding words.
 
@@ -597,7 +657,7 @@ Ideally, we would prefer to not truncate documents, especially since later conte
 
 \subsection{Baselines}
 
-For a baseline, we take the first 15 words of the document (chosen as the average length of a sentence in the training dataset). We call this \textsc{First}. 
+For a baseline, we take the first 15 words of the document (chosen as the average length of a sentence in the training dataset). We call this \textsc{First}.
 
 Others...
 % Need way more here...
@@ -610,32 +670,37 @@ We ran experiments with Models 0 to 3 as described above. Model 0 serves as the 
 
 \begin{itemize}
 \item Model 0: Soft attention.
-\item Model 1: Hierarchical LSTM, soft attention over all.
-\item Model 2: Hierarchical LSTM, soft hierarchical attention.
-\item Model 3: Hierarchical LSTM, hard attention over sentences.
-\item Model 3+multisampling: We include multisampling with $k=5$.
+\item Model 1: Organized by sentence, soft attention over all.
+\item Model 2: Hierarchical LSTM, coarse-to-fine with soft attention.
+\item Model 3: Hierarchical LSTM, coarse-to-fine with hard attention over sentences.
+%\item Model 3+multisampling: We include multisampling with $k=5$.
 \end{itemize}
 
-%% Help so bad!!!
 
 
 \section{Training}
 
 %% fix batch size and other details, and also note we train until convergence (which is slightly longer for hard attn)
-We train with minibatch stochastic gradient descent (SGD) with batch size 32 for 13 epochs, renormalizing gradients to be below norm 5. We initialize the learning rate to 1, and begin decaying it by 0.5 each epoch after the validation perplexity stops decreasing. 
+We train with minibatch stochastic gradient descent (SGD) with batch size 20 for 20 epochs, renormalizing gradients below norm 5. We initialize the learning rate to 0.1 for the sentence encoder and 1 for the rest of the model, and begin decaying it by a factor of 0.5 each epoch after the validation perplexity stops decreasing.\footnote{We tried more complicated optimization methods such as Adagrad \citep{Duchi2011} and Adam \citep{Kingma2015}, but found that they did not perform as well. This could be due to gradient norms that are too large.}
 
 We use 2 layer LSTMs with 500 hidden units, and we initialize word embeddings with 300-dimensional word2vec embeddings \citep{mikolov2013word2vec}. For convolutional layers, we use a kernel width of 6 and 600 filters.
 
+% talk about LSTM soft attention?
+
+%\paragraph{Hard attention}
 %Rewards for multisampling are scaled by a factor of $0.04$ (in addition to scaling by the moving variance).
+
+
+
+Our models are implemented using Torch \citep{Torch} based on a past version of Harvard's OpenNMT system\footnote{https://github.com/harvardnlp/seq2seq-attn}. We ran our experiments on a GPU (specs?).
 
 In the next chapter we show results.
 
 \chapter{Results}
 
-\section{Evaluation} % other experiments? find other metrics
-% also, where should we talk about the fact that ROUGE sucks?
+\section{Evaluation}
 
-We report metrics for best validation perplexity and ROUGE scores \citep{lin2004rouge}. We use the ROUGE balanced F-scores with ROUGE-1 (unigrams), ROUGE-2 (bigrams), and ROUGE-L (longest common substring). We chose F-scores since recall is biased towards longer sentences.
+We report metrics for best validation perplexity and ROUGE scores \citep{lin2004rouge}. We use the ROUGE balanced F-scores with ROUGE-1 (unigrams), ROUGE-2 (bigrams), and ROUGE-L (longest common substring). We chose F-score since recall is biased towards longer predicted sentences.
 
 To generate summaries for evaluation, we run beam search with a beam size of 5.
 
@@ -648,29 +713,62 @@ To generate summaries for evaluation, we run beam search with a beam size of 5.
  Model &  & PPL & ROUGE-1 & ROUGE-2 & ROUGE-L \\
  \midrule
 \textsc{First} & & - & 23.1 & 9.8 & 20.5 \\
-\textsc{berkeley} \\
-\textsc{Model 0} & &  \\
+\textsc{Berkeley} \\
+\textsc{Model 0} & & 13.6 &  \\
  \textsc{Model 1} & & \\
- \textsc{Model 2} & & 16.2 & 24.5 & 12.0 & 22.9 \\
-\textsc{Model 2+SynthPre} & & 16.0 & 23.7 & 11.5 & 22.0 \\
- \textsc{Model 3} & &   \\
- \textsc{Model 3+sample5} & & 17 & 23.9 & 11.3 & 22.4\\
-\textsc{Model 3+sample5+SynthPre} & & 14.6 & 24.1 & 11.7 & 22.5\\
+\textsc{Model 2 conv} & & 15.8 & & \\
+\textsc{Model 2 sparsemax} & & \\
+\textsc{Model 3 hard only}  \\
+\textsc{Model 3 semi sampling}  \\
+\midrule
+\textsc{Model 2 BOW} & & 16.4 & & \\
+\textsc{Model 2 LSTM}  & & \\
+\textsc{Model 2 5x80 conv} \\
+\textsc{Model 2 2x200 conv} \\
  \bottomrule
 \end{tabular}
 \caption{Summarization results for CNN/Dailymail.}
 \label{table:summary}
 \end{table}
 
+\begin{table}[h]
+\centering
+\begin{tabular}{llr}
+\toprule
+Model & & Entropy \\
+\midrule
+\textsc{Model 0} \\
+\textsc{Model 1} \\
+\textsc{Model 2 conv} \\
+\textsc{Model 2 BOW} \\
+\textsc{Model 2 conv +entropy}  \\
+\textsc{Model 2 sparsemax} \\
+\bottomrule
+\end{tabular}
+\caption{Entropy over sentence attention. All numbers are for  We computed \textsc{Model 0} and \textsc{Model 1} entropy by summing over each row.}
+\label{table:entropy}
+\end{table}
+
 \section{Analysis}
 
 See Table~\ref{table:summary} for summary results.
 
-%% attention figures needed here
+We investigate the entropy of the sentence attention on the validation set in Table~\ref{table:entropy}.
 
-We notice that Model 2 has the best performance, while multisampling is comparable. We hypothesize that by sampling multiple times, the model learns to approximate the soft attention distribution 
+% synthetic data
 
-\chapter{Discussion}
+% MT?
+
+% training curves
+We see hard attention takes longer to converge.
+
+%% attention figures 
+We see that the attention is very spread out over sentences. In particular, we notice that the word-level attention focuses on specific stop words for all decoder time steps. We posit this may be due to ???
+See Appendix~\ref{appendix:attn} for more visualizations.
+
+% predicted examples
+We show some predicted summaries from the model.
+
 
 
 \chapter{Conclusion}
@@ -683,7 +781,7 @@ We notice that Model 2 has the best performance, while multisampling is comparab
 \begin{appendices}
 
 \chapter{Attention Visualizations}
-
+\label{appendix:attn}
 hi
 
 \end{appendices}
