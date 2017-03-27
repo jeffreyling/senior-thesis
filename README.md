@@ -1,10 +1,7 @@
 # For readers
 
 ## High-level concerns
-* how much to talk about summarization vs deep learning?
-* Am I talking too much about RL?
-* where to talk about models in detail: in background or afterward?
-Having trouble balancing intuitive explanation and formal descriptions.
+* am I adequately explaning the REINFORCE algorithm? Is the relation between 
 
 ## Typos to look out for
 * citet vs citep (are citations in parentheses when they should be?)
@@ -14,7 +11,9 @@ Having trouble balancing intuitive explanation and formal descriptions.
 * anything that looks weird (I may have missed something in the pdf)
 
 ## TODOs
+* clean up lit review sections
 * include figures
 * experiments
 * bibliography looks terrible
 * abstract
+* conclusion

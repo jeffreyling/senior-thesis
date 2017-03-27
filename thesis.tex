@@ -8,7 +8,10 @@
 \usepackage{setspace}
 \usepackage{hyperref}
 \usepackage[english]{babel}
+\usepackage{amsthm}
+
 \newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+\newtheorem{theorem}{Theorem}
 
 \pagenumbering{roman}
 \title{Document Summarization (draft)}
@@ -48,8 +51,8 @@ While humans reliably perform these functions on a daily basis, they are not at 
 
 
 However, the need for computers to understand language has never been greater.
-In today's information age, NLP grows increasingly important as the accumulation of free-form text begins to outpace the ability of humans to read all of it. In fields such as medicine, this can mean missed diagnoses; in law, wasted effort on irrelevant documents; in international relations, misinterpretations of foreign articles.
-Successful text processing systems can therefore have an immeasurably positive impact if deployed today.
+In today's information age, NLP grows increasingly important as the accumulation of free-form text begins to outpace the ability of humans to process it. In fields such as medicine, this can mean missed diagnoses; in law, wasted effort on irrelevant documents; in international relations, misinterpretations of foreign articles.
+Because natural language is everywhere and used by everyone, the demand for text processing solutions remains as high as ever.
 
 \section{Methods in NLP}
 
@@ -69,7 +72,7 @@ In order to solve a language problem, we might begin by enriching the surface fo
 
 Another mode of thought focuses on the role of statistics in language. A cursory examination of the distribution of English words reveals an interesting power law distribution known as Zipf's law (figure~\ref{fig:zipf}). By drawing from ideas of information theory \citep{Shannon1948}, we can treat language as the result of some noisy probabilistic process, and we can reduce problems such as language modeling to learning parameters of some simple distributions.
 
-Historically, there has been contention about the roles of linguistics and statistics in NLP. Certain practical problems seem to be better off without linguistic theory; as IBM researcher Frederick Jelinek famously said, ``Every time I fire a linguist, the performance of the speech recognizer goes up.'' Indeed, even naive models of language seem to perform well if given enough training data, as evidenced by the IBM models for machine translation \citep{Brown1993}.
+Historically, there has been contention about the roles of linguistics and statistics in NLP. Certain practical problems seem to be better off without linguistic theory; as IBM researcher Frederick Jelinek famously said, ``Every time I fire a linguist, the performance of the speech recognizer goes up.'' \todo{citation} Indeed, even naive models of language seem to perform well if given enough training data, as evidenced by the IBM models for machine translation \citep{Brown1993}.
 
 Today, the linguistics-free approach has been taken to an extreme by deep learning systems. For the first time, neural networks are able to learn to perform language tasks in an end-to-end fashion \citep{Collobert2011}, i.e. without the linguistic preprocessing that was once considered necessary.
 Neural methods have been adopted by user-facing systems like Google Translate with great success \citep{GoogleTranslate2016}.
@@ -115,7 +118,7 @@ DUC also inspired a lot of thinking on the best way to evaluate summaries. Evalu
 
 For extractive summaries, people have proposed simple metrics such as precision and recall on selected sentences. These naturally do not work too well since 1) not all sentences are equally informative, and 2) not all parts of a sentence are relevant.
 
-When we don't have sentence labels as in the extractive case, the problem is harder. One proposed metric is recall on elementary discourse units (EDUs), labeled clauses within a summary that ought to be captured. ROUGE \citep{lin2004rouge}, inspired by the BLEU metric for machine translation \citep{Papineni2002}, is a cheap and fast method based on n-gram precision, recall, and length considerations.
+When we don't have sentence labels as in the extractive case, evaluation is harder. One proposed metric is recall on elementary discourse units (EDUs), labeled clauses within a summary that ought to be captured. ROUGE \citep{lin2004rouge}, inspired by the BLEU metric for machine translation \citep{Papineni2002}, is a cheap and fast method based on n-gram precision, recall, and length considerations.
 
 
 None of these methods directly address the grammaticality of the output. Aside from using human evaluation, meaningful metrics for summaries is still very much an open question \citep{toutanova2016summarymetrics}.
@@ -174,7 +177,7 @@ Fusion: align parse trees and combine phrases that are similar \todo{finish}
 \citet{Durrett2016} apply an ILP approach, where they maximize a score based on textual and coreferent features with certain grammaticality and anaphora constraints.
 
 
-Deep learning has also been successfully applied to abstractive summarization. \citet{rush2015neural} propose a completely data-driven model for headline generation by training a sequence-to-sequence model with attention. More recently, \citet{nallapati2016seq2seq} apply the same approach on full documents, further demonstrating the feasibility of end-to-end models.
+Deep learning has also been successfully applied to abstractive summarization. \citet{rush2015neural} propose a completely data-driven model for headline generation by training an end-to-end model. More recently, \citet{nallapati2016seq2seq} apply the same approach on full documents.
 
 As with deep learning methods for extraction, these models require a large amount of supervised training data. One advantage of the abstractive model is that data in the document-abstract format is more easily obtainable than labeled extractive data.
 
@@ -183,11 +186,11 @@ As with deep learning methods for extraction, these models require a large amoun
 
 Outside of the academic realm, summarization is an important problem in industry. One noteworthy summarization method is on Reddit\footnote{\url{reddit.com}}: in order to summarize long forum discussions, Reddit uses technology from Smmry\footnote{\url{smmry.com}}.
 
-Smmry's algorithm is a simple extractive summarization method. It counts word occurrences, splits discussions by sentence, and ranks the sentences based on the sum of their word scores (perhaps tf-idf?). This algorithm bears extraordinary similarity to \citet{luhn1958automatic} --- although a variety of work has been done since then, the simplest approaches turn out to be the most practical.
+Smmry's algorithm is a simple extractive method. It counts word occurrences, splits discussions by sentence, and ranks the sentences based on the sum of their word scores. This algorithm bears extraordinary similarity to \citet{luhn1958automatic} --- although a variety of work has been done since then, the simplest approaches turn out to be the most practical.
 
 \section{Outline}
 
-Inspired by advances in deep learning for NLP, we set out to build a deep model to abstractively generate summaries. Along the way, we propose a new model architecture that extends the sequence-to-sequence model and attempts to reduce the computational complexity of the document summarization problem.
+Inspired by advances in deep learning for NLP, we set out to build a deep model to abstractively generate summaries. Along the way, we propose a new model architecture that extends the sequence-to-sequence model that attempts to reduce the computational complexity of the document summarization problem.
 
 
 We provide an outline for the rest of this thesis.
@@ -221,7 +224,7 @@ Recently, neural networks have made a resurgence. In the ImageNet image classifi
 
 While neural networks are often treated as black box classifiers, \citet{Zeiler2014} show that the intermediate layers of deep convolutional networks contain abstracted qualities of the input, such as patterns, textures, and objects of the input. This suggests that neural networks are discovering features of the input and building generalized \emph{representations} of their inputs.
 
-The idea of learning representations of the input is highly general, and so it comes as no surprise that deep networks soon found applications in NLP. \citet{mikolov2013word2vec} show that by training a neural network on a Google News text corpus, the network learned to map words in the English language to a vector of real numbers known as \emph{word embeddings}. These word embeddings are actually able to capture semantic properties of the words --- for example, taking the vectors for \emph{king}, \emph{man}, and \emph{woman}, we find that $v_{king} - v_{man} + v_{woman} \approx v_{queen}$, preserving the analogy that we usually make with text.
+The idea of learning representations of the input is quite general, and so it comes as no surprise that deep networks soon found applications in NLP. \citet{mikolov2013word2vec} show that by training a neural network on a Google News text corpus, the network learned to map words in the English language to a vector of real numbers known as \emph{word embeddings}. These word embeddings are actually able to capture semantic properties of the words --- for example, taking the vectors for \emph{king}, \emph{man}, and \emph{woman}, we find that $v_{king} - v_{man} + v_{woman} \approx v_{queen}$, preserving the analogy that we usually make with text.
 
 % diagram of vectors
 
@@ -248,7 +251,6 @@ Several state-of-the-art algorithms are now based upon deep learning tools such 
 
 \section{Motivation}
 
-\todo{needs work} 
 
 Why deep models? There are currently two general approaches to solving problems in NLP: one is to use as much linguistic theory as possible to reduce the problem, and another is to apply black box learners such as deep neural networks.
 
@@ -268,8 +270,10 @@ Third, we find that trained models can discover latent structure in language aut
 
 It is this third point upon which we base this thesis. Although they began as black-box optimizers, end-to-end deep models are slowly being dissected into more understandable parts. Our goal is to test the hypothesis that such parts are in fact interpretable and are functioning as we expect them to.
 
-With this goal in mind, we attempt to interpretably extend the existing sequence-to-sequence model with attention, and we analyze its resulting performance on the task of document summarization. In the next chapter, we provide the background for how we will do this.
+With this goal in mind, we attempt to interpretably extend the existing sequence-to-sequence model with attention, and we analyze the performance on the task of document summarization. In the next chapter, we provide the background for how we will do this.
 
+
+\todo{needs work} 
 
 %%%%%%%
 \chapter{Background}
@@ -280,7 +284,6 @@ In this chapter, we set up the relevant background ideas for our models.
 \section{Sequence-to-Sequence Attention Models}
 
 Many NLP problems can be posed as follows: given an input sequence of tokens $x_1, \ldots, x_n \in \mcV$, we train a model to produce an output sequence $y_1, \ldots, y_m \in \mcY$. We normally pose this as a probabilistic problem and model the conditional probabilities, so that we wish to find
-\todo{this looks bad}
 \begin{equation}
 \begin{split}
 &\argmax_{y_1, \ldots, y_n \in \mcY} p(y_1, \ldots, y_m | x_1, \ldots, x_n) \\
@@ -288,7 +291,7 @@ Many NLP problems can be posed as follows: given an input sequence of tokens $x_
 \end{split}
 \end{equation}
 
-The sequence-to-sequence architecture \citep{sutskever2014sequence}, also known as the encoder-decoder architecture, neatly provides a solution to this framework. By encoding the input $x_1, \ldots, x_n$ into a fixed size vector which we call the \emph{context vector}, we proceed to generate the output $y_1, \ldots, y_m$ conditioned on this context vector.
+The sequence-to-sequence architecture \citep{sutskever2014sequence}, also known as the encoder-decoder architecture, neatly provides a solution to this framework. By encoding the input $x_1, \ldots, x_n$ into a fixed size vector which we call the \emph{context vector}, we can compute the conditional probabilities and hence generate $y_1, \ldots, y_m$ conditioned on this context vector.
 
 The model has been used to great effect in a variety of NLP tasks, including machine translation \citep{sutskever2014sequence, bahdanau2014neural}, question answering \citep{Hermann2015}, dialogue \citep{li2016persona}, caption generation \citep{xu2015captioning}, and in particular summarization \citep{rush2015neural}.
 
@@ -347,9 +350,7 @@ In general, we may want to sample from multinomial distributions, i.e. select on
 
 
 Reinforcement learning has also been proposed as an approach to handling discrete units in a network.
-
-
-\citet{xu2015captioning} suggest ``hard'' attention as one possible solution to the discrete selection problem. While standard ``soft'' attention averages the representations of where the model attends to, for hard attention we make a hard decision and choose only one location. Such models can be trained using reinforcement learning.
+\citet{xu2015captioning} suggest ``hard'' attention as one possible discrete selection mechanism. While standard ``soft'' attention averages the representations of where the model attends to, for hard attention we make a hard decision and choose only one location. To train such models, we can use reinforcement learning.
 
 In the next section, we briefly overview reinforcement learning and explain how it can be applied to train the hard attention model.
 
@@ -359,20 +360,22 @@ In the next section, we briefly overview reinforcement learning and explain how 
 Standard backpropagation training of neural networks assumes that the output is a deterministic and differentiable function of the input. Reinforcement learning, however, is a more general framework that makes no such assumptions.
 
 The traditional setup of reinforcement learning (RL) assumes some agent is navigating an environment and earning rewards.
-We assume a state space $\mcS$, an action space $\mcA$, a reward function of state and action $R : \mcS \times \mcA \to \reals$, and a transition distribution $p(s_{t+1} | s_t, a_t)$ (so that our environment is Markovian).
+We assume a state space $\mcS$, an action space $\mcA$, a reward function of state and action $R : \mcS \times \mcA \to \reals$, and a Markovian transition distribution $p(s' | s, a)$ for $s, s' \in \mcS$ and $a \in \mcA$.
 
 We suppose that at time $t$, the agent is in state $s_t \in \mcS$, makes an action $a_t \in \mcA$, earns a reward $r_t = R(s_t, a_t)$, and transitions probabilistically to the next state $s_{t+1}$.
 Assuming the reward function is unknown, the agent wants to maximize total expected reward
 $$\mathbb{E}_{s_t, r_t} [\sum_{t=0}^\infty \gamma^t r_t]$$
-by finding an optimal action policy. Here, $\gamma$ is a time discount factor.
+by finding an optimal action policy, i.e. finding the optimal policy $\pi : \mcS \to \mcA$ for states $s \in \mcS$. Here, $\gamma$ is a time discount factor for the reward.
 
-% diagram
 
-It turns out that 
+In general RL, we assume that we don't know the reward function $R(s,a)$ and we don't know the transition distribution $p(s_{t+1} | s_t, a_t)$. While the environment still gives us rewards for actions, finding the optimal policy requires predicting which states lead to those rewards.
+Since we don't know ahead of time which states are best, we must explore the state space to find what actions lead to the best rewards.
 
-\section{Policy Gradient}
+There are several methods for solving the general RL problem. Some are model-based, which attempt to model the transition distribution $p(s_{t+1} | s_t, a_t)$; others are model-free, which directly attempt to learn actions based on states. One such is Q-learning \citep{Watkins1989}, which estimates the reward for every pair $(s,a) \in \mcS \times \mcA$.
 
-A variety of methods have been invented for solving the RL problem, i.e. finding the optimal policy $\pi(s)$ for a given state $s$.
+Another method is to learn a direct policy function $\pi( \cdot ; \theta) : \mcS \to \mcA$, where $\pi$ is parametrized by weights $\theta$. We can train $\pi$  to maximize expected reward through a gradient ascent method known as \emph{policy gradient}, or the REINFORCE algorithm \citep{williams1992reinforce}.
+
+It turns out that REINFORCE can be used to train deep neural networks with stochastic units by a simple extension of the backpropagation algorithm. In the next section, we derive the training algorithm.
 
 %When the transition distribution $p(s_{t+1} | s_t, a_t)$ and reward function $R(s,a)$ is known, our problem is also known as a Markov decision process (MDP), and can be 
 %
@@ -385,8 +388,7 @@ A variety of methods have been invented for solving the RL problem, i.e. finding
 %
 %When we don't know the transition distribution, we can estimate it by standard maximum-likelihood methods and exploration of the state space. The same iteration techniques then apply.
 
-In general RL, we assume that we don't know the reward function $R(s,a)$ \emph{and} we don't know the transition distribution $p(s_{t+1} | s_t, a_t)$. While the environment still gives us rewards for actions, finding the optimal policy requires knowing which states lead to those rewards.
-Since we don't know ahead of time which states are best, we are forced to extensively explore the state space to find what actions lead to the best rewards.
+
 
 %There are two methods for approaching the general RL problem. First, model-based approaches attempt to estimate the transition distribution $p(s_{t+1} | s_t, a_t)$ and apply the Bellman equations to find the optimal policy. Second, model-free approaches forgo the transitions and simply learn what action is best in a given state.
 
@@ -410,20 +412,7 @@ Since we don't know ahead of time which states are best, we are forced to extens
 %w \gets w + \eta \left(r + \gamma \max_{a' \in \mcA} Q(s', a') - Q(s,a) \right) \frac{\partial Q(s,a)}{\partial w}
 %\end{equation}
 
-One method for deciding on an optimal policy is to use Q-learning \citep{}. In Q-learning, we model a function $Q(s,a)$ that estimates the total expected reward of taking an action $a$ in state $s$. Our optimal policy is then $\pi(s) = \argmax_{a \in \mcA} Q(s,a)$.
 
-An alternative to modeling the Q-function is to learn a policy $\pi : \mcS \to \mcA$ directly. We parametrize $\pi$ with weights $w$, and assume that at training time, we have a probability distribution $p(a|s ; w)$ over the actions that we sample from. Then assuming we get reward $r$, our update is
-\begin{equation}
-w \gets w + \eta \mathbb{E}_a \left[ r \cdot \frac{\partial \log p(a | s ; w)}{\partial w}  \right]
-\end{equation}
-
-This is known as the policy gradient update or REINFORCE algorithm \citep{williams1992reinforce}. We give the derivation in the next section.
-
-If we have a full trajectory of states $s_t$ and rewards $r_t$, then we can assume our action $a_t$ at time $t$ led to future discounted reward $R_t = \sum_{k=t}^\infty \gamma^{k-t} r_k$. We then have the update rule
-\begin{equation}
-\label{eq:reinforce1}
-w^{(t+1)} \gets w^{(t)} + \eta \mathbb{E}_{a_t} \left[ R_t \cdot \frac{\partial \log p(a_t | s_t ; w)}{\partial w}  \right]
-\end{equation}
 
 %\paragraph{TD-learning} An alternative to modeling the Q-function is to model the value function $V(s) = \max_{a \in \mcA Q(s,a)$, which can be a simpler learning problem. 
 %
@@ -443,85 +432,201 @@ w^{(t+1)} \gets w^{(t)} + \eta \mathbb{E}_{a_t} \left[ R_t \cdot \frac{\partial 
 
 \section{Stochastic Computation Graphs}
 
-%Reinforcement learning and deep learning have successfully been combined to play Go \citep{Silver2016}, 
-%control robots \citep{Levine2016}, and play Atari games from pixels \citep{deepatari2015}.
+Neural networks with stochastic units are also known as \emph{stochastic computation graphs}, as defined by \citet{schulman2015backprop}. Formally, they define a stochastic computation graph (SCG) as a directed, acylic graph with three kinds of nodes:
+\begin{enumerate}
+\item Input nodes, including fixed network inputs and parameters.
+\item Deterministic nodes, which are deterministic functions of their parents.
+\item Stochastic nodes, which are random variables distributed conditionally on their parents.
+\end{enumerate}
+We can formulate a training problem for SCGs by choosing certain terminal nodes and taking their sum as the objective function. If a node is stochastic, we take its expectation. That is, for a set of terminal nodes $\mcC$, we optimize $\sum_{c \in \mcC} \mathbb{E}[\hat{c}]$, where $\hat{c}$ denotes the random variable corresponding to node $c$.
 
-Aside from these classical applications of RL, the RL framework can be applied to train deep neural networks with stochastic units. We cast our learning problem with the neural network as an agent with a parametrized policy function $\pi : \mcS \to \mcA$, where the states $\mcS$ are the inputs and the actions $\mcA$ are the possible outputs of each stochastic unit. The rewards are then negative loss (e.g. from regression or classification).
+Note that the SCG formulation captures both supervised deep learning and RL policy functions. Deep neural networks are just SCGs with all deterministic nodes, and the loss function $\mcL$ of the task is the objective. The RL policy function is an SCG with actions at the stochastic nodes, and the expected reward $\mathbb{E}[r]$ is the objective. As we will see, SCGs will turn out to be a generalization of the REINFORCE algorithm.
 
-More concretely, consider a sequential classification problem such as summarization, and consider the sequence-to-sequence model with attention. At each time step $t$ of the decoder, our state $s_t$ is given by the LSTM state and the encoded context, and our action $a_t$ is where in the encoder context to attend to. The reward $r_t$ is then the log-likelihood of predicting the gold word (according to some supervised dataset).
+\begin{figure}
+% todo
+\caption{Simple examples of stochastic computation graphs (SCGs). Nodes in circles are stochastic, nodes in squares are deterministic, and the rest are input nodes. Image from \citet{schulman2015backprop}.}
+\label{fig:scg}
+\end{figure}
 
-\todo{diagram}
+Figure~\ref{fig:scg} shows examples of simple SCGs, as well as the gradient of the objective for the parameter $\theta$. Using the gradient, we optimize the objective function using gradient descent.
 
-To obtain gradients for backpropagation, we can apply policy gradient methods for the nondifferentiable stochastic units. Because our network has both differentiable and nondifferentiable weights on the pathways to the output, we can consider it as a \emph{stochastic computation graph} \citep{schulman2015backprop}.
+Next, we derive the gradient of the objective with respect to parameter input nodes in the general case.
 
-Suppose that, given input $x$, our network has stochastic units drawn from some parametrized distribution $z \sim p(z | x; \phi)$. Then, a parametrized deterministic scalar function $f(z ; \theta)$ gives us the output, and we want to maximize the expectation $\mathbb{E}_{z \sim p(z | x; \phi)} [ f(z ; \theta) ]$.
+We define for nodes $w,v$ the relation $w \prec v$ (pronounced $w$ influences $v$) if there exists a path from $w$ to $v$ in the SCG. We also say $w \prec^D v$ ($w$ deterministically influences $v$) if there exists a path that consists of only deterministic nodes.
 
-To train the weights directly connected to the loss function (i.e. $\theta$) we backpropagate the standard gradient:
-\begin{equation}
-\frac{\partial \mcL}{\partial \theta} = \frac{\partial}{\partial \theta} \mathbb{E}_{z \sim p(z | x; \phi)} [ f(z ; \theta) ] =  \mathbb{E}_{z \sim p(z | x; \phi)} \left[ \frac{\partial f(z ; \theta)}{\partial \theta} \right]
-\end{equation}
-To train weights that are not directly connected, but precede an intermediate stochastic unit (i.e. $\phi$), we backpropagate the weighted policy gradient:
+Given an SCG, let $\mcS$ be the set of stochastic nodes, $\mcC$ the set of cost nodes that give the objective. For a given node $v$, let $\on{par}(v)$ denote its parents.
+
+For a given parameter $\theta$, we have the following:
+\begin{theorem}
+Assume differentiability of all functions. Then the gradient of the objective with respect to $\theta$ is
+\begin{align}
+\frac{\partial}{\partial \theta} \mathbb{E}\left[ \sum_{c \in \mcC} \hat{c} \right] &= \mathbb{E}\left[\sum_{c \in \mcC} \hat{c} \sum_{v \in \mcS,~\theta \prec^D v, ~v \prec c }  \frac{\partial}{\partial\theta} \log p(v | \on{par}(v) ; \theta )  +
+ \sum_{c\in \mcC,~\theta \prec^D c} \frac{\partial}{\partial \theta} \hat{c}
+\right] \label{eq:gradient1} \\
+&=  \mathbb{E}\left[ \sum_{v \in \mcS,~\theta \prec^D v} \left( \frac{\partial}{\partial\theta} \log p(v | \on{par}(v) ; \theta ) \right) \hat{C}_v + \sum_{c\in \mcC,~\theta \prec^D c} \frac{\partial}{\partial \theta} \hat{c} \label{eq:gradient2}
+\right] 
+\end{align}
+where $\hat{C}_v = \sum_{c \in \mcC, ~v \prec c} \hat{c}$ is a random variable of the cost that stochastic node $v$ influences.
+\label{thm:gradient}
+\end{theorem}
+Before we give the proof, we note the intuition. The first term represents the gradient from the stochastic nodes, where we multiply the gradient of the log probability with the cost.
+The second term is the standard gradient we obtain from backpropagation.
+\begin{proof}
+Due to linearity of expectation, we only need consider a single node $c \in \mcC$. Let $\mcL = \mathbb{E}[\hat{c}]$ be the loss function.
+
+We have stochastic nodes $v$ such that $\theta \prec^D v$ and $v \prec c$. Let this set be $\mcS_\theta$, and denote the joint random variable of this set as $\hat{\boldv}$. Let $c(\hat{\boldv} ; \theta)$ explicitly denote $\hat{c}$.
+
+We compute the gradient:
 \begin{align*}
-\frac{\partial \mcL}{\partial \phi} &= \frac{\partial}{\partial \phi} \sum_z p(z | x; \phi) f(z ; \theta) \\
-& = \sum_z \frac{ \partial  p(z | x; \phi) } {\partial \phi} \cdot f(z ; \theta) \\
-&= \sum_z p(z | x; \phi) \frac{1}{p(z|x;\phi)}\frac{ \partial  p(z | x; \phi) } {\partial \phi} f(z ; \theta) \\
-&= \sum_z p(z | x; \phi) \frac{ \partial  \log p(z | x; \phi) } {\partial \phi} f(z ; \theta) \\
-\frac{\partial \mcL}{\partial \phi} &= \mathbb{E}_{z \sim p(z | x; \phi)} \left[ \frac{ \partial  \log p(z | x; \phi) } {\partial \phi} f(z ; \theta) \right] \numberthis
+\frac{\partial }{\partial \theta}\mathbb{E}[c] &= \frac{\partial}{\partial \theta} \sum_{\hat{\boldv}} p(\hat{\boldv} | \on{par}(\boldv); \theta) \cdot c(\hat{\boldv}; \theta) \\
+& = \sum_{\hat{\boldv}} \frac{ \partial  p(\hat{\boldv} | \on{par}(\boldv); \theta) } {\partial \theta} \cdot c(\hat{\boldv} ; \theta) + p(\hat{\boldv} | \on{par}(\boldv); \theta) \cdot \frac{\partial}{\partial\theta} c(\hat{\boldv}; \theta) \\
+&= \sum_{\hat{\boldv}} \frac{ \partial  p(\hat{\boldv} | \on{par}(\boldv); \theta) } {\partial \theta} \cdot c(\hat{\boldv} ; \theta) + \mathbb{E}_{\boldv}\left[ \frac{\partial}{\partial\theta} c(\hat{\boldv}; \theta)  \right]
 \end{align*}
-For a given $x$, we perform Monte Carlo sampling to obtain the gradients, e.g.
-\begin{equation}
-\frac{\partial \mcL}{\partial \phi} \approx \frac{1}{N} \sum_{i=1}^N \frac{ \partial  \log p(z_i | x; \phi) } {\partial \phi} f(z_i ; \theta)
-\end{equation}
-where $z_i \sim p(z | x; \phi)$ i.i.d. for $i = 1, \ldots, N$. In practice, $N$ is set to 1 for computational reasons.
-
-Note that this generalizes the REINFORCE algorithm in equation~\ref{eq:reinforce}, where $f(z ; \theta)$ is the reward.
-
-
-\subsection{Baseline reward}
-In practice, the variance of the Monte Carlo gradient can be very high. One of the simplest ways to reduce the variance of the gradient estimator is to introduce a baseline reward $b$ which we subtract from our reward. This works because
-\begin{equation}
-\mathbb{E}_z \left[ (f(z; \theta) - b) \frac{\partial \log p(z | x; \phi)}{\partial \phi} \right] = \mathbb{E}_z \left[ f(z ; \theta) \frac{\partial \log p(z | x; \phi)}{\partial \phi} \right] - b \mathbb{E}_z \left[ \frac{\partial \log p(z | x; \phi)}{\partial \phi} \right]
-\end{equation}
-The second term vanishes as
+Note that the second term gives the standard backpropagation gradient. We can rewrite the first term:
 \begin{align*}
-\mathbb{E}_z \left[ \frac{\partial \log p(z | x; \phi)}{\partial \phi} \right] &= \sum_z p(z | x; \phi) \frac{\partial \log p(z | x; \phi)}{\partial \phi} =  \sum_z p(z | x; \phi) \frac{1}{p(z | x; \phi)} \frac{\partial  p(z | x; \phi)}{\partial \phi}  \\
-&= \frac{\partial}{\partial \phi} \sum_z p(z | x; \phi) =  \frac{\partial}{\partial \phi} [1] = 0
+\sum_{\hat{\boldv}} \frac{ \partial  p(\hat{\boldv} | \on{par}(\boldv); \theta) } {\partial \theta} \cdot c(\hat{\boldv} ; \theta)
+&= \sum_{\hat{\boldv}} p(\hat{\boldv} | \on{par}(\boldv); \theta) \frac{1}{p(\hat{\boldv}|\on{par}(\boldv);\theta)}\frac{ \partial  p(\hat{\boldv} | \on{par}(\boldv); \theta) } {\partial \theta} \cdot c(\hat{\boldv}; \theta) \\
+&= \sum_{\hat{\boldv}} p(\hat{\boldv} | \on{par}(\boldv); \theta) \frac{ \partial  \log p(\hat{\boldv} | \on{par}(\boldv); \theta) } {\partial \theta} \cdot c(\hat{\boldv}; \theta) \\
+ &= \mathbb{E}_{\hat{\boldv} \sim p(\hat{\boldv} | \on{par}(\boldv); \theta)} \left[ \frac{ \partial  \log p(\hat{\boldv} | \on{par}(\boldv); \theta) } {\partial \theta} \cdot c(\hat{\boldv} ; \theta) \right] \\
+&= \mathbb{E}\left[ \widehat{c} \cdot \sum_{v \in \mcS_\theta} \frac{  \partial  \log p(\hat{v} | \on{par}(v); \theta) } {\partial \theta}  \right]
+\end{align*}
+where the last equality follows from separating the log joint probability term into its conditional marginals.
+
+We have thus shown Equation~\ref{eq:gradient1}. Equation~\ref{eq:gradient2} follows directly by rearranging the order of summations, noting which nodes $v$ influence a certain $c$.
+
+\end{proof}
+
+Because the expectation in both gradient formulae are intractable in the general case, we use a single Monte Carlo sample.
+In practice, however, the variance of the Monte Carlo gradient can be very high.
+
+%The training problem can be formalized as an RL problem. We can treat a neural network as a stochastic agent, and its computation serves to define the parametrized policy function $\pi(\cdot; w) : \mcS \to \mcA$.
+%The states $\mcS$ are the inputs and the actions $\mcA$ are the possible outputs of each stochastic unit. The rewards are then negative loss (e.g. from regression or classification).
+
+
+One of the simplest ways to reduce the variance of the gradient estimator is to introduce a baseline scalar $b \approx \mathbb{E}[\hat{c}]$ which we subtract from each cost term. That is, we have:
+\begin{theorem}
+The gradient from Theorem~\ref{thm:gradient} can also be written as
+\begin{equation}
+\frac{\partial}{\partial \theta} \mathbb{E}\left[ \sum_{c \in \mcC} \hat{c} \right] = \mathbb{E}\left[\sum_{c \in \mcC} (\hat{c} - b_c) \sum_{v \in \mcS,~\theta \prec^D v, ~v \prec c }  \frac{\partial}{\partial\theta} \log p(v | \on{par}(v) ; \theta )  +
+ \sum_{c\in \mcC,~\theta \prec^D c} \frac{\partial}{\partial \theta} \hat{c}
+\right] 
+\end{equation}
+where $b_c$ is a scalar not influenced by any of the $v$ in the summation.
+\end{theorem}
+
+\begin{proof}
+The proof boils down to a trick with the log probability. Considering a single $c$, by linearity it suffices to show that
+\begin{equation*}
+\mathbb{E} \left[ \frac{\partial}{\partial\theta} \log p(v | \on{par}(v) ; \theta) \right] = 0, \qquad \forall v \in \mcS_\theta
+\end{equation*}
+This is true since the $b_c$ term is constant with respect to the expectation (by our assumption that no $v$ influences it).
+
+But this follows since
+\begin{align*}
+\mathbb{E} \left[ \frac{\partial}{\partial \theta} \log p(\hat{v} | \on{par}(v); \theta) \right] &= \sum_{\hat{v}} p(\hat{v} | \on{par}(v); \theta) \frac{\partial \log p(\hat{v} | \on{par}(v); \theta)}{\partial \theta} \\
+&=  \sum_{\hat{v}} p(\hat{v} | \on{par}(v); \theta) \frac{1}{p(\hat{v} | \on{par}(v); \theta)} \frac{\partial  p(\hat{v} | \on{par}(v); \theta)}{\partial \theta}  \\
+&= \frac{\partial}{\partial \theta} \sum_{\hat{v}} p(\hat{v} | \on{par}(v); \theta) =  \frac{\partial}{\partial \theta} [1] = 0
 \end{align*}
 Thus, the gradient with baseline is unbiased.
+\end{proof}
 
-Including a baseline is proven to reduce the variance of the estimator \citep{Weaver2001}. Intuitively, we can think of it as an estimate of the value function $V(s)$ for a state $s$. There are a few ways to produce a baseline for a given reward, which we describe in section ????.
+Including a baseline is proven to reduce the variance of the estimator \citep{Weaver2001}. There are several different methods for producing baselines, and we will not cover all of them here.
 
-Our policy gradient update from equation~\ref{eq:reinforce1} can therefore be summarized as
+\subsection{Algorithm}
+\label{sec:algorithm}
+
+In order to compute the gradients of SCGs in practice, we make a slight tweak to the backpropagation algorithm.
+
+We first perform a forward pass of the SCG to obtain all values and samples for each node. In the backward pass, gradients for nodes that are directly connected to the cost nodes can be computed with usual backpropagation. For stochastic nodes, we first compute the costs $\hat{C}_v$ for node $v$ in Equation~\ref{eq:gradient2}. Broadcasting these values to the corresponding nodes, we can then continue backpropagation from the stochastic nodes with the gradient of the log probability.
+
+Finally, if $g_\theta$ is the resulting gradient for parameter $\theta$, our gradient descent update is
 \begin{equation}
-w^{(t+1)} \gets w^{(t)} + \eta \mathbb{E}_{a_t} \left[ (R_t - b) \frac{\partial \log p(a_t | s_t; w)}{\partial w} \right]
+\theta \gets \theta  - \eta g_\theta
 \end{equation}
+where $\eta$ is a learning rate.
+
+Algorithm~\ref{alg:reinforce} gives the complete algorithm for gradient descent on SCGs.
 
 
-\todo{algorithm}
+
+\begin{algorithm}
+\caption{Gradient Descent for SCGs}
+\label{alg:reinforce}
+\begin{algorithmic}
+\State Forward pass through SCG
+\ForAll{$c \in \mcC$}
+\State $\hat{c} \gets \hat{c} - b_c$ \Comment{Subtract baselines from costs}
+\EndFor
+\ForAll{$v \in \text{SCG}$}
+\State $\boldg_v = \begin{cases} 1 & \text{if $v \in \mcC$} \\ 0 & \text{else} \end{cases}$
+\State Compute $\hat{C}_v \gets \sum_{c \in \mcC, ~v \prec c} \hat{c}$ \Comment{Aggregated costs}
+\EndFor
+
+\For{$v$ in \textsc{ReverseTopologicalOrder}(SCG)}
+\For{$w \in \on{par}(v)$}
+\If{\textbf{not} \textsc{IsStochastic}($w$)}
+\If{\textsc{IsStochastic}($v$)}
+	\State $\boldg_w \text{ += } \hat{C}_w \cdot \frac{\partial}{\partial w} \log p(v | \on{par}(v) ) $
+\Else
+	\State $\boldg_w \text{ += } (\frac{\partial v}{\partial w})^\top \boldg_v$
+\EndIf
+\EndIf
+\EndFor
+\EndFor
+\ForAll{parameters $\theta$}
+\State $\theta \gets \theta - \eta g_\theta$ \Comment{Gradient descent}
+\EndFor
+\end{algorithmic}
+\end{algorithm}
 
 
-\subsection{Reinforcement Learning in NLP}
+%Our policy gradient update from equation~\ref{eq:reinforce1} can therefore be summarized as
+%\begin{equation}
+%w^{(t+1)} \gets w^{(t)} + \eta \mathbb{E}_{a_t} \left[ (R_t - b) \frac{\partial \log p(a_t | s_t; w)}{\partial w} \right]
+%\end{equation}
 
-In computer vision, these policy gradient methods have been fairly successful on several tasks
+While SCGs are a very useful and general framework, it is often simpler to pose certain SCGs in the language of reinforcement learning.
+
+Consider in particular the sequential decision problem of RL. Suppose we have a trajectory of states $s_t$ and we make actions $a_t$ at time $t$ based on some parameterized policy function. Each action leads to a reward $r_t$, and influences total future reward $\sum_{s=t}^T r_s$ where $T < \infty$ is the time horizon.
+
+Note that we can treat our actions $a_t$ for $ t = 0, \ldots, T$ as stochastic nodes in an SCG, and the costs $\hat{c}$ are the rewards we receive for each $t$. Then instead of computing $\hat{C}_{a_t} = \sum_{s=t}^T r_s$, we can scale later rewards with a discount factor $\gamma $, giving
+\begin{equation}
+\hat{C}_{a_t} = \sum_{s=t}^T \gamma^{s-t} r_s
+\end{equation}
+which fits neatly in with Algorithm~\ref{alg:reinforce}. We will use this RL setup to discuss our models, and our algorithms are confidently backed up by the theory of SCGs.
+
+\todo{diagram?}
+
+
+
+
+\section{Reinforcement Learning in NLP}
+\todo{needs some organizing}
+
+Even before the concept of SCGs were formalized, reinforcement learning and deep learning have successfully been combined to play Go \citep{Silver2016}, 
+control robots \citep{Levine2016}, and play Atari games from pixels \citep{deepatari2015}.
+In computer vision, policy gradient methods have been fairly successful on several tasks
 \citep{mnih2014visualattention, ba2015visualattention, xu2015captioning}.
 
 In NLP, reinforcement learning research is still preliminary, but has been attempted with varying degrees of success so far.
 \citet{ranzato2015} apply RL to improve sequential estimation by e.g. training on BLEU rewards for machine translation.
-\citet{Narasimhan2015} uses RL play text-based games.
-\citet{li2016dialogueRL} uses RL to train an end-to-end dialogue system.
-\citet{narasimhan2016} uses RL to improve information extraction on scarce data.
+\citet{Narasimhan2015} use RL play text-based games.
+\citet{li2016dialogueRL} use RL to train an end-to-end dialogue system.
+\citet{narasimhan2016} use RL to improve information extraction on scarce data.
 %\citet{Andreas2016} uses RL to compose 
-\citet{Yogatama2017} uses RL along with an architecture called a tree LSTM that produces a tree-structured latent variable on a sentence using \textsc{Shift} and \textsc{Reduce} actions. They show that the tree LSTM can produce reasonable parse structures by solely using RL methods.
+\citet{Yogatama2017} use RL along with an architecture called a tree LSTM that produces a tree-structured latent variable on a sentence using \textsc{Shift} and \textsc{Reduce} actions. They show that the tree LSTM can produce reasonable parse structures by solely using RL methods.
 
 
-Inspired by these ideas, we handle the document summarization problem by (1) implementing conditional computation using coarse-to-fine attention at the sentence level, and (2) including reinforcement learning for a sparse coarse attention layer.
+Inspired by these recent works, we are interested to see if reinforcement learning can be applied to the document summarization problem. We will introduce stochastic nodes into a deep learning model and investigate the feasibility of using policy gradient methods for conditional computation.
 
 In the next chapter we describe our models in detail.
 
 
-
 \chapter{Models}
 \label{chap:models}
+
+
+\todo{lots of figures needed}
 
 \section{Sequence-to-sequence (seq2seq)}
 
@@ -530,7 +635,7 @@ We first describe the neural network architecture of the seq2seq models, also kn
 
 In the seq2seq model, an \emph{encoder} recurrent neural network (RNN) reads the source sequence as input to produce the \emph{context}, and a \emph{decoder} RNN generates the output sequence using the context as input.  One popular RNN choice is the long-short term memory (LSTM) network \citep{hochreiter1997long}.
 
-% more specifics here?
+
 More formally, suppose we have a vocabulary $\mcV$. A given input sentence $w_1, \ldots, w_n \in \mathcal{V}$ is transformed into a sequence of vectors $\boldx_1, \ldots, \boldx_n \in \mathbb{R}^{d_{in}}$ through a word embedding matrix $\boldE \in \mathbb{R}^{|\mathcal{V}| \times d_{in}}$ as $\boldx_t = \boldE w_t$.
 
 An RNN is given by a parametrizable function $f_{enc}$ and a hidden state $\boldh_t \in \mathbb{R}^{ d_{hid}}$ at each time step $t$ with $\boldh_t = f_{enc}(\boldx_t, \boldh_{t-1})$. For the LSTM, we keep an auxiliary state $\boldc_t$ along with $\boldh_t$, and we compute $f_{enc}$ as
@@ -548,7 +653,6 @@ LSTMs can be stacked on top of one another by treating the outputs $\boldh_t$ of
 
 In stacked LSTMs, we will take the top sequence of hidden states $\boldh_1, \ldots, \boldh_n$ to form a single context vector.
 
-%% diagram
 
 The decoder is another RNN $f_{dec}$ that generates output words $y_t \in \mathcal{V}$. It keeps hidden state $\boldh_t^{dec} \in \mathbb{R}^{d_{hid}}$ as $\boldh_t^{dec} = f_{dec}(y_{t-1}, \boldh_{t-1}^{dec})$ similar to the encoder RNN.
 A context vector is produced at each time step using an attention function $a$ that takes the encoded hidden states $[\boldh_1, \ldots, \boldh_n]$ and the current decoder hidden state $\boldh_t^{dec}$ and produces the context $\boldc_t \in \reals^{d_{ctx}}$:
@@ -576,7 +680,9 @@ In \cite{bahdanau2014neural}, the function $a$ is implemented with an \emph{atte
 The idea behind attention is to select the most relevant words of the source (by assigning higher attention weights) when generating output word $y_t$ at time $t$.
 
 The $\mathrm{softmax}$ function, defined as
-$$\mathrm{softmax}([\beta_1, \ldots, \beta_n])_i =  \frac{\exp(\beta_i)}{\sum_{j=1}^n \exp(\beta_j)}$$
+\begin{equation}
+\mathrm{softmax}([\beta_1, \ldots, \beta_n])_i =  \frac{\exp(\beta_i)}{\sum_{j=1}^n \exp(\beta_j)}
+\end{equation}
 normalizes the $\alpha_i$ to sum to 1 over the source sentence words. This gives us a notion of probability distribution over the encoder words --- we can therefore write $\boldc_t$ as the expectation $\mathbb{E}_\alpha[\boldh]$, where we pick $\boldh_i$ with probability $\alpha_i$.
 
 Our final context vector is then
@@ -590,12 +696,12 @@ Going forward, we call this this instantiation of the attention function \textsc
 
 \section{Model 1 and 2: Coarse-to-Fine Soft Attention}
 
-%%
+\todo{figure}
 
 We can leverage the same idea for text summarization, assuming we have a suitable representation of our input document. The simplest method for doing so would be to run an LSTM over the document.
 
 However, the attention step becomes computationally difficult --- for each word we generate, we need to compare it to every word of the document in order to determine which part to attend to. Therefore, we propose a hierarchical method of attending to the document by first attending to sentences, then to the words within sentences. We call this method \emph{coarse-to-fine attention}
-\footnote{The term coarse-to-fine attention has previously been introduced in the literature \citep{mei2016}. However, their idea is different: they use coarse attention to reweight the fine attention computed over the entire input. Similar ideas have also been called hierarchical attention \citep{nallapati2016seq2seq}.}.
+\footnote{The term coarse-to-fine attention has previously been introduced in the literature \citep{mei2016}. However, their idea is different: they use coarse attention to reweight the fine attention computed over the entire input. This idea has also been called hierarchical attention \citep{nallapati2016seq2seq}.}.
 
 
 
@@ -613,12 +719,17 @@ For a large source input like a document, it may be computationally inefficient 
 Specifically, suppose we have sentences $s_1, \ldots, s_m$ with words $w_{i,1}, \ldots, w_{i,n_i}$ for sentence $s_i$, so that we can apply an RNN to each separately to get corresponding hidden states $\boldh_{i,j}$ for $i = 1, \ldots, m$ and $j = 1, \ldots, n_i$.
 For attention, we then consider two options.
 
-\paragraph{Model 1} We can follow \textsc{Model 0} and compute attention weights $\alpha_{i,j}$ for each hidden state $h_{i,j}$ by normalizing over all states. We call this \textsc{Model 1}.
+\paragraph{Model 1} We can follow \textsc{Model 0} and compute attention weights $\alpha_{i,j}$ for each hidden state $\boldh_{i,j}$ by normalizing over all states. We call this \textsc{Model 1}.
 
 \paragraph{Model 2} Alternatively, rather than taking attention over the entire document, we can instead have a two-layered hierarchical attention mechanism: first, we have weights $\alpha_1^s, \ldots, \alpha_m^s$ for each sentence, and then for sentence $s_i$, we have another set of weights $\alpha_{i,1}^w, \ldots, \alpha_{i,n_i}^w$.
 Our final attention weight on word $w_{i,j}$ is then $\alpha_{i,j} = \alpha_i^s \cdot \alpha_{i,j}^w$.
 
 In order to compute the sentence attention weights $\alpha_i^s$, we need to produce representations of each sentence; i.e., given the words $w_{i,1}, \ldots, w_{i, n_i}$ of the sentence, we produce a vector representation $\boldh^s_i \in \mathbb{R}^{d_{sent}}$.
+
+\begin{figure}
+\caption{Options for producing sentence representations. We can either use a bag of words by summing the word embeddings, or apply convolutions and max-over-time pooling.}
+\label{fig:sent_reps}
+\end{figure}
 
 Our first option is bag of words: we simply take the representation as
 \begin{equation}
@@ -630,12 +741,12 @@ Alternatively, we can use a convolutional method: as in \citet{kim2014convolutio
 
 Explicitly, fix a sentence and suppose we have word vectors $\boldx_1, \ldots, \boldx_n$ with $\boldx_j = \boldE w_j \in \reals^{d_{in}}$, and suppose we have kernel width $k$ and convolution weights $\boldW^{conv} \in \reals^{d_f \times d_{in} k}$ where $d_f$ is the number of filters. Then applying the convolution
 $\boldW^{conv} * [\boldx_1, \ldots, \boldx_n]$ gives result $\boldu = [\boldu_1, \ldots, \boldu_{n-k+1}]$ with $j$th element
-$$\boldu_j = \boldW^{conv} \cdot [\boldx_j, \boldx_{j+1}, \ldots, \boldx_{j+k-1}] \in \reals^{d_f}$$
+$$\boldu_j = \boldW^{conv} \cdot [\boldx_j, \boldx_{j+1}, \ldots, \boldx_{j+k-1}] + \boldb^{conv} \in \reals^{d_f}$$
 Our final output is given by 
 \begin{equation}
-\boldh^s = \mathrm{max-over-time}(\tanh(\boldu + b^{conv}))
+\boldh^s = \text{max-over-time}(\tanh(\boldu))
 \end{equation}
-where $\mathrm{max-over-time}$ takes the maximum along the $j$-indexing dimension.
+where $\text{max-over-time}$ takes the maximum along the $j$-indexing dimension.
 
 
 Thus, using the sentence representations, we can compute attention over the sentences.
@@ -652,57 +763,47 @@ However, if we are able to perform conditional computation and only compute on $
 In our experiments, we will apply stochastic sampling to the attention distribution $\balpha$ in the spirit of \citet{xu2015captioning} and ``hard attention''.
 Specifically, rather than computing the context $\widetilde{\boldc}$ as an expectation over $\balpha$ (i.e. $\boldc = \sum_{i=1}^n \alpha_i \boldh_i$), we can sample from the probability distribution $\balpha$ to obtain a single state $\boldh_i$, and we set $\widetilde{\boldc} = h_i$ as the sampled hidden state.
 
-In our case, we take \textsc{Model 2} and apply hard attention at the sentence level, but keep the word level attention per sentence as is. That is, we sample from the attention weights $\alpha_1^s, \ldots, \alpha_m^s$ to obtain a one-hot encoding for the sentence attention, and apply the same multiplication with this one-hot vector on the word-level attention weights $\alpha_{i,1}^w, \ldots, \widetilde{\alpha}_{i,n_i}^w$ for all $i = 1, \ldots, m$. We call this \emph{Model 3}.
+In our case, we take \textsc{Model 2} and apply hard attention at the sentence level, but keep the word level attention per sentence as is. That is, we sample from the attention weights $\alpha_1^s, \ldots, \alpha_m^s$ to obtain a one-hot encoding for the sentence attention, and apply the same multiplication with this one-hot vector on the word-level attention weights $\alpha_{i,1}^w, \ldots, \widetilde{\alpha}_{i,n_i}^w$ for all $i = 1, \ldots, m$. We call this \textsc{Model 3}.
 
 
 Because the hard attention model loses the property of being end-to-end differentiable, we use reinforcement learning to train our network.
 
 
-\subsection{Practical considerations}
+\subsection{Practical Considerations}
+\label{sec:practical}
 
-Recall the policy gradient update from section ??? at time $t$ of the decoder:
-\begin{equation}
-w \gets w + R_t \frac{\partial \log p(\balpha_t | y_1, \ldots, y_{t-1})}{\partial w}
-\end{equation}
-Since samples from $\balpha_t$ at time $t$ of the RNN decoder can also affect future rewards, we use a discount factor of $\gamma = 0.5$, so that the reward is $R_t = \sum_{s = t}^n \gamma^{n-s}r_s$ at time $t$, where $r_t = \log p(y_t | y_1, \ldots, y_{t-1})$ is the single step reward.
+Our hard attention model is now a stochastic computation graph, and thus Algorithm~\ref{alg:reinforce} from Section~\ref{sec:algorithm} applies.
 
-While this gradient is theoretically unbiased, because the gradient is sampled through a stochastic process, it tends to have high variance in practice. Thus, we implement a few variance reduction techniques to stabilize training.
+Here, we have an RL agent where the state $s_t$ is the LSTM decoder state at time $t$, and actions $a_t$ are the hard attention decisions.
+Since samples from $\balpha_t$ at time $t$ of the RNN decoder can also affect future rewards, we use a discount factor of $\gamma = 0.5$, so that the reward is $\hat{C}_t = \sum_{s = t}^n \gamma^{n-s}r_s$ at time $t$, where $r_t = \log p(y_t | y_1, \ldots, y_{t-1})$ is the single step reward.
 
-\paragraph{Baseline reward} As described in section ???, we subtract a baseline from the reward to reduce variance while keeping the gradient unbiased.
-
-In practice, we keep a separate baseline $b_t$ for each decoder time step $t$. Then our total discounted reward at time $t$ becomes
-\begin{equation}
-R_t = \sum_{s=t}^n \gamma^{n-s}(r_s - b_s)
-\end{equation}
-
-Our policy gradient update then becomes
-\begin{equation}
-w \gets w + R_t \frac{\partial \log p(\balpha_t | y_1, \ldots, y_{t-1})}{\partial w}
-\end{equation}
-
-There are a few methods for producing the baseline. We follow \citet{xu2015captioning} and keep an exponentially moving average of the reward for each time step $t$:
+To calculate the baselines for variance reduction, we store a constant $b_t$ for each decoder time step $t$. We follow \citet{xu2015captioning} and keep an exponentially moving average of the reward for each time step $t$:
 \begin{equation}
 b_t \gets b_t + \beta (r_t - b_t)
 \end{equation}
 where $r_t$ is the average minibatch reward and $\beta$ is a learning rate (set to 0.1).
 
+While several papers suggest using a learned baseline \citep[e.g.][]{mnih2014visualattention, ranzato2015}, we have not found this to be effective. In our experiments, we found that attempting to learn the baseline failed to converge, most likely because there is not enough correlation between the reward and the hidden states preceding the attention layer.
+
+In addition to including a baseline, we also scale the rewards by a tuned hyperparameter --- we found that scaling helped to stabilize training. We empirically set this scale to 0.3.
+
+
+
 %Similarly, we keep a moving average of the variance for normalization:
 %$$\sigma^2_j = (1 - \beta) \sigma^2_{j-1} + \beta v_j$$
 %where $v_t$ is the variance of the minibatch rewards for batch $j$. Since we have rewards at each time step of the decoder LSTM, we keep a separate moving average for the baseline for each time step, but we keep a single moving variance for all time steps.
 
-While several papers suggest using a learned baseline from the RNN state in RL tasks  \citep[e.g.][]{mnih2014visualattention, ranzato2015}, we have not found this to be effective. In our experiments, we found that attempting to learn the baseline failed to converge, most likely because there is not enough correlation between the RNN state and the reward.
 
 
-In addition to including a baseline, we also scale the rewards by a tuned hyperparameter --- we found that scaling helped to stabilize training. We empirically set this scale to 0.3.
 
 \paragraph{Randomly training using soft attention} \citet{xu2015captioning} explain that training hard attention with REINFORCE has very high variance, even when including a baseline. Thus, for every minibatch of training, they randomly use soft attention instead of hard attention with some probability (they use 0.5).
 The backpropagated gradient is then the standard soft attention gradient instead of the REINFORCE gradient.
 
 While this method helps stabilize training, it's aesthetically not very pleasing. Our goal in coarse-to-fine attention is to reduce computation over the encoded hidden states, while this method requires that we perform the full amount of computation as soft attention for a random subset of minibatches. However, we include this training method in our experiments to test how feasible hard attention is.
 
-\section{Test Time}
+\section{Beam Search}
 
-At test time, we use beam search. \todo{asdf}
+At test time decoding, we use beam search. \todo{do we need this?}
 
 %We also include an entropy-increasing term to encourage exploration during the training process, which is important to speed up convergence of learning. Our policy gradient equation then becomes
 %\begin{equation}
@@ -881,11 +982,13 @@ Model & & Entropy \\
 \textsc{Model 2 sparsemax} \\
 \bottomrule
 \end{tabular}
-\caption{Entropy over sentence attention. All numbers are for  We computed \textsc{Model 0} and \textsc{Model 1} entropy by summing over each row.}
+\caption{Entropy over sentence attention. We computed \textsc{Model 0} and \textsc{Model 1} entropy by summing over each row.}
 \label{table:entropy}
 \end{table}
 
 \section{Analysis}
+
+\todo{fill in numbers, plot training curves, attention heatmaps, predicted summaries}
 
 See Table~\ref{table:summary} for summary results.
 
