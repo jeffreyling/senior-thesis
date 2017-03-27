@@ -14,6 +14,8 @@
 * clean up lit review sections
 * include figures
 * experiments
+  * ROUGE scores
+  * error analysis
 * bibliography looks terrible
 * abstract
 * conclusion
