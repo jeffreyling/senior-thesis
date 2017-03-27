@@ -1,7 +1,7 @@
 # For readers
 
 ## High-level concerns
-* am I adequately explaning the REINFORCE algorithm? Is the relation between 
+* am I adequately explaning the REINFORCE algorithm? am I doing too much in explaining both reinforcment learning and stochastic computation graphs?
 
 ## Typos to look out for
 * citet vs citep (are citations in parentheses when they should be?)
