@@ -270,7 +270,7 @@ Third, we find that trained models can discover latent structure in language aut
 
 It is this third point upon which we base this thesis. Although they began as black-box optimizers, end-to-end deep models are slowly being dissected into more understandable parts. Our goal is to test the hypothesis that such parts are in fact interpretable and are functioning as we expect them to.
 
-With this goal in mind, we attempt to interpretably extend the existing sequence-to-sequence model with attention, and we analyze the performance on the task of document summarization. In the next chapter, we provide the background for how we will do this.
+With this goal in mind, we attempt to interpretably extend the attention mechanism of existing sequence-to-sequence models, and we analyze its performance on the task of document summarization. In the next chapter, we provide the background for how we will do this.
 
 
 \todo{needs work} 
@@ -665,7 +665,13 @@ Finally, a linear projection produces a distribution over output words $y_t \in 
 \begin{equation}
 p(y_t | y_{t-1}, \ldots, y_1, [h_1, \ldots, h_n]) = \boldW^{out}\boldc_t + b^{out}
 \end{equation}
-The models are trained to maximize the log probability of getting the sequences in the dataset correct. As the model is fully differentiable with respect to its parameters, we can train it end-to-end with stochastic gradient descent and the backpropagation algorithm.
+
+Given document-summary pairs $\{ (\boldx^{(i)}, \boldy^{(i)}) \}_{i=1}^N$ for training, the models are trained to maximize the log probability of getting the sequences in the dataset correct, i.e. minimize the negative log-likelihood (NLL):
+\begin{align*}
+\mcL(\theta) &= - \sum_{i=1}^N \log p(\boldy^{(i)} | \boldx^{(i)}; \theta)  \\
+&= -\sum_{i=1}^N \sum_{t=1}^{T-1} \log p(y_{t+1}^{(i)} | \boldx^{(i)}, y_t^{(i)}, \ldots, y_1^{(i)} ; \theta)
+\end{align*}
+As the model is fully differentiable with respect to its parameters, we can train it end-to-end with stochastic gradient descent and the backpropagation algorithm.
 
 We note that we have great flexibility in how our attention function $a$ combines the encoder context and the current decoder hidden state. In the next few sections, we explain standard choices for $a$ as well as our proposed coarse-to-fine attention model.
 
@@ -691,7 +697,7 @@ Our final context vector is then
 \end{equation}
 for $\boldW^2 \in \reals^{2d_{hid} \times d_{ctx}}$ a learned matrix.
 
-Going forward, we call this this instantiation of the attention function \textsc{Model 0}.
+Going forward, we call this instantiation of the attention function \textsc{Model 0}.
 
 
 \section{Model 1 and 2: Coarse-to-Fine Soft Attention}
@@ -744,9 +750,9 @@ $\boldW^{conv} * [\boldx_1, \ldots, \boldx_n]$ gives result $\boldu = [\boldu_1,
 $$\boldu_j = \boldW^{conv} \cdot [\boldx_j, \boldx_{j+1}, \ldots, \boldx_{j+k-1}] + \boldb^{conv} \in \reals^{d_f}$$
 Our final output is given by 
 \begin{equation}
-\boldh^s = \text{max-over-time}(\tanh(\boldu))
+\boldh^s = \max_j(\tanh(\boldu_j))
 \end{equation}
-where $\text{max-over-time}$ takes the maximum along the $j$-indexing dimension.
+where the max-over-time takes the maximum along the word indexing dimension.
 
 
 Thus, using the sentence representations, we can compute attention over the sentences.
@@ -775,7 +781,7 @@ Because the hard attention model loses the property of being end-to-end differen
 Our hard attention model is now a stochastic computation graph, and thus Algorithm~\ref{alg:reinforce} from Section~\ref{sec:algorithm} applies.
 
 Here, we have an RL agent where the state $s_t$ is the LSTM decoder state at time $t$, and actions $a_t$ are the hard attention decisions.
-Since samples from $\balpha_t$ at time $t$ of the RNN decoder can also affect future rewards, we use a discount factor of $\gamma = 0.5$, so that the reward is $\hat{C}_t = \sum_{s = t}^n \gamma^{n-s}r_s$ at time $t$, where $r_t = \log p(y_t | y_1, \ldots, y_{t-1})$ is the single step reward.
+Since samples from $\balpha_t$ at time $t$ of the RNN decoder can also affect future rewards, we use a discount factor of $\gamma = 0.5$, so that the reward is $\hat{C}_t = \sum_{s = t}^n \gamma^{n-s}r_s$ at time $t$, where $r_t = \log p(y_t | y_1, \ldots, y_{t-1}, \boldx)$ is the single step reward.
 
 To calculate the baselines for variance reduction, we store a constant $b_t$ for each decoder time step $t$. We follow \citet{xu2015captioning} and keep an exponentially moving average of the reward for each time step $t$:
 \begin{equation}
@@ -874,7 +880,7 @@ Avg. \# words per summary & 13 & 15 \\
 \label{fig:data_examples}
 \end{figure}
 
-In the context of these new datasets, the summarization task has not yet been fully standardized. Research in the area is still largely preliminary, with only a few papers reporting results \citep{nallapati2016seq2seq}. While CNN/Dailymail may not be the most suitable dataset for the task due to its noisiness \citep{Chen2016}, a better alternative is yet to exist.
+In the context of these new datasets, the summarization task has not yet been fully standardized. Research in the area is still largely preliminary, with only a few papers reporting results \citep[][e.g.]{nallapati2016seq2seq}. While CNN/Dailymail may not be the most suitable dataset for the task due to its noisiness \citep{Chen2016}, a better alternative is yet to exist.
 
 
 
@@ -884,24 +890,22 @@ In the context of these new datasets, the summarization task has not yet been fu
 
 \section{Implementation details}
 
-A few implementation details were necessary to make minibatch training possible. First, instead of taking attention over each individual sentence, we arrange the first 400 words of the document into a 10 by 40 image, and take each row to be a sentence. Second, we pad short documents to the maximum length with a special padding word, and allow the model to attend to it. However, we zero out word embeddings for the padding states and also zero out their corresponding LSTM states. We found in practice that very little of the attention ended up on the padding words.
+A few implementation details were necessary to make minibatch training possible. First, instead of taking attention over each individual sentence, we arrange the first 400 words of the document into a 10 by 40 image, and take each row to be a sentence.
 
-Ideally, we would prefer to not truncate documents, especially since later context can be important for summarizing the document. Due to memory issues, this is a problem we still have to resolve.
+Second, we pad short documents to the maximum length with a special padding word, and allow the model to attend to it. However, we zero out word embeddings for the padding states and also zero out their corresponding LSTM states. We found in practice that very little of the attention ended up on the padding words.
+
+Ideally, we would prefer to not truncate documents, especially since later context can be useful for summarizing the document. Due to memory issues, this is a problem we still have to resolve.
 
 \section{Models}
 
-\subsection{Baselines}
+\paragraph{Baselines}
+For a baseline, we take the first sentence of the document (chosen as the average length of a sentence in the training dataset). We call this \textsc{First}.
 
-For a baseline, we take the first 15 words of the document (chosen as the average length of a sentence in the training dataset). We call this \textsc{First}.
+We also consider the feature-based document summarizer of \citet{Durrett2016}, which uses ILP methods to compress extracted sentences. We apply the code \footnote{https://github.com/gregdurrett/berkeley-doc-summarizer} directly on the test set without retraining the system. Their system requires that the documents are preprocessed in CONLL format, and we use the Berkeley coreference system\footnote{https://github.com/gregdurrett/berkeley-entity}.
 
-Others...
-% Need way more here...
-% ideas: berkeley system (if it works), look for others - sentence fusion?
+\paragraph{Our models}
 
-
-\subsection{Our models}
-
-We ran experiments with Models 0 to 3 as described above. Model 0 serves as the baseline.
+We ran experiments with Models 0 to 3 as described above.
 
 \begin{itemize}
 \item Model 0: Soft attention.
@@ -927,7 +931,7 @@ We use 2 layer LSTMs with 500 hidden units, and we initialize word embeddings wi
 
 
 
-Our models are implemented using Torch \citep{Torch} based on a past version of Harvard's OpenNMT system\footnote{https://github.com/harvardnlp/seq2seq-attn}. We ran our experiments on a GPU (specs?).
+Our models are implemented using Torch \citep{Torch} based on a past version of Harvard's OpenNMT system\footnote{https://github.com/harvardnlp/seq2seq-attn}. We ran our experiments on a GPU (specs?). All of our code is available open source\footnote{https://github.com/jeffreyling/seq2seq-hard}.
 
 In the next chapter we show results.
 
@@ -936,9 +940,11 @@ In the next chapter we show results.
 
 \section{Evaluation}
 
-We report metrics for best validation perplexity and ROUGE scores \citep{lin2004rouge}. We use the ROUGE balanced F-scores with ROUGE-1 (unigrams), ROUGE-2 (bigrams), and ROUGE-L (longest common substring). We choose F-score since recall is biased towards longer predicted sentences.
+We report metrics for perplexity and ROUGE scores \citep{lin2004rouge} on the test set. % will I have time to do the test set??? main problem is running the Berkeley system
+ROUGE-n computes n-gram overlap between a gold summary and a predicted summary, and ROUGE-L computes the longest common subsequence.
+We use ROUGE balanced F-scores and report numbers for ROUGE-1 (unigrams), ROUGE-2 (bigrams), and ROUGE-L. While ROUGE traditionally uses the recall metric, we choose F-score since recall is biased towards longer predicted sentences.
 
-To generate summaries for evaluation, we run beam search with a beam size of 5.
+With multiple gold summaries in the CNN/Dailymail highlights, we choose to take the max ROUGE score over the gold summaries for a predicted summary, as our models are trained to produce a single sentence. The final metric is then the average over all test data points. % check this
 
 
 
@@ -955,13 +961,15 @@ To generate summaries for evaluation, we run beam search with a beam size of 5.
 \textsc{Model 2 conv} & & 15.8 & & \\
 \textsc{Model 2 sparsemax} & & 16.1 \\
 \textsc{Model 3 hard only} & & 32.3 \\
-\textsc{Model 3 semi sampling} & & 23.3 \\
 \midrule
 \textsc{Model 2 BOW} & & 16.4 & & \\
-\textsc{Model 2 LSTM} & & \\
+\textsc{Model 2 LSTM} & & 15.5 \\
 \textsc{Model 2 5x80 conv} & & 14.8 \\
-\textsc{Model 2 2x200 conv} & &  \\
-\textsc{Model 2 conv +pos} & & 15.8 & & \\
+\textsc{Model 2 2x200 conv} & & 14.2  \\
+\textsc{Model 2 conv +pos} & & 15.3 & & \\
+\midrule
+\textsc{Model 3 hard sample 2} & & 25.0 \\
+\textsc{Model 3 hard sample 3} & &  \\
  \bottomrule
 \end{tabular}
 \caption{Summarization results for CNN/Dailymail.}
@@ -1008,7 +1016,9 @@ See Appendix~\ref{appendix:attn} for more visualizations.
 % predicted examples
 We show some predicted summaries from the model.
 
+\section{Discussion}
 
+Coarse-to-fine might work but it hurts performance. For next steps, we would want to scale to even larger datasets and implement hard attention.
 
 \chapter{Conclusion}
 \label{chap:conclusion}
