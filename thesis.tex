@@ -636,6 +636,12 @@ We first describe the neural network architecture of the seq2seq models, also kn
 
 In the seq2seq model, an \emph{encoder} recurrent neural network (RNN) reads the source sequence as input to produce the \emph{context}, and a \emph{decoder} RNN generates the output sequence using the context as input.  One popular RNN choice is the long-short term memory (LSTM) network \citep{hochreiter1997long}.
 
+\begin{figure}[t]
+\includegraphics[width=\textwidth]{images/seq2seq}
+\caption{Model architecture for sequence-to-sequence with attention, or \textsc{Model 0}. The yellow hidden states are the encoder, the blue hidden states are the decoder, and the red hidden states are the generator. The decoder hidden state at each time step determines the attention weights, which we use to average the encoder hidden states to produce a context vector. The result feeds into the generator.}
+\label{fig:seq2seq}
+\end{figure}
+
 
 More formally, suppose we have a vocabulary $\mcV$. A given input sentence $w_1, \ldots, w_n \in \mathcal{V}$ is transformed into a sequence of vectors $\boldx_1, \ldots, \boldx_n \in \mathbb{R}^{d_{in}}$ through a word embedding matrix $\boldE \in \mathbb{R}^{|\mathcal{V}| \times d_{in}}$ as $\boldx_t = \boldE w_t$.
 
@@ -737,7 +743,18 @@ Our final attention weight on word $w_{i,j}$ is then $\alpha_{i,j} = \alpha_i^s 
 
 In order to compute the sentence attention weights $\alpha_i^s$, we need to produce representations of each sentence; i.e., given the words $w_{i,1}, \ldots, w_{i, n_i}$ of the sentence, we produce a vector representation $\boldh^s_i \in \mathbb{R}^{d_{sent}}$.
 
-\begin{figure}
+\begin{figure}[t]
+\centering
+\begin{subfigure}{0.45\textwidth}
+	\includegraphics[width=\textwidth]{images/bow_encoder_bow}
+	\caption{Bag-of-words}
+	\label{fig:bow_encoder_bow}
+\end{subfigure}
+\begin{subfigure}{0.45\textwidth}
+	\includegraphics[width=\textwidth]{images/bow_encoder_conv}
+	\caption{Convolution}
+	\label{fig:bow_encoder_conv}
+\end{subfigure}
 \caption{Options for producing sentence representations. We can either use a bag of words by summing the word embeddings, or apply convolutions and max-over-time pooling.}
 \label{fig:sent_reps}
 \end{figure}
