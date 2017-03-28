@@ -9,6 +9,7 @@
 \usepackage{hyperref}
 \usepackage[english]{babel}
 \usepackage{amsthm}
+\usepackage{caption}
 
 \newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
 \newtheorem{theorem}{Theorem}
@@ -218,7 +219,7 @@ Recently, neural networks have made a resurgence. In the ImageNet image classifi
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{images/graph}
-\caption{A visualization of word2vec word embeddings \citep{mikolov2013word2vec}. Words with similar semantic meaning tend to be clustered together. Image from CS287.}
+\caption{A visualization of word2vec word embeddings clusters \citep{mikolov2013word2vec}, projected to two dimensional space (how?). Words with similar semantic meaning tend to be close together in the space. Image from CS287.}
 \label{fig:word2vec}
 \end{figure}
 
@@ -702,7 +703,11 @@ Going forward, we call this instantiation of the attention function \textsc{Mode
 
 \section{Model 1 and 2: Coarse-to-Fine Soft Attention}
 
-\todo{figure}
+\begin{figure}
+\includegraphics[width=\textwidth]{images/coarse_to_fine.pdf}
+\caption{Model architecture for sequence-to-sequence with coarse-to-fine attention. The left side is the encoder that reads the document, and the right side is the decoder that produces the output sequence. On the encoder side, the green hidden states (sentence-level) are used for the coarse attention weights, while the yellow hidden states (word-level) are used for the fine attention weights. The context vector is then produced by averaging the word-level states. In \textsc{Model 2}, we average over the coarse attention weights, thus requiring computation of all word-level hidden states. In \textsc{Model 3}, we make a hard decision for which sentence to use, and so we only need to compute word-level hidden states for one sentence.}
+\label{fig:coarsetofine}
+\end{figure}
 
 We can leverage the same idea for text summarization, assuming we have a suitable representation of our input document. The simplest method for doing so would be to run an LSTM over the document.
 
@@ -859,12 +864,13 @@ Train, validation, and test splits are provided along with document tokenization
 % dataset statistics
 \begin{table}[h]
 \centering
-\begin{tabular}{lcc}
+\begin{tabular}{lccc}
 \toprule
-Dataset  & CNN & Dailymail \\
+Dataset  & CNN & Dailymail & Combined\\
 \midrule
-Train size & 90266 & 196961 \\
-Valid size & 1220 & 12148 \\
+Train size & 90266 & 196961 & 287227\\
+Valid size & 1220 & 12148 & 13368\\
+Test size & 1093 & 10397 & 11490 \\
 Avg. \# words per doc. & 794 & 832\\
 Avg. \# sent. per doc. & 21 & 29\\
 Avg. \# words per sent. & 36 & 27\\
