@@ -239,7 +239,7 @@ While neural networks are often treated as black box classifiers, \citet{Zeiler2
 \begin{figure}
 \centering
 \includegraphics[trim={15cm 15cm 15cm 15cm},clip,width=\textwidth]{images/graph}
-\caption{A visualization of word2vec word vectors \citep{mikolov2013word2vec}, projected to two dimensional space (how?). Words with similar semantic meaning tend to cluster together in the space. Image from CS287.}
+\caption{A visualization of word2vec word vectors \citep{mikolov2013word2vec}, projected to two dimensional space using PCA. Words with similar semantic meaning tend to cluster together in the space. Image from CS287.}
 \label{fig:word2vec}
 \end{figure}
 
@@ -743,8 +743,10 @@ We can also leverage sequence-to-sequence for text summarization. However, the a
 
 
 To be able to attend to both sentences and words in a hierarchical manner, we need to construct encodings of the document at both levels. For the coarse-grained sentence representations, we use a simple encoding model (e.g. bag of words), and for the fine-grained representations, we run an LSTM encoder on the words of a sentence.
-\citet{Sukhbaatar2015} demonstrate how coarse representations can be useful by using memory networks to access information for simple question-answering tasks.
-\citet{li2015autoencoder} use the idea of a hierarchical representation of text to develop a two-layer LSTM autoencoder for paragraph representation.
+
+Thinking about text at different levels of granularity has been previously considered. \citet{li2015autoencoder} use the idea of a hierarchical representation of text to develop a two-layer LSTM autoencoder for paragraph representation.
+
+%\citet{Sukhbaatar2015} demonstrate how coarse representations can be useful by using memory networks to access information for simple question-answering tasks.
 %by using low-level LSTMs on words to build sentence representations, then a high-level LSTM on the sentences for the final paragraph representation.
 
 Therefore, if we can make our model first use coarse attention to choose sentences, then use fine attention to choose words only from that sentence, then we avoid the computational cost of searching over the entire document.
@@ -774,7 +776,7 @@ In order to compute the sentence attention weights $\alpha_i^s$, we need to prod
 	\caption{Convolution}
 	\label{fig:bow_encoder_conv}
 \end{subfigure}
-\caption{Options for producing sentence representations from the word embeddings. We can either use a bag of words by summing the embeddings, or apply convolutions and max-over-time pooling.}
+\caption{Options for producing sentence representations from the word embeddings. We can either use a bag of words by summing the embeddings, or apply convolutions and max-over-time pooling. }
 \label{fig:sent_reps}
 \end{figure}
 
@@ -795,6 +797,8 @@ Our final output is given by
 \end{equation}
 where the max-over-time takes the maximum along the word indexing dimension. See Figure~\ref{fig:sent_reps} for diagrams of the sentence representation models.
 
+As an addition to any sentence representation method, we can include \emph{positional embeddings}. In general, we expect the order of sentences in the document to matter for summarization --- for example, the first few sentences are usually important.
+We therefore include the option to concatenate a small fixed-dimensional embedding of the sentence's position to the existing representation.
 
 Thus, using the sentence representations, we can compute attention over the sentences.
 For the words in each sentence, we run an LSTM over each sentence separately, and create attention weights over each sentence in the same way as \textsc{Model 0}. Using attention on word $w_{i,j}$ as  $\alpha_{i,j} = \alpha_i^s \cdot \alpha_{i,j}^w$, we can proceed exactly as in \textsc{Model 0} by computing the weighted average over hidden states $\boldh_{i,j}$.
@@ -841,9 +845,8 @@ In addition to including a baseline, we also scale the rewards by a tuned hyperp
 %where $v_t$ is the variance of the minibatch rewards for batch $j$. Since we have rewards at each time step of the decoder LSTM, we keep a separate moving average for the baseline for each time step, but we keep a single moving variance for all time steps.
 
 
-\paragraph{Positional embeddings} \todo{finish}
 
-\paragraph{Through training} \citet{xu2015captioning} explain that training hard attention with REINFORCE has very high variance, even when including a baseline. Thus, for every minibatch of training, they randomly use soft attention instead of hard attention with some probability (they use 0.5).
+\paragraph{\textsc{Through} training} \citet{xu2015captioning} explain that training hard attention with REINFORCE has very high variance, even when including a baseline. Thus, for every minibatch of training, they randomly use soft attention instead of hard attention with some probability (they use 0.5).
 The backpropagated gradient is then the standard soft attention gradient instead of the REINFORCE gradient. In our results, we label this as \textsc{+through}.
 
 While this method helps stabilize training, it's aesthetically not very pleasing. Our goal in coarse-to-fine attention is to reduce computation over the encoded hidden states, while this method requires that we perform the full amount of computation as soft attention for a random subset of minibatches. However, we include this training method in our experiments to test how feasible hard attention is.
@@ -963,7 +966,7 @@ In the context of these new datasets, the summarization task has not yet been fu
 %
 %We found that unsupervised pretraining on the given dataset is beneficial to learning. For each document, we randomly sample 2 sentences and concatenate to form the target sentence in a new synthetic dataset. We can sample multiple times to have multiple targets for a given source document, and we found that 5 samples was most beneficial to learning (performance drops with significantly more samples). We then train on the synthetic dataset for 5 epochs and initialize future training with the learned weights.
 
-\section{Implementation details}
+\section{Implementation Details}
 
 A few implementation details were necessary to make minibatch training possible. First, instead of taking attention over each individual sentence, we arrange the first 400 words of the document into a 10 by 40 image, and take each row to be a sentence.
 
@@ -1042,7 +1045,7 @@ With multiple gold summaries in the CNN/Dailymail highlights, we choose to take 
 \midrule
 \textsc{Model 0} & & 13.9 & 34.7 & 18.8 & 32.3 \\
 \midrule
- \textsc{Model 1} & & \\
+ \textsc{Model 1} & & 14.9 & 33.0 & 17.5 & 30.7 \\
 %\textsc{Model 2 sparsemax} & & 16.1 \\
 \midrule
 \textsc{Model 2 conv} & & 16.0 & 33.3 & 17.5 & 31.0 \\
@@ -1057,11 +1060,11 @@ With multiple gold summaries in the CNN/Dailymail highlights, we choose to take 
 \textsc{Model 3 conv +multi2} & & 25.5 & 30.0 & 14.4 & 27.9 \\
 \textsc{Model 3 conv +pos +multi2} & &  \\
 \textsc{Model 3 conv +multi3} & & 22.9 & 30.4 & 14.9 & 28.3 \\
-\textsc{Model 3 conv +pretrain} & & \\
+\textsc{Model 3 conv +pretrain} & & 26.3 & 29.7 & 14.2 & 27.5\\
 \textsc{Model 3 conv +through} & & 23.6 & 31.1 & 15.4 & 28.8 \\
  \bottomrule
 \end{tabular}
-\caption{Summarization results for CNN/Dailymail on the test set. Lower PPL is better, higher ROUGE is better.}
+\caption{Summarization results for CNN/Dailymail on the test set. The ROUGE numbers are balanced F-scores. Lower PPL is better, higher ROUGE is better.}
 \label{table:summary}
 \end{table}
 
@@ -1127,52 +1130,6 @@ Intuitively, higher entropy means the attention is more spread out, while lower 
 We see that the entropy of \textsc{Model 0} attention is quite low, suggesting that a factorization over sentence
 
 
-%% attention figures 
-\subsection{Attention}
-We analyze the attention distributions produced by each model. In each figure, the rows are the sentences of each document (40 words), and the columns are the summary words produced. We limit our figures to sentence level here --- the full word-level attention are difficult to examine, but can be found in Appendix~\ref{appendix:attn}.
-
-% 5819
-\begin{figure}[p]
-\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/1predsent}
-\caption{\textsc{Model 0}}
-\end{figure}
-
-\begin{figure}[p]
-\centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/1predsent}
-\caption{\textsc{Model 1}}
-\end{figure}
-
-\begin{figure}[p]
-\centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/1predsent}
-\caption{\textsc{Model 2}}
-\end{figure}
-
-\begin{figure}[p]
-\centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/1predsent}
-\caption{\textsc{Model 2 +pos}}
-\end{figure}
-
-\begin{figure}[p]
-\centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/1predsent}
-\caption{\textsc{Model 3}}
-\end{figure}
-
-\begin{figure}[p]
-\centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/1predsent}
-\caption{\textsc{Model 3 +multi2}}
-\end{figure}
-
-\begin{figure}[p]
-\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/1predsent}
-\caption{\textsc{Model 3 +multi2 +pos}}
-\end{figure}
 
 
 We see that the attention is very spread out over sentences in the soft attention models. By examining word-level attention, we notice that the model focuses on stop words (e.g. punctuation marks, \texttt{</s>}) in the encoder. We posit this may be due to the LSTM ``saving'' information at these words, and so the soft attention model can best retrieve the information by averaging over these hidden states.
@@ -1181,7 +1138,14 @@ Appendix~\ref{appendix:attn} contains a few more visualizations.
 
 % predicted examples
 \subsection{Predicted Summaries}
-We show some predicted summaries from the model. We refer to Figure~\ref{fig:data_examples} for the source documents, and show the predicted summaries in Figure~\ref{fig:predicted_summaries}.
+We show some predicted summaries from the model in Figures~\ref{fig:predicted_summaries1}, \ref{fig:predicted_summaries2}, and \ref{fig:predicted_summaries3}.
+The source documents are truncated in these examples for clarity --- see Appendix~\ref{appendix:full_docs} for the full text.
+
+We notice that the generated summaries tend to be quite short and succint, and most are the result of copying or paraphrasing specific sentences. Clearly, the summaries are usually getting the basic gist of the articles. 
+
+While the summaries are mostly grammatical, they are occasional redundant (e.g. ``the message was posted on twitter and posted on twitter'') or have very little information content (e.g. ``new : death toll rises to \#\# , policy say''). In these cases, the model is most likely just sampling from the decoder language model without using the encoder very much.
+
+Appendix ??? shows some more predicted summaries.
 
 \begin{figure}[p]
 \centering
@@ -1234,10 +1198,56 @@ Source & & jasmine coleman , \#\# , has been found safe and well some \#\# miles
 \bottomrule
 \end{tabular}
 \caption{Predicted summaries for each model, given a short document (an easier example).}
-\label{fig:predicted_summaries}
+\label{fig:predicted_summaries1}
 \end{figure}
 
 
+
+%\begin{figure}[p]
+%\centering
+%%\renewcommand{\arraystretch}{1.5}
+%\begin{tabular}{ll p{0.7\linewidth}}
+%\toprule
+%Model & & \\
+%\midrule
+%Source & & isis has threatened twitter founder jack dorsey and his employees after the site removed accounts linked to the extremists . \texttt{</s>} twitter confirmed to daily mail online that the company was working with authorities to verify the seriousness of the threat which claimed employees ' necks are ' a target for the soldiers of the caliphate ' . \texttt{</s>} the chilling warning , written in arabic , featured a picture of dorsey in a gun 's \texttt{<unk>} and the twitter logo . it was posted on sunday on an anonymous site based in poland which is used by programmers to share code . \texttt{</s>} dorsey , who is worth an estimated \$ \#.\#billion and lives in california , made no mention of the threat online on sunday as he tweeted his \#.\#\#million followers . \texttt{</s>} the threat featured a picture of twitter billionaire co-founder jack dorsey in a gun 's \texttt{<unk>} and the twitter logo \texttt{</s>} the alleged threat , first reported by buzzfeed , mentioned dorsey and included the words : ' we always come back . ' \texttt{</s>} ... \\
+%%it goes on : ' you started this failed war ' . the message then appears to address dorsey directly and twitter employees . it reads : ' hey jack ... when their necks officially become a target for the soldiers of the caliphate and supporters scattered among your midst ! ' it also claimed killing employees ' outside a neighborhood pub ' would be no more preventable than the massacres of charlie hebdo killer amedy coulibaly and copenhagen shooter omar el - hussein . the message later reads : ' imagine the scene and wait for its occurrence at any moment , and the earliest opportunity ! \texttt{</s>} ' virtual your war on us in the internet will pull you real wars on earth ! ' \texttt{</s>} it closes with the threat : ' is the message reached my twitter ? ' isis have posted horrific videos and images of executions , including \\
+%\midrule
+%\textsc{Gold} & & twitter confirmed to daily mail online on monday that the company was working with authorities to verify the seriousness of the threat \\
+%%& & cnn 's kelly wallace wonders why women too often do n't lift each up in the workplace \\
+%%& &  much of the start of the world 's most famous sled dog , the iditarod trail sled dog race , is covered in barren gravel \\
+%\midrule
+%\textsc{First} & & isis has threatened twitter founder jack dorsey and his employees after the site removed accounts linked to the extremists . \\
+% \midrule
+%\textsc{Berkeley} & & ISIS has threatened Twitter founder Jack Dorsey after the site removed accounts linked to the extremists .
+%Twitter confirmed to Daily Mail Online that the company was working with authorities .
+%The threat featured a picture of Twitter billionaire co-founder Jack Dorsey in a gun 's cross-hairs and the Twitter logo .\\
+%\midrule
+%
+%\textsc{Model 0} & & image of jack dorsey in \texttt{<unk>} was posted alongside a diatribe written in arabic \\
+%\midrule
+% \textsc{Model 1} & & the message was posted on sunday on an anonymous site based in poland \\
+%% there are bare patches of grass and mud on the alaska range
+%%\textsc{Model 2 sparsemax} & & 16.1 \\
+%\midrule
+%\textsc{Model 2 conv} & & the message was posted on an anonymous site based in poland \\
+%%the \texttt{\texttt{<unk>}} gorge sled dog race starts saturday \\
+%\textsc{Model 2 BOW} & &  the threat featured a picture of dorsey in a gun 's \texttt{<unk>} and twitter logo \\
+%% the \texttt{\texttt{<unk>}} gorge dog race starts saturday \\
+%\textsc{Model 2 conv +pos} & & warning : graphic content \\
+%% the \texttt{\texttt{<unk>}} trail sled dog race starts saturday \\
+%\midrule
+%\textsc{Model 3 conv} & & twitter co-founder jack dorsey , \#\# , has threatened twitter \\
+%% \texttt{\texttt{<unk>}} \texttt{\texttt{<unk>}} , \\#\\# , from anchorage , alaska , broke his back in \\#\\#\\#\\# \\
+%%\textsc{Model 3 conv +pos} & &  \\
+%\textsc{Model 3 conv +multi2} & &  twitter co-founder jack dorsey tweeted the tweet on twitter \\
+%% \texttt{\texttt{<unk>}} \texttt{\texttt{<unk>}} 's team runs across the alaskan lake \\
+%%\textsc{Model 3 conv +pos +multi2} & &  \\
+%\bottomrule
+%\end{tabular}
+%\caption{Predicted summaries for each model, given a longer document.}
+%\label{fig:predicted_summaries2}
+%\end{figure}
 
 \begin{figure}[p]
 \centering
@@ -1246,42 +1256,42 @@ Source & & jasmine coleman , \#\# , has been found safe and well some \#\# miles
 \toprule
 Model & & \\
 \midrule
-Source & & isis has threatened twitter founder jack dorsey and his employees after the site removed accounts linked to the extremists . \texttt{</s>} twitter confirmed to daily mail online that the company was working with authorities to verify the seriousness of the threat which claimed employees ' necks are ' a target for the soldiers of the caliphate ' . \texttt{</s>} the chilling warning , written in arabic , featured a picture of dorsey in a gun 's \texttt{<unk>} and the twitter logo . it was posted on sunday on an anonymous site based in poland which is used by programmers to share code . \texttt{</s>} dorsey , who is worth an estimated \$ \#.\#billion and lives in california , made no mention of the threat online on sunday as he tweeted his \#.\#\#million followers . \texttt{</s>} the threat featured a picture of twitter billionaire co-founder jack dorsey in a gun 's \texttt{<unk>} and the twitter logo \texttt{</s>} the alleged threat , first reported by buzzfeed , mentioned dorsey and included the words : ' we always come back . ' \texttt{</s>} ... \\
-%it goes on : ' you started this failed war ' . the message then appears to address dorsey directly and twitter employees . it reads : ' hey jack ... when their necks officially become a target for the soldiers of the caliphate and supporters scattered among your midst ! ' it also claimed killing employees ' outside a neighborhood pub ' would be no more preventable than the massacres of charlie hebdo killer amedy coulibaly and copenhagen shooter omar el - hussein . the message later reads : ' imagine the scene and wait for its occurrence at any moment , and the earliest opportunity ! \texttt{</s>} ' virtual your war on us in the internet will pull you real wars on earth ! ' \texttt{</s>} it closes with the threat : ' is the message reached my twitter ? ' isis have posted horrific videos and images of executions , including \\
+Source & & isis supporters have vowed to murder twitter staff because they believe the site 's policy of shutting down their extremist pages is a ' virtual
+war ' . \texttt{</s>} a mocked - up image of the site 's founder jack dorsey in \texttt{<unk>} was posted yesterday alongside a diatribe written in arabic , which claimed twitter employees ' necks
+ are ' a target for the soldiers of the caliphate ' . \texttt{</s>} addressing mr dorsey personally , it claimed twitter was taking sides in a ' media war ' which allowed ' slaughter ' ,
+adding : ' your virtual war on us will cause a real war on you . \texttt{</s>} diatribe : an image of twitter founder jack dorsey in \texttt{<unk>} was posted alongside a rant in arabic \texttt{</s>} ... \\
 \midrule
-\textsc{Gold} & & twitter confirmed to daily mail online on monday that the company was working with authorities to verify the seriousness of the threat \\
+\textsc{Gold} & & diatribe in arabic posted anonymously yesterday and shared online \\
 %& & cnn 's kelly wallace wonders why women too often do n't lift each up in the workplace \\
 %& &  much of the start of the world 's most famous sled dog , the iditarod trail sled dog race , is covered in barren gravel \\
 \midrule
-\textsc{First} & & ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel in baton rouge , louisiana , has died , brittany stewart in the east baton rouge coroner 's office said wednesday .\\
+\textsc{First} & &  isis supporters have vowed to murder twitter staff because they believe the site 's policy of shutting down their extremist pages is a ' virtual
+war ' . \\
  \midrule
-\textsc{Berkeley} & & -LRB- CNN -RRB- The man suspected of killing a deputy U.S. marshal at a motel in Baton Rouge , Louisiana , has died . Enforcement partners face untold dangers every day in the pursuit of justice , '' '' The fugitive who killed Deputy Wells was extremely dangerous . \\
+\textsc{Berkeley} & & ISIS supporters have vowed to murder Twitter staff because they believe the site 's policy of shutting down their extremist pages is a ' virtual war ' .
+Twitter was taking sides .
+Islamic State militants have swept through huge tracts of Syria and Iraq , murdering thousands of people .\\
 \midrule
 
-\textsc{Model 0} & & image of jack dorsey in \texttt{<unk>} was posted alongside a diatribe written in arabic \\
+\textsc{Model 0} & & image of jack dorsey 's founder jack dorsey posted on twitter \\
 \midrule
- \textsc{Model 1} & & the message was posted on sunday on an anonymous site based in poland \\
-% there are bare patches of grass and mud on the alaska range
+ \textsc{Model 1} & & a mocking - up image of jack dorsey was posted on twitter \\
 %\textsc{Model 2 sparsemax} & & 16.1 \\
 \midrule
-\textsc{Model 2 conv} & & the message was posted on an anonymous site based in poland \\
-%the \texttt{\texttt{<unk>}} gorge sled dog race starts saturday \\
-\textsc{Model 2 BOW} & &  the threat featured a picture of dorsey in a gun 's \texttt{<unk>} and twitter logo \\
-% the \texttt{\texttt{<unk>}} gorge dog race starts saturday \\
-\textsc{Model 2 conv +pos} & & warning : graphic content \\
-% the \texttt{\texttt{<unk>}} trail sled dog race starts saturday \\
+\textsc{Model 2 conv} & & the message was posted in arabic and posted on twitter \\
+\textsc{Model 2 BOW} & &  the message was posted on twitter and posted on twitter \\
+\textsc{Model 2 conv +pos} & & dorsey in \texttt{<unk>} was posted yesterday alongside a diatribe in arabic \\
 \midrule
-\textsc{Model 3 conv} & & twitter co-founder jack dorsey , \#\# , has threatened twitter \\
-% \texttt{\texttt{<unk>}} \texttt{\texttt{<unk>}} , \\#\\# , from anchorage , alaska , broke his back in \\#\\#\\#\\# \\
+\textsc{Model 3 conv} & & ' lone war ' is a ' virtual war ' image of the islamic state \\
 %\textsc{Model 3 conv +pos} & &  \\
-\textsc{Model 3 conv +multi2} & &  twitter co-founder jack dorsey tweeted the tweet on twitter \\
-% \texttt{\texttt{<unk>}} \texttt{\texttt{<unk>}} 's team runs across the alaskan lake \\
+\textsc{Model 3 conv +multi2} & &  isis supporters say site 's policy of shutting down is a ' propaganda war ' \\
 %\textsc{Model 3 conv +pos +multi2} & &  \\
 \bottomrule
 \end{tabular}
 \caption{Predicted summaries for each model, given a longer document.}
-\label{fig:predicted_summaries}
+\label{fig:predicted_summaries2}
 \end{figure}
+
 
 
 \begin{figure}[p]
@@ -1324,24 +1334,97 @@ Source & & ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel
 \bottomrule
 \end{tabular}
 \caption{Predicted summaries for each model, given a more difficult document.}
-\label{fig:predicted_summaries}
+\label{fig:predicted_summaries3}
 \end{figure}
 
-See Appendix~\ref{appendix:full_docs} for the full source documents.
 
-\todo{analysis} Appendix ??? shows more predicted summaries.
+
+%% attention figures 
+\subsection{Attention Heatmaps}
+We analyze the attention distributions produced by each model for the summaries in Figure~\ref{fig:predicted_summaries2}.
+In each figure, the rows are the sentences of each document (40 words), and the columns are the summary words produced.
+We limit our figures to sentence level here --- the full word-level attention is difficult to examine, but can be found in Appendix ???
+The \textsc{Model 0} and \textsc{Model 1} heatmaps are produced by summing the word-level attention weights in each row.
+
+
+
+% 5819
+\begin{figure}[p]
+\centering
+%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/1predsent}
+\caption{\textsc{Model 0}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/1predsent}
+\caption{\textsc{Model 1}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/1predsent}
+\caption{\textsc{Model 2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/1predsent}
+\caption{\textsc{Model 2 +pos}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/1predsent}
+\caption{\textsc{Model 3}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/1predsent}
+\caption{\textsc{Model 3 +multi2}}
+\end{figure}
+
+%\begin{figure}[p]
+%\centering
+%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/1predsent}
+%\caption{\textsc{Model 3 +multi2 +pos}}
+%\end{figure}
 
 \section{Discussion}
 
-Coarse-to-fine might work but it hurts performance. For next steps, we would want to scale to even larger datasets and implement hard attention.
+As shown by the results, coarse-to-fine attention generally performs worse than standard sequence-to-sequence attention.
 
-As we noted, we may be obtaining poor results because of an optimization problem. The low entropy of \textsc{Model 0} attention, as well as the attention visualization, both show that the model mainly focuses on one sentence at a time when generating the output. Thus, in theory there exists an attention distribution for the coarse-to-fine models to replicate --- the fact that they do not is most likely due to bad optimization.
+We first discuss the weakness of the soft attention model, i.e. \textsc{Model 2}. As we noted, we may be obtaining poor results because of an optimization problem. The low entropy of \textsc{Model 0} attention, as well as the attention visualization, both show that the model mainly focuses on one sentence at a time when generating the output. Thus, in theory there exists an attention distribution for the coarse-to-fine models to replicate --- the fact that they do not is most likely due to bad optimization.
 
 Assuming we can learn the attention distribution, another possible cause for the worse performance of coarse-to-fine models is lower modeling power. Because we run the encoder LSTM across each sentence separately, it may not capture the full context in same way as running the LSTM across the entire document as in \textsc{Model 0}.
-However, we found in some additional experiments that even if we run an LSTM over the full document to encode, and then learn the word-level attention over it, there was not a significant change in performance. This does not conclusively rule out this possibility, but only shows that the performance bottleneck is in learning the attention.
+However, we found in additional experiments that even if we run an LSTM over the full document to encode, and then learn the word-level attention over it, there was not a significant change in performance. This does not conclusively rule out this possibility, but only shows that the performance bottleneck is in learning the attention.
 
-\todo{more here}
+Another modeling issue is in the sentence representations. While bag-of-words and convolutional models are effective for simple tasks, we would be interested to see if more sophisticated representations could allow us to obtain better attention. There is some research on developing general sentence representations for transfer learning \citep{Bowman2015}, and we leave this area to future work.
 
+
+%%%
+Despite the worse performance of \textsc{Model 2} and its hard counterpart \textsc{Model 3}, there are interesting aspects of the hard attention model. First, we see that the model does indeed learn to attend to a small subset of sentences, which is encouraging. This suggests that the model may be useful in large-scale conditional computation frameworks; however, this will definitely depend on how the performance scales as we increase the number of sentences.
+
+Second, sampling multiple times with $k_{mul} > 1$ seems to do well, and only incurs a constant cost in computational complexity. By relaxing the constraint that we attend to a single sentence, we can build models with similar complexity but better training guarantees. 
+
+
+Third, we see that pretraining the hard attention model with soft attention significantly helps performance. While pretraining with soft attention on the task at hand defeats the purpose of conditional computation, we can imagine starting with a pretrained LSTM on the encoder side from another task to possibly achieve the same effect.
+In addition, we see that the fixed bag-of-words coarse attention performs almost as well as the higher powered convolutional model --- therefore, we can conclude that lower variance in the training process will lead to better performance. Transfer learning of a pretrained LSTM may partially solve this problem.
+
+Therefore, we conclude that while reinforcement learning methods have promise in building large-scale models with conditional computation, the noisiness of training is a difficult barrier to overcome. There are possible directions in reducing the burden of RL training (e.g., the aforementioned pretraining), but it would also be wise to consider alternative techniques for sparseness.
+
+
+\subsection{Future Work}
+
+We propose the following as concrete future work.
+
+We would like to explore alternative methods of sentence representation to improve the coarse attention. This requires researching ...
+
+For future work, we want to apply this at a larger scale. Ten sentences is still not that many.
+
+
+Different conditional computation methods
 
 \chapter{Conclusion}
 \label{chap:conclusion}
@@ -1351,11 +1434,6 @@ In this work, we develop a new coarse-to-fine architecture.
 We train it using methods from reinforcement learning.
 
 We experiment with it on the CNN/Dailymail dataset.
-
-\section{Future Work}
-
-For future work, we want to apply this at a larger scale. Ten sentences is still not that many.
-
 
 \bibliographystyle{plainnat}
 \bibliography{../papers/Mendeley/library}
