@@ -841,10 +841,10 @@ In addition to including a baseline, we also scale the rewards by a tuned hyperp
 %where $v_t$ is the variance of the minibatch rewards for batch $j$. Since we have rewards at each time step of the decoder LSTM, we keep a separate moving average for the baseline for each time step, but we keep a single moving variance for all time steps.
 
 
+\paragraph{Positional embeddings} \todo{finish}
 
-
-\paragraph{Randomly training using soft attention} \citet{xu2015captioning} explain that training hard attention with REINFORCE has very high variance, even when including a baseline. Thus, for every minibatch of training, they randomly use soft attention instead of hard attention with some probability (they use 0.5).
-The backpropagated gradient is then the standard soft attention gradient instead of the REINFORCE gradient.
+\paragraph{Through training} \citet{xu2015captioning} explain that training hard attention with REINFORCE has very high variance, even when including a baseline. Thus, for every minibatch of training, they randomly use soft attention instead of hard attention with some probability (they use 0.5).
+The backpropagated gradient is then the standard soft attention gradient instead of the REINFORCE gradient. In our results, we label this as \textsc{+through}.
 
 While this method helps stabilize training, it's aesthetically not very pleasing. Our goal in coarse-to-fine attention is to reduce computation over the encoded hidden states, while this method requires that we perform the full amount of computation as soft attention for a random subset of minibatches. However, we include this training method in our experiments to test how feasible hard attention is.
 
@@ -852,7 +852,7 @@ While this method helps stabilize training, it's aesthetically not very pleasing
 \paragraph{Multiple samples} 
 From our initial experiments with \textsc{Model 3}, we found that taking a single sample was not very effective. However, we discovered that sampling multiple times from the distribution $\alpha$ improves performance.
 
-To be precise, we sample based on the multinomial distribution $\mathrm{Mult}(k_{mul}, \{\alpha_i\}_{i=1}^n)$ to produce the sentence-level attention vector $\balpha_t$ at time $t$, with $\alpha_i = x_i / k_{mul}$, where $x_i$ is the $i$th entry of the multinomial sample. $k_{mul}$ is a hyperparameter which can be tuned (standard hard attention is $k_{mul} = 1$).
+To be precise, we sample based on the multinomial distribution $\mathrm{Mult}(k_{mul}, \{\alpha_i\}_{i=1}^n)$ to produce the sentence-level attention vector $\balpha_t$ at time $t$, with $\alpha_i = x_i / k_{mul}$, where $x_i$ is the $i$th entry of the multinomial sample. $k_{mul}$ is a hyperparameter which can be tuned (standard hard attention is $k_{mul} = 1$). In our results, we label this as \textsc{+multi}.
 
 Intuitively, $k_{mul}$ is the number of sentences we select to produce the context. With higher $k_{mul}$, the hard attention model more closely approximates the soft attention model, and hence leads to better performance. This, however, incurs a cost in computational complexity.
 
@@ -860,13 +860,13 @@ Intuitively, $k_{mul}$ is the number of sentences we select to produce the conte
 
 Once we have our trained model, we use beam search at test time to produce the output summaries.
 
-In beam search, we keep a beam of 
+In beam search, we keep a beam of $k$ hypotheses at every time step $t$. \todo{finish}
 
 \begin{algorithm}[b]
 \caption{Beam Search}
 \label{alg:beam_search}
 \begin{algorithmic}
-\State hi
+\State todo
 \end{algorithmic}
 \end{algorithm}
 
@@ -931,7 +931,27 @@ Avg. \# words per summary & 13 & 15 \\
 \end{table}
 
 \begin{figure}
-\caption{Examples of source and target for the CNN/Dailymail dataset. The source is a news article, and the target is one of the given highlights.}
+\centering
+\begin{tabular}{p{0.7\linewidth} r p{0.2\linewidth}}
+\toprule 
+\textbf{Document} & & \textbf{Summary} \\
+\midrule 
+( cnn ) the man suspected of killing a deputy u.s. marshal at a motel in baton rouge , louisiana , has died , brittany stewart in the east baton rouge coroner 's office said wednesday . \texttt{</s>} the cause of death is pending autopsy , she said . \texttt{</s>} jamie croom , \#\# , was wounded in a shootout with deputy u.s. marshal josie wells . \texttt{</s>} it can be one of the most dangerous tasks for a law enforcement officer : serving an arrest warrant to a fugitive murder suspect . when wells tried to do that tuesday , he lost his life . \texttt{</s>}  ... & & the fugitive who killed the marshal was " extremely dangerous , " u.s. marshals service director says \\
+\midrule
+( cnn ) there have been a few times in my career when i 've been thoroughly disappointed -- even disgusted -- with my fellow women in the workplace . \texttt{</s>} no , i certainly do n't expect all my female colleagues to go out of their way for me and sing " kumbaya " together in the office , but i 'm always stunned when a woman who could have been helpful to me was n't , when a woman who could have been a mentor chose not to be , when a woman tried to hurt me because of her own fear , anxiety or what have you . \texttt{</s>} i 'd love to say more about each of the women i 've met along the way who fit those descriptions , but my point is not to single anyone out . my goal is to ask the question , " why ? " \texttt{</s>} obviously , not all women are like this and there are plenty of men guilty of the same behavior , but why do so many women try to tear each other down instead of lift each other up ? \texttt{</s>} ... & & cnn 's kelly wallace wonders why women too often do n't lift each up in the workplace \\
+\midrule
+much of the start of the world 's most famous sled dog race is covered in barren gravel , forcing iditarod organizers to move the start further north where there is snow and ice . \texttt{</s>} a weather pattern that buried the eastern u.s. in snow has left alaska fairly warm and relatively snow - free this winter , especially south of the alaska range . \texttt{</s>} ' if i have one more person say to me to move the iditarod to boston , i 'm going to shake my head , ' said race director mark nordman . \texttt{</s>} scroll down for video in this photo taken on thursday , there are bare patches of grass and mud on sled dog trails in anchorage , alaska which is unsuitable for the iditarod \texttt{</s>}  ... & & much of the start of the world 's most famous sled dog , the iditarod trail sled dog race , is covered in barren gravel \\
+%\midrule
+%a store clerk manged to foil an armed robber with just the swat of his hand . \texttt{</s>} the workers , who was behind the counter at the ok food store in houston , texas early thursday
+% morning , got the shock of his life when a young man pulled a gun on him and demanded money as he opened the register . \texttt{</s>} rather than hand over the bills however , the clerk , who is not being identified , started hitting at the man 's gun repeatedly , sending him and his accomplice running from the store . \texttt{</s>} scroll down for video a man 's attempt to rob a store in houston , texas was caught on video \texttt{</s>} the man entered the store and pretended to be a customer , being joined by a friend soon after \texttt{</s>} when the cashier opened the register the man pulled out a gun \texttt{</s>} the gunman first enters pretending to be a customer , pointing out things to the clerk as he takes out a large wad of cash . \texttt{</s>} then , a minute later , his friend leaves the car and joins him in the store . \texttt{</s>} when the clerk then opens up the cash register to make the sale , the gun comes out . \texttt{</s>} ... & & a man attempted to rob the ok food store in houston , texas early thursday morning at gunpoint \\
+% \midrule
+% ( cnn ) a michigan woman lost her planet fitness membership over the " inappropriate " manner in which she complained about a transgender woman in the locker room , a gym spokeswoman said . \texttt{</s>} yvette cormier 's membership was not canceled for simply raising the issue , " as we welcome all feedback from our members , " said mccall gosselin , director of public relations at planet fitness corporate . \texttt{</s>} rather , it was the manner in which she expressed her concerns that club management felt was inappropriate , resulting in the cancellation , gosselin said . \texttt{</s>} cormier stands by her actions in a case that has drawn attention to transgender rights . \texttt{</s>} " this is all new to me . i did n't go out to specifically bash a transgender person that day . i was taken aback by the situation , " cormier told cnn . " this is about me and how i felt unsafe . i should feel safe in there . " \texttt{</s>} the mother of two says she was acting out of concern for her safety and the privacy of other female gym members when she raised the issue on saturday , february \#\# . \texttt{</s>} ... & & woman loses gym membership after complaining about transgender woman in locker room \\
+% \midrule
+
+%( cnn ) the american civil liberties union is challenging an alabama law that will force those under \#\# seeking an abortion to go through an adversarial process that 's akin to a trial . \texttt{</s>} generally , laws in the united states require parental consent for a minor to obtain an abortion . but for some children , parental consent is impossible or even dangerous . this class of minors must seek a judicial bypass . while the bypass is a common feature of abortion laws in other states , this alabama law may have gone too far . here are the suspect provisions of this " bypass by trial " : \texttt{</s>} alabama has turned what is supposed to be an informal , child - centered hearing into more of a trial . \texttt{</s>} the court can appoint a guardian ad litem -- normally an appointed lawyer for a child in , say , a divorce proceeding or a hearing involving unfit parents -- for the fetus . \texttt{</s>} the minor may be cross-examined by the district attorney and possibly the minor 's parents . \texttt{</s>} information about the minor 's pregnancy may be disclosed to her family , friends and employers , and they might even be brought to court to testify -- against the minor . \texttt{</s>} ... & & cevallos : alabama may go too far in the process used to decide if a teenager can have an abortion without parental consent \\
+\bottomrule
+\end{tabular}
+\caption{Examples of source and target for the CNN/Dailymail dataset. Data is shown after preprocessing. In the first example, the summary is from a quote later on in the document. The second example is similar, but the start of the document has low information content. In the third, the summary is almost identical to the first sentence. See Appendix~\ref{appendix:full_docs} for the full documents.}
 \label{fig:data_examples}
 \end{figure}
 
@@ -949,14 +969,14 @@ A few implementation details were necessary to make minibatch training possible.
 
 Second, we pad short documents to the maximum length with a special padding word, and allow the model to attend to it. However, we zero out word embeddings for the padding states and also zero out their corresponding LSTM states. We found in practice that very little of the attention ended up on the padding words.
 
-Ideally, we would prefer to not truncate documents, especially since later context can be useful for summarizing the document. Due to memory issues, this is a problem we still have to resolve.
+Ideally, we would prefer to not truncate documents, especially since later context can be useful for summarizing the document. Due to memory issues, this should be explored in future work.
 
 \section{Models}
 
 \paragraph{Baselines}
-For a baseline, we take the first sentence of the document (chosen as the average length of a sentence in the training dataset). We call this \textsc{First}.
+For a baseline, we take the first sentence of the document. We call this \textsc{First}.
 
-We also consider the feature-based document summarizer of \citet{Durrett2016}, which uses ILP methods to compress extracted sentences. We apply the code \footnote{https://github.com/gregdurrett/berkeley-doc-summarizer} directly on the test set without retraining the system. Their system requires that the documents are preprocessed in CONLL format, so we use the Berkeley coreference system\footnote{https://github.com/gregdurrett/berkeley-entity} with the coreference and NER settings. We call this \textsc{Berkeley}.
+We also consider the feature-based document summarizer of \citet{Durrett2016}, which uses ILP methods to compress extracted sentences. We apply the code \footnote{https://github.com/gregdurrett/berkeley-doc-summarizer} directly on the test set without retraining the system. Their system requires that the documents are preprocessed in CONLL format, so we use the Berkeley coreference system\footnote{https://github.com/gregdurrett/berkeley-entity} with the coreference and NER settings. We call this baseline \textsc{Berkeley}.
 
 \paragraph{Our models}
 
@@ -969,7 +989,9 @@ We ran experiments with Models 0 to 3 as described above.
 \item \textsc{Model 3}: Hierarchical LSTM, coarse-to-fine with hard attention over sentences.
 \end{itemize}
 
-We also 
+We also include option \textsc{+pos} by including positional embeddings for sentence representations. For \textsc{Model 3}, we include options \textsc{+multi} for $k_{mul} > 1$, \textsc{+pretrain} for starting with a model pretrained with soft attention for 1 epoch, and \textsc{+through} for sampling between hard and soft attention with probability 0.5.
+
+For \textsc{Model 2}, while our default document arrangement is a 10 by 40 image, we also experiment with shapes of 5 by 80 and 2 by 200 (denoted \textsc{5x80}, \textsc{2x200} resp.). These should more closely approximate \textsc{Model 0} as the shape approaches a single sequence.
 
 
 \section{Training}
@@ -977,7 +999,7 @@ We also
 %% fix batch size and other details, and also note we train until convergence (which is slightly longer for hard attn)
 We train with minibatch stochastic gradient descent (SGD) with batch size 20 for 20 epochs, renormalizing gradients below norm 5. We initialize the learning rate to 0.1 for the sentence encoder and 1 for the rest of the model, and begin decaying it by a factor of 0.5 each epoch after the validation perplexity stops decreasing.\footnote{We tried more complicated SGD optimization methods such as Adagrad \citep{Duchi2011} and Adam \citep{Kingma2015}, but found that they did not perform as well. This could be due to gradient norms that are too large.}
 
-We use 2 layer LSTMs with 500 hidden units, and we initialize word embeddings with 300-dimensional word2vec embeddings \citep{mikolov2013word2vec}. For convolutional layers, we use a kernel width of 6 and 600 filters.
+We use 2 layer LSTMs with 500 hidden units, and we initialize word embeddings with 300-dimensional word2vec embeddings \citep{mikolov2013word2vec}. For convolutional layers, we use a kernel width of 6 and 600 filters. Positional embeddings had dimension 25.
 
 % talk about LSTM soft attention?
 
@@ -986,7 +1008,7 @@ We use 2 layer LSTMs with 500 hidden units, and we initialize word embeddings wi
 
 
 
-Our models are implemented using Torch \citep{Torch} based on a past version of Harvard's OpenNMT system\footnote{https://github.com/harvardnlp/seq2seq-attn}. We ran our experiments on a GPU (specs?). 
+Our models are implemented using Torch \citep{Torch} based on a past version of Harvard's OpenNMT system\footnote{https://github.com/harvardnlp/seq2seq-attn}. We ran our experiments on a 12GB Geforce GTX Titan X GPU.
 The models take between 2-2.5 hours to train per epoch.
 
 All of our code is available open source\footnote{https://github.com/jeffreyling/seq2seq-hard}.
@@ -998,7 +1020,9 @@ In the next chapter we show results.
 
 \section{Evaluation}
 
-We report metrics for perplexity and ROUGE scores \citep{lin2004rouge} on the test set.
+We report metrics for perplexity and ROUGE scores \citep{lin2004rouge} on the test set. We use the trained models with the best validation perplexity.
+
+Perplexity is the exponential of the negative log-likelihood, so that smaller perplexity is better (with a lower bound of 1.0).
 
 ROUGE-n computes n-gram overlap between a gold summary and a predicted summary, and ROUGE-L computes the longest common subsequence.
 We use ROUGE balanced F-scores and report numbers for ROUGE-1 (unigrams), ROUGE-2 (bigrams), and ROUGE-L. While ROUGE traditionally uses the recall metric, we choose F-score since recall is biased towards longer predicted sentences.
@@ -1014,31 +1038,70 @@ With multiple gold summaries in the CNN/Dailymail highlights, we choose to take 
  Model &  & PPL & ROUGE-1 & ROUGE-2 & ROUGE-L \\
  \midrule
 \textsc{First} & & - & 32.3 & 15.5 & 27.4 \\
-\textsc{Berkeley} & & - &  \\
-\textsc{Model 0} & & 13.9 &  \\
+\textsc{Berkeley} & & - & 29.1 & 16.0 & 26.5 \\
+\midrule
+\textsc{Model 0} & & 13.9 & 34.7 & 18.8 & 32.3 \\
+\midrule
  \textsc{Model 1} & & \\
-\textsc{Model 2 conv} & & 15.8 & & \\
 %\textsc{Model 2 sparsemax} & & 16.1 \\
-\textsc{Model 3 conv} & & 32.3 \\
 \midrule
-\textsc{Model 2 BOW} & & 16.4 & & \\
-\textsc{Model 2 LSTM} & & 15.5 \\
-\textsc{Model 2 conv +pos} & & 15.3 & & \\
+\textsc{Model 2 conv} & & 16.0 & 33.3 & 17.5 & 31.0 \\
+\textsc{Model 2 BOW} & & 16.3 & 33.0 & 17.4 & 30.7 \\
+%\textsc{Model 2 LSTM} & & 15.5 \\
+\textsc{Model 2 conv +pos} & & 15.4 & 34.2 & 18.3 & 31.8 \\
+\textsc{Model 2 5x80 conv} & & 15.0 & 33.9 & 18.0 & 31.5 \\
+\textsc{Model 2 2x200 conv} & & 14.5 & 33.9 & 18.1 & 31.6 \\
 \midrule
-\textsc{Model 2 5x80 conv} & & 14.8 \\
-\textsc{Model 2 2x200 conv} & & 14.2  \\
-\midrule
-\textsc{Model 3 conv +pos} & & 25.0 \\
-\textsc{Model 3 conv +multi2} & & 25.0 \\
-\textsc{Model 3 conv +pos +multi2} & & 25.0 \\
-\textsc{Model 3 conv +multi3} & &  \\
+\textsc{Model 3 conv} & & 32.8 & 28.2 & 12.9 & 26.2 \\
+\textsc{Model 3 conv +pos} & &  \\
+\textsc{Model 3 conv +multi2} & & 25.5 & 30.0 & 14.4 & 27.9 \\
+\textsc{Model 3 conv +pos +multi2} & &  \\
+\textsc{Model 3 conv +multi3} & & 22.9 & 30.4 & 14.9 & 28.3 \\
+\textsc{Model 3 conv +pretrain} & & \\
+\textsc{Model 3 conv +through} & & 23.6 & 31.1 & 15.4 & 28.8 \\
  \bottomrule
 \end{tabular}
-\caption{Summarization results for CNN/Dailymail on the test set.}
+\caption{Summarization results for CNN/Dailymail on the test set. Lower PPL is better, higher ROUGE is better.}
 \label{table:summary}
 \end{table}
 
-\begin{table}[h]
+
+\section{Analysis}
+
+
+Table~\ref{table:summary} shows summarization results. We see that our soft attention models comfortably beat the baselines, while hard attention falls slightly behind.
+
+The \textsc{Berkeley} model ROUGE scores are surprisingly low. We attribute this due to the fact that our models usually produce a single summary, while the ILP system can produce multiple. The \textsc{Berkeley} model therefore has very high ROUGE recall, while suffering in precision. See Appendix~\ref{appendix:more_results} for numbers.
+
+Unfortunately, the \textsc{Model 0} sequence-to-sequence baseline proves to be difficult to beat. \textsc{Model 1} comes close, but we note that it is weaker in modeling power as the word-level LSTMs are truncated between rows.
+
+\textsc{Model 2} has worse performance, likely due to our assumption that we can factor the attention distribution into a coarse distribution and a fine distribution.
+This assumption is quite strong --- we hypothesize that our deficit then exists because either (1) our sentence representations are not sufficiently strong, or (2) we did not properly solve the optimization problem.
+We believe (1) may be true because with perfect modeling power, the model should be able to learn accurate representations of sentences such that it can attend to the right ones.
+We believe (2) is also an issue because the training signal is backpropagated to the word-level LSTM via the attention weights. Because the training algorithm cannot directly compare word attention weights as in \textsc{Model 0} or \textsc{Model 1}, it has trouble finding the best optimum.
+Additionally, we found empirically that Adagrad and Adam performed worse than SGD, which is unusual given that these methods are usually state-of-the-art.
+
+We observe that \textsc{Model 3} results are significantly worse than soft attention results. This is most likely due to a noisy gradient; even by using variance reduction techniques, the variance of the gradient estimator remains high. It may be too difficult to train the encoder (which forms a large part of the model) using such a noisy gradient.
+%It is also easy to fall into local optima if the stochastic agent's policy does not sufficiently explore the state space (i.e., the sentence attention settles too early on a spurious sentence).
+
+We note that positional embeddings (\textsc{+Pos}) give a nontrivial boost to scores. This makes sense since the position of the sentence in the document should be relevant for determining its importance; for example, we would expect sentences near the start of the document to be more useful for summarization.
+
+
+\begin{figure}
+\caption{Training curves for models.} % train, test curves for model 0-3
+\label{fig:train_curves}
+\end{figure}
+
+
+\subsection{Training Curves} We examine training curves for our models in Figure~\ref{fig:train_curves}. We see that hard attention takes longer to converge on average, which likely is due to the noisy gradient.
+\todo{something about train vs val}
+
+
+
+
+\subsection{Entropy}
+
+\begin{table}[t]
 \centering
 \begin{tabular}{llr}
 \toprule
@@ -1057,36 +1120,241 @@ Model & & Entropy \\
 \label{table:entropy}
 \end{table}
 
-\section{Analysis}
+We investigate the entropy of the sentence attention on the validation set in Table~\ref{table:entropy}. Entropy for a discrete random variable $Z$ is computed as
+$$H(Z) = -\sum_{z} p(Z = z) \log p(Z = z)$$
+Intuitively, higher entropy means the attention is more spread out, while lower entropy means the attention is concentrated.
 
-\todo{fill in numbers, plot training curves, attention heatmaps, predicted summaries}
-
-See Table~\ref{table:summary} for summary results.
-
-
-% training curves
-We see hard attention takes longer to converge.
-
-We investigate the entropy of the sentence attention on the validation set in Table~\ref{table:entropy}.
-
-% synthetic data
-
-% MT?
+We see that the entropy of \textsc{Model 0} attention is quite low, suggesting that a factorization over sentence
 
 
 %% attention figures 
-We see that the attention is very spread out over sentences. In particular, we notice that the word-level attention focuses on specific stop words for all decoder time steps. We posit this may be due to ???
-See Appendix~\ref{appendix:attn} for more visualizations.
+\subsection{Attention}
+We analyze the attention distributions produced by each model. In each figure, the rows are the sentences of each document (40 words), and the columns are the summary words produced. We limit our figures to sentence level here --- the full word-level attention are difficult to examine, but can be found in Appendix~\ref{appendix:attn}.
+
+% 5819
+\begin{figure}[p]
+\centering
+%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/1predsent}
+\caption{\textsc{Model 0}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/1predsent}
+\caption{\textsc{Model 1}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/1predsent}
+\caption{\textsc{Model 2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/1predsent}
+\caption{\textsc{Model 2 +pos}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/1predsent}
+\caption{\textsc{Model 3}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/1predsent}
+\caption{\textsc{Model 3 +multi2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/1predsent}
+\caption{\textsc{Model 3 +multi2 +pos}}
+\end{figure}
+
+
+We see that the attention is very spread out over sentences in the soft attention models. By examining word-level attention, we notice that the model focuses on stop words (e.g. punctuation marks, \texttt{</s>}) in the encoder. We posit this may be due to the LSTM ``saving'' information at these words, and so the soft attention model can best retrieve the information by averaging over these hidden states.
+
+Appendix~\ref{appendix:attn} contains a few more visualizations.
 
 % predicted examples
-We show some predicted summaries from the model.
+\subsection{Predicted Summaries}
+We show some predicted summaries from the model. We refer to Figure~\ref{fig:data_examples} for the source documents, and show the predicted summaries in Figure~\ref{fig:predicted_summaries}.
+
+\begin{figure}[p]
+\centering
+%\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{ll p{0.7\linewidth}}
+\toprule
+Model & & \\
+\midrule
+Source & & jasmine coleman , \#\# , has been found safe and well some \#\# miles from her home a \#\# - year - old girl who went missing from her family home at \#am amid fears she was driven away by an ' older man ' has been found safe and well . jasmine coleman was reported as missing this morning after disappearing from her home in \texttt{<unk>} , west sussex . the child was found this afternoon following a police appeal some \#\#miles away in croydon , south east london . police feared she may have been driven to london by an older man when they launched an appeal for information this morning . the schoolgirl had not been seen since \#\#.\#\#pm on friday night . sussex police said she may have been talking with someone on facetime before disappearing at around \#am . ... \\
+%the force launched a public appeal for information on her whereabouts on saturday morning . in it , she was described as fair with long , blonde hair and as having possibly been wearing black riding trousers and a polo shirt or a paisley pattern dress . on saturday afternoon the force confirmed she had been found safe and well in croydon but could not confirm the circumstances under which police located her . no one has been arrested in connection with her disappearance . shortly after \#pm a spokesman said : ' jasmine coleman , the \#\# - year - old girl from \texttt{<unk>} reported missing from home during the early hours of saturday ( \#\# march ) was found safe and well later the same day in croydon . ' police would like to thank the media and members of the public for help given during efforts to trace her . ' west sussex police ( headquarters pictured above ) confirmed the child was found on saturday afternoon </s>  \\
+\midrule
+\textsc{Gold} & & jasmine coleman disappeared from her home at around \#am this morning \\
+%the fugitive who killed the marshal was " extremely dangerous , " u.s. marshals service director says \\
+%& & cnn 's kelly wallace wonders why women too often do n't lift each up in the workplace \\
+%& &  much of the start of the world 's most famous sled dog , the iditarod trail sled dog race , is covered in barren gravel \\
+\midrule
+\textsc{First} & & jasmine coleman , \#\# , has been found safe and well some \#\# miles from her home a \#\# - year - old girl who went missing from her family home at \#am amid fears she was driven away by an ' older man ' has been found safe and well . \\
+\midrule
+%( cnn ) the man suspected of killing a deputy u.s. marshal at a motel in baton rouge , louisiana , has died , brittany stewart in the east baton rouge coroner 's office said wednesday .\\
+\textsc{Berkeley} & & Jasmine Coleman , 12 , has been found safe and well some 50 miles from her home . A 12-year-old girl has been found safe and well . Jasmine Coleman was reported as missing this morning . The force launched a public appeal for information on Saturday morning . \\
+%-LRB- CNN -RRB- The man suspected of killing a deputy U.S. marshal at a motel in Baton Rouge , Louisiana , has died . Enforcement partners face untold dangers every day in the pursuit of justice , '' '' The fugitive who killed Deputy Wells was extremely dangerous . \\
+\midrule
+
+\textsc{Model 0} & & jasmine coleman disappeared from her home in \texttt{<unk>} , west sussex \\
+%the cause of death is pending autopsy , she says \\
+\midrule
+ \textsc{Model 1} & & jasmine coleman , \#\# , disappeared from home in \texttt{<unk>} , west sussex \\
+%the man suspected of killing a deputy u.s. marshal at a motel in louisiana \\
+% there are bare patches of grass and mud on the alaska range
+%\textsc{Model 2 sparsemax} & & 16.1 \\
+\midrule
+\textsc{Model 2 conv} & & jasmine coleman , \#\# , was found safe and well in croydon \\
+% new : u.s. marshals service director \texttt{<unk>} a. \texttt{<unk>} died in baton rouge , louisiana \\
+%the \texttt{<unk>} gorge sled dog race starts saturday \\
+\textsc{Model 2 BOW} & & jasmine coleman , \#\# , has been found safe and well in croydon \\
+% the man suspected of killing deputy u.s. marshal killed deputy u.s. marshal \\
+% the \texttt{<unk>} gorge dog race starts saturday \\
+\textsc{Model 2 conv +pos} & & jasmine coleman disappeared from her home in \texttt{<unk>} , west sussex \\
+% the cause of death is pending autopsy \\
+% the \texttt{<unk>} trail sled dog race starts saturday \\
+\midrule
+\textsc{Model 3 conv} & & jasmine coleman , \#\# , disappeared from family home in \texttt{<unk>} , south east sussex \\
+% new : body of suspect found in baton rouge , louisiana \\
+% \texttt{<unk>} \texttt{<unk>} , \#\# , from anchorage , alaska , broke his back in \#\#\#\# \\
+%\textsc{Model 3 conv +pos} & &  \\
+\textsc{Model 3 conv +multi2} & & jasmine coleman , \#\# , disappeared from her home in \texttt{<unk>} , west sussex \\
+% new : death toll rises to \#\# , police say \\
+% \texttt{<unk>} \texttt{<unk>} 's team runs across the alaskan lake \\
+%\textsc{Model 3 conv +pos +multi2} & &  \\
+\bottomrule
+\end{tabular}
+\caption{Predicted summaries for each model, given a short document (an easier example).}
+\label{fig:predicted_summaries}
+\end{figure}
+
+
+
+\begin{figure}[p]
+\centering
+%\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{ll p{0.7\linewidth}}
+\toprule
+Model & & \\
+\midrule
+Source & & isis has threatened twitter founder jack dorsey and his employees after the site removed accounts linked to the extremists . \texttt{</s>} twitter confirmed to daily mail online that the company was working with authorities to verify the seriousness of the threat which claimed employees ' necks are ' a target for the soldiers of the caliphate ' . \texttt{</s>} the chilling warning , written in arabic , featured a picture of dorsey in a gun 's \texttt{<unk>} and the twitter logo . it was posted on sunday on an anonymous site based in poland which is used by programmers to share code . \texttt{</s>} dorsey , who is worth an estimated \$ \#.\#billion and lives in california , made no mention of the threat online on sunday as he tweeted his \#.\#\#million followers . \texttt{</s>} the threat featured a picture of twitter billionaire co-founder jack dorsey in a gun 's \texttt{<unk>} and the twitter logo \texttt{</s>} the alleged threat , first reported by buzzfeed , mentioned dorsey and included the words : ' we always come back . ' \texttt{</s>} ... \\
+%it goes on : ' you started this failed war ' . the message then appears to address dorsey directly and twitter employees . it reads : ' hey jack ... when their necks officially become a target for the soldiers of the caliphate and supporters scattered among your midst ! ' it also claimed killing employees ' outside a neighborhood pub ' would be no more preventable than the massacres of charlie hebdo killer amedy coulibaly and copenhagen shooter omar el - hussein . the message later reads : ' imagine the scene and wait for its occurrence at any moment , and the earliest opportunity ! \texttt{</s>} ' virtual your war on us in the internet will pull you real wars on earth ! ' \texttt{</s>} it closes with the threat : ' is the message reached my twitter ? ' isis have posted horrific videos and images of executions , including \\
+\midrule
+\textsc{Gold} & & twitter confirmed to daily mail online on monday that the company was working with authorities to verify the seriousness of the threat \\
+%& & cnn 's kelly wallace wonders why women too often do n't lift each up in the workplace \\
+%& &  much of the start of the world 's most famous sled dog , the iditarod trail sled dog race , is covered in barren gravel \\
+\midrule
+\textsc{First} & & ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel in baton rouge , louisiana , has died , brittany stewart in the east baton rouge coroner 's office said wednesday .\\
+ \midrule
+\textsc{Berkeley} & & -LRB- CNN -RRB- The man suspected of killing a deputy U.S. marshal at a motel in Baton Rouge , Louisiana , has died . Enforcement partners face untold dangers every day in the pursuit of justice , '' '' The fugitive who killed Deputy Wells was extremely dangerous . \\
+\midrule
+
+\textsc{Model 0} & & image of jack dorsey in \texttt{<unk>} was posted alongside a diatribe written in arabic \\
+\midrule
+ \textsc{Model 1} & & the message was posted on sunday on an anonymous site based in poland \\
+% there are bare patches of grass and mud on the alaska range
+%\textsc{Model 2 sparsemax} & & 16.1 \\
+\midrule
+\textsc{Model 2 conv} & & the message was posted on an anonymous site based in poland \\
+%the \texttt{\texttt{<unk>}} gorge sled dog race starts saturday \\
+\textsc{Model 2 BOW} & &  the threat featured a picture of dorsey in a gun 's \texttt{<unk>} and twitter logo \\
+% the \texttt{\texttt{<unk>}} gorge dog race starts saturday \\
+\textsc{Model 2 conv +pos} & & warning : graphic content \\
+% the \texttt{\texttt{<unk>}} trail sled dog race starts saturday \\
+\midrule
+\textsc{Model 3 conv} & & twitter co-founder jack dorsey , \#\# , has threatened twitter \\
+% \texttt{\texttt{<unk>}} \texttt{\texttt{<unk>}} , \\#\\# , from anchorage , alaska , broke his back in \\#\\#\\#\\# \\
+%\textsc{Model 3 conv +pos} & &  \\
+\textsc{Model 3 conv +multi2} & &  twitter co-founder jack dorsey tweeted the tweet on twitter \\
+% \texttt{\texttt{<unk>}} \texttt{\texttt{<unk>}} 's team runs across the alaskan lake \\
+%\textsc{Model 3 conv +pos +multi2} & &  \\
+\bottomrule
+\end{tabular}
+\caption{Predicted summaries for each model, given a longer document.}
+\label{fig:predicted_summaries}
+\end{figure}
+
+
+\begin{figure}[p]
+\centering
+%\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{ll p{0.7\linewidth}}
+\toprule
+Model & & \\
+\midrule
+Source & & ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel in baton rouge , louisiana , has died , brittany stewart in the east baton rouge coroner 's office said wednesday . \texttt{</s>} the cause of death is pending autopsy , she said . \texttt{</s>} jamie croom , \#\# , was wounded in a shootout with deputy u.s. marshal josie wells . \texttt{</s>} it can be one of the most dangerous tasks for a law enforcement officer : serving an arrest warrant to a fugitive murder suspect . when wells tried to do that tuesday , he lost his life . \texttt{</s>}  ... \\
+\midrule
+\textsc{Gold} & & the fugitive who killed the marshal was " extremely dangerous , " u.s. marshals service director says \\
+%& & cnn 's kelly wallace wonders why women too often do n't lift each up in the workplace \\
+%& &  much of the start of the world 's most famous sled dog , the iditarod trail sled dog race , is covered in barren gravel \\
+\midrule
+\textsc{First} & & ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel in baton rouge , louisiana , has died , brittany stewart in the east baton rouge coroner 's office said wednesday .\\
+ \midrule
+\textsc{Berkeley} & & -LRB- CNN -RRB- The man suspected of killing a deputy U.S. marshal at a motel in Baton Rouge , Louisiana , has died . Enforcement partners face untold dangers every day in the pursuit of justice , '' '' The fugitive who killed Deputy Wells was extremely dangerous . \\
+\midrule
+
+\textsc{Model 0} & & the cause of death is pending autopsy , she says \\
+\midrule
+ \textsc{Model 1} & & the man suspected of killing a deputy u.s. marshal at a motel in louisiana \\
+% there are bare patches of grass and mud on the alaska range
+%\textsc{Model 2 sparsemax} & & 16.1 \\
+\midrule
+\textsc{Model 2 conv} & & new : u.s. marshals service director \texttt{<unk>} a. \texttt{<unk>} died in baton rouge , louisiana \\
+%the \texttt{<unk>} gorge sled dog race starts saturday \\
+\textsc{Model 2 BOW} & &  the man suspected of killing deputy u.s. marshal killed deputy u.s. marshal \\
+% the \texttt{<unk>} gorge dog race starts saturday \\
+\textsc{Model 2 conv +pos} & & the cause of death is pending autopsy \\
+% the \texttt{<unk>} trail sled dog race starts saturday \\
+\midrule
+\textsc{Model 3 conv} & & new : body of suspect found in baton rouge , louisiana \\
+% \texttt{<unk>} \texttt{<unk>} , \#\# , from anchorage , alaska , broke his back in \#\#\#\# \\
+%\textsc{Model 3 conv +pos} & &  \\
+\textsc{Model 3 conv +multi2} & &  new : death toll rises to \#\# , police say \\
+% \texttt{<unk>} \texttt{<unk>} 's team runs across the alaskan lake \\
+%\textsc{Model 3 conv +pos +multi2} & &  \\
+\bottomrule
+\end{tabular}
+\caption{Predicted summaries for each model, given a more difficult document.}
+\label{fig:predicted_summaries}
+\end{figure}
+
+See Appendix~\ref{appendix:full_docs} for the full source documents.
+
+\todo{analysis} Appendix ??? shows more predicted summaries.
 
 \section{Discussion}
 
 Coarse-to-fine might work but it hurts performance. For next steps, we would want to scale to even larger datasets and implement hard attention.
 
+As we noted, we may be obtaining poor results because of an optimization problem. The low entropy of \textsc{Model 0} attention, as well as the attention visualization, both show that the model mainly focuses on one sentence at a time when generating the output. Thus, in theory there exists an attention distribution for the coarse-to-fine models to replicate --- the fact that they do not is most likely due to bad optimization.
+
+Assuming we can learn the attention distribution, another possible cause for the worse performance of coarse-to-fine models is lower modeling power. Because we run the encoder LSTM across each sentence separately, it may not capture the full context in same way as running the LSTM across the entire document as in \textsc{Model 0}.
+However, we found in some additional experiments that even if we run an LSTM over the full document to encode, and then learn the word-level attention over it, there was not a significant change in performance. This does not conclusively rule out this possibility, but only shows that the performance bottleneck is in learning the attention.
+
+\todo{more here}
+
+
 \chapter{Conclusion}
 \label{chap:conclusion}
+
+In this work, we develop a new coarse-to-fine architecture.
+
+We train it using methods from reinforcement learning.
+
+We experiment with it on the CNN/Dailymail dataset.
+
+\section{Future Work}
+
+For future work, we want to apply this at a larger scale. Ten sentences is still not that many.
 
 
 \bibliographystyle{plainnat}
@@ -1099,6 +1367,22 @@ Coarse-to-fine might work but it hurts performance. For next steps, we would wan
 \label{appendix:attn}
 hi
 
+\chapter{Full Source Documents}
+\label{appendix:full_docs}
+
+% ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel in baton rouge , louisiana , has died , brittany stewart in the east baton rouge coroner 's office said wednesday . </s> the cause of death is pending autopsy , she said . </s> jamie croom , ## , was wounded in a shootout with deputy u.s. marshal josie wells . </s> it can be one of the most dangerous tasks for a law enforcement officer : serving an arrest warrant to a fugitive murder suspect . when wells tried to do that tuesday , he lost his life . </s> " wells was part of a team executing arrest warrants on a fugitive wanted for double homicide in baton rouge , " the u.s. marshals service said in a news release . " the team engaged in gunfire with the fugitive and wells was shot . he was immediately transported to lane regional medical center in zachary , louisiana , where he died . " </s> wells , ## , was trying to arrest croom , who is suspected in the deaths of a brother and sister in new roads , louisiana , cnn affiliate wafb said . </s> " our deputies and law enforcement partners face untold dangers every day in the pursuit of justice in cities nationwide , " said u.s. marshals service director stacia a. hylton said in a news release . " the fugitive who killed deputy wells was extremely dangerous , wanted for double homicide and intentionally evaded justice . ... when a public servant dies in the line of duty , it is an immeasurable tragedy felt by all . our thoughts and prayers are with deputy wells ' family , friends and colleagues . " </s> officials would not elaborate on exactly what happened , but the advocate newspaper in baton rouge said there was a shootout . authorities said croom shot and killed wells at a baton rouge motel . </s> wells , ## , was based in mississippi but was on temporary assignment in the baton rouge area , the sun herald newspaper said . he was married and came from a law enforcement family . </s> despite the risks , wells loved his job . </s> " it was his passion , " longtime friend alex mcgee told the paper . " i tipped my hat to him because he knew the dangers and wanted to do the job anyway . " </s> croom , the suspect , was taken to a hospital after he was wounded , wafb said . </s> he was wanted in the shooting deaths of the two siblings in february and was also on probation for firearms charges . </s> that double homicide stemmed from a feud over a loan made to one of the victim 's relatives as well as an alleged break - in at the suspect 's grandmother 's house , croom 's older sister latonia croom duncan told cnn . </s> duncan said the family reported threats and a shooting at her grandmother 's house to police , but said there was never any follow - up . </s> she said her brother called her the night of the homicides , which took place at a nightclub . </s> " he called me and said he loved me and that he 'd be gone , " duncan said . " he said he was n't going back to jail . before he 'd go back to jail , he said , he 'd rather be dead . " </s> cnn 's devon m. sayers , john newsome , sam stringer and eliott c. mclaughlin contributed to this report . </s>
+
+%isis supporters have vowed to murder twitter staff because they believe the site 's policy of shutting down their extremist pages is a ' virtual war ' . </s> a mocked - up image of the site 's founder jack dorsey in cross-hairs was posted yesterday alongside a diatribe written in arabic , which claimed twitter employees ' necks are ' a target for the soldiers of the caliphate ' . </s> addressing mr dorsey personally , it claimed twitter was taking sides in a ' media war ' which allowed ' slaughter ' , adding : ' your virtual war on us will cause a real war on you . </s> diatribe : an image of twitter founder jack dorsey in cross-hairs was posted alongside a rant in arabic </s> it is nine years since mr dorsey launched the site , which is trying to avoid being a vehicle for jihadi videos </s> ' how will you protect your employees and supporters , helpless jack , when their necks officially become a target for the soldiers of the caliphate ? ' </s> it also claimed killing employees ' outside a neighbourhood pub ' would be no more preventable than the massacres of charlie hebdo killer amedy coulibaly and copenhagen shooter omar el - hussein . </s> it then said men and women , young and old , would all be targeted and closed by saying nothing would prevent the ' delivery of the holy mission to the world ' . the rant was written anonymously and posted on the text sharing service pastebin yesterday before being shared by isis supporters , including on twitter . </s> a twitter spokesman told buzzfeed law enforcement officials had been made aware of the rant and will assess whether it poses a genuine threat . </s> killers : the message compared its threat to the murders carried out in paris by amedy coulibaly ( left ) and in copenhagen by omar el - hussein ( right ) . so - called ' lone wolf ' attackers are encouraged by online messages </s> islamic state militants have swept through huge tracts of syria and iraq , murdering thousands of people and forcing others to conform to an extreme interpretation of sunni islam . </s> also known as isis and isil , they use social media a major propaganda tool in their bid to radicalise young muslims and persuade them to fight in iraq and syria . </s> last year home secretary theresa may said ### brits had gone to fight in the two countries , with cases emerging since then of schoolgirls fleeing to become jihadi brides . the terror group has posted gruesome videos and images of murder , including beheadings , on mainstream sites such as twitter and youtube alongside the hidden parts of the web . </s> both sites have a policy of taking down extremist content and blocking users who upload it , but usually by the time an account is shut down the content has spread halfway around the world . </s>
+
+%jasmine coleman , ## , has been found safe and well some ## miles from her home a ## - year - old girl who went missing from her family home at #am amid fears she was driven away by an ' older man ' has been found safe and well . jasmine coleman was reported as missing this morning after disappearing from her home in lancing , west sussex . the child was found this afternoon following a police appeal some ##miles away in croydon , south east london . police feared she may have been driven to london by an older man when they launched an appeal for information this morning . the schoolgirl had not been seen since ##.##pm on friday night . sussex police said she may have been talking with someone on facetime before disappearing at around #am . the force launched a public appeal for information on her whereabouts on saturday morning . in it , she was described as fair with long , blonde hair and as having possibly been wearing black riding trousers and a polo shirt or a paisley pattern dress . on saturday afternoon the force confirmed she had been found safe and well in croydon but could not confirm the circumstances under which police located her . no one has been arrested in connection with her disappearance . shortly after #pm a spokesman said : ' jasmine coleman , the ## - year - old girl from lancing reported missing from home during the early hours of saturday ( ## march ) was found safe and well later the same day in croydon . ' police would like to thank the media and members of the public for help given during efforts to trace her . ' west sussex police ( headquarters pictured above ) confirmed the child was found on saturday afternoon </s>
+
+%( cnn ) there have been a few times in my career when i 've been thoroughly disappointed -- even disgusted -- with my fellow women in the workplace . </s> no , i certainly do n't expect all my female colleagues to go out of their way for me and sing " kumbaya " together in the office , but i 'm always stunned when a woman who could have been helpful to me was n't , when a woman who could have been a mentor chose not to be , when a woman tried to hurt me because of her own fear , anxiety or what have you . </s> i 'd love to say more about each of the women i 've met along the way who fit those descriptions , but my point is not to single anyone out . my goal is to ask the question , " why ? " </s> obviously , not all women are like this and there are plenty of men guilty of the same behavior , but why do so many women try to tear each other down instead of lift each other up ? </s> i figured this would be a perfect question for sophia nelson , author of a new self - help book for women called " the woman code , " and she did n't disappoint . </s> unlocking ' the woman code ' : # tips to know your value </s> " from the time we 're little girls , we 're taught to compete , " said nelson during a recent conversation at cnn . " i need to be prettier , taller , smarter , my hair needs to be straighter , curlier , whatever it is . i need to get the better looking guy . i need to always be better than because we 're taught to come from a place of lack as women . " </s> the way nelson , an award - winning author and journalist , radio and television personality and motivational speaker , sees it , we women need to start operating like the boys . </s> men " operate from a sense of , there 's this whole pie , and i want my piece , and i do n't care if he gets his piece , and maybe we even have to work together to start that business , start that company , " said nelson . </s> of course , it 's easier for a man not to worry " if he gets his piece " since there are plenty of pieces of pie available for men in terms of management positions in corporate america , but that is n't the case for women . today , just # % of s&p ### chief executives are women and only ## % of the top five senior leadership positions at those companies are held by women , according to a cnn money analysis . </s> sheryl sandberg teams up with nba to get men to # leanin </s> decades ago , the situation was even worse . when i was just starting my television news career in #### , women who were in their ##s and were in high - level positions were the only women in a position of influence . naturally , many of them often viewed other women as threats who could take their job . </s> " because they did n't think there could be ten of them , they only thought there could be one of them , " said nelson . " fast forward ## years later . now there ... are a number of women partners at big firms , a number of women in congress . i could keep going on and on so ... there is a place for more of us . " </s> which means we can lift as we climb , we can help our younger sisters and even our cohorts while still moving up and on in our careers , says nelson . </s> " how exactly do we do that ? " i had to ask . nelson came armed with five tips on how women can work with as opposed to against each other . </s> first , nelson says be mindful of the people you surround yourself with and careful about " who 's in your row . " </s> " if you hear another woman say , and i 've heard this , ' i do n't do women friends , i do n't have women friends , ' believe her and leave her alone . i mean that , listen to me now , " said nelson . </s> there are too many women who believe in the sisterhood of women , so do n't invest any time , if possible , with people who do n't , she says . </s> if you are in a meeting and you have a great idea , do n't feel like you have to hoard it to yourself , said nelson . " collaborate , share , collaborate . ... so you lift other women as you climb by collaborating versus competing . " </s> competition is healthy and we can compete , but we ought to take a page from our male colleagues ' playbook , she said . " the guys collaborate better than we do because they operate from a place of ' i want the dollars . i want to win the contract . i want to get the business . ' we have to get in that same mindset . " </s> we 're all busy but we 've got to slow down and mentor , said nelson . </s> " we have to build a bench , " she said . " men do this well again . you 've seen it in corporate , i 've seen it . the guys go out and golf . they do things together and they 're building up the next young man leader . whatever field we 're in ... we 're less likely to do it because we 're busy . we 've got to mentor . " </s> when you lift other women as you climb , said nelson , you realize it 's reciprocal . " it 's not all about you . " </s> we women win when more women are in executive roles in organizations , i added . </s> " the right women , " said nelson . " i want to caveat that . and again , i do n't mean to be mean or catty but ... i know a lot of women in power positions that do n't help other women but there are a lot of women in power positions that do . " </s> this is a tough one for us , says nelson . we need to be willing to say to another woman that we did n't like something she did or said and do it in a respectful and private way where we are still building her up , not pulling her down . </s> " do n't go tell ## of your friends not to like her . you 'd be amazed at how silly we can be . we 're still in kindergarten some of us , " said nelson . </s> " gossip is still one of the most rampant , nasty things we do as women to each other . and it hurts . it really damages women . " </s> why do you think women too often tear each other down instead of help each other in the workplace ? share your thoughts with kelly wallace on twitter @ kellywallacetv or cnn living on facebook . </s>
+
+% much of the start of the world 's most famous sled dog race is covered in barren gravel , forcing iditarod organizers to move the start further north where there is snow and ice . </s> a weather pattern that buried the eastern u.s. in snow has left alaska fairly warm and relatively snow - free this winter , especially south of the alaska range . </s> ' if i have one more person say to me to move the iditarod to boston , i 'm going to shake my head , ' said race director mark nordman . </s> scroll down for video in this photo taken on thursday , there are bare patches of grass and mud on sled dog trails in anchorage , alaska which is unsuitable for the iditarod </s> the iditarod trail sled dog race starts saturday with a ceremonial run through anchorage . but the official start two days later has been moved ### miles ( ### kilometers ) north , over the alaska range , to fairbanks to avoid the area that left many mushers bruised and bloodied last year . iditarod officials said the conditions are worse this year . </s> the race 's chief executive officer , stan hooley , called the conditions ' pretty miserable . ' and last year was no picnic . </s> one musher last year was taken out by a rescue helicopter after making it through the dalzell gorge only to hit his head on a tree stump in the farewell burn . knocked unconscious for at least an hour , scott janssen got back on the trail after waking up . but shortly after , he broke his ankle while walking on ice trying to corral a loose dog . </s> mush ! : aliy zirkle 's team runs across willow lake during the iditarod trail sled dog race in willow lake , alaska last year when the terrain was snowy enough ' as an outdoorsman , to have to be rescued from the trail is n't a wonderful thing , ' janssen said . </s> this year 's race will feature ## mushers , including six former champions and ## rookies . the winner is expected in nome in about ## days . </s> alaskans can thank the jet stream , which has been delivering warm air from the pacific , said dave snider , a meteorologist with the national weather service in anchorage . </s> ' that position of the jet has been pretty stagnant , or at least in the general same position for a long period of time . while that 's allowing a lot of cold air to flow out of the arctic into the midwest and the eastern seaboard , we 're locked into the warmer part of that pattern , and we 've continued to see those warm pushes for a fairly long period over the winter , ' he said . </s> anchorage gets about ## inches ( ### centimeters ) of snow in a normal year ; this year only about ## inches ( ## centimeters ) have fallen . </s> the new route , which puts mushers on river ice for about ### miles , could level the playing field . </s> there are bare patches of grass and mud on sled dog trails in anchorage , alaska making it not ideal to hold the world famous dog sled race </s> ' nobody has a plan , ' nordman said . ' you 're not going to be stopping and putting your snow hook into the same tree you had the last ## years . it 's a whole new ballgame . ' </s> brent sass of eureka , alaska , is running his third iditarod , and is coming off a win in last month 's #,### - mile ( #,### - kilometer ) yukon quest international sled dog race . </s> ' it does n't hurt a guy like me who has only run the race a couple of times , ' he said of the route change . ' for the guys that have run the race ## times , it 's not just the normal routine so it might throw them off a little bit . ' </s> among the veterans in this year 's race is the defending champion , dallas seavey , and the #### bizarre finish will be remembered as much as the poor trail conditions . </s> stan hooley , the chief executive officer of the iditarod trail sled dog race , is silhouetted as video of a musher wiping out in the #### race plays behind him during a meeting in anchorage , alaska , ahead of the #### race </s> a sudden blizzard blew four - time champion and race leader jeff king out of the race when he was about ## miles ( ## kilometers ) from the finish line of the nearly #,### - mile race . </s> then aliy zirkle , who was solidly in second place , waited out the storm at the last checkpoint , ## miles ( ## kilometers ) from nome , for two hours , ## minutes . she got back on the trail when seavey blew through the checkpoint , but lost the race by two minutes , ## seconds . it was her third straight runner - up finish with no wins . </s> the route change eliminates the mountainous terrain and treacherous gorge , but it could present mushers with a whole new set of problems with a flat trail on unpredictable river ice . plus , because it 's an entirely new route , mushers say they ca n't rely much on information , even something as simple as the mileage between village checkpoints , provided by iditarod officials . </s> by removing the alaska range , mushers may assume it will be a very fast race , seavey said . </s> ' just because it 's a flat trail does not mean your dogs can all of a sudden do ## times what they 've been able to do in the past , ' said seavey , a two - time champion . ' i feel that is a trap that will catch a lot of people . ' </s> ' in the end , this race will not be won on tricks or gimmicks . it will be won on good dogmanship , ' he said . </s> too warm : in this photo taken on wednesday , stan hooley , the chief executive officer of the iditarod trail sled dog race , speaks in anchorage , alaska , ahead of the #### race </s>
+
+\chapter{Extended Results}
+\label{appendix:more_results}
+Ideas for what to put here: more experiments, ROUGE recall and precision
 \end{appendices}
 
 \end{document}
