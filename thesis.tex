@@ -23,7 +23,7 @@
 \onehalfspacing
 
 \begin{abstract} % needs work
-While humans are naturally able to produce high-level summaries upon reading paragraphs of text, computers still find such a task enormously difficult. Despite progress over the years, the general problem of document summarization remains intractable and 
+While humans are naturally able to produce high-level summaries upon reading paragraphs of text, computers still find such a task enormously difficult. Despite progress over the years, the general problem of document summarization remains intractable
 
 Inspired by recent work in deep learning, we apply the sequence-to-sequence (seq2seq) model with attention to the summarization problem. While seq2seq models are successful in a variety of natural language processing tasks, the computation does not scale well to tasks with long sequences such as documents. To that end, we propose a novel coarse-to-fine attention method to reduce the computational complexity of the standard attention model.
 %By organizing the source sequence into a 2-dimensional image, we hierarchically apply attention, using a coarse mechanism for the first layer to select a row sequence, and a finer mechanism for the second soft attention layer. While the computation for training standard seq2seq models scales linearly with source sequence length, our method is invariant to length and thus can scale arbitrarily.
@@ -59,7 +59,7 @@ Because natural language is everywhere and used by everyone, the demand for text
 
 We have established that NLP is a difficult yet worthwhile undertaking. In this section, we investigate the general philosophy of tackling these hard problems.
 
-The key property of language that make it difficult for machines to handle is its discrete and combinatorial nature. When we form sentences, we can string together arbitrary words from our vocabulary, as long as we follow the rules of some highly structured grammar. In some sense, the essential difficulty in NLP lies in handling these complicated structured problems.
+The key property of language that makes it difficult for machines to handle is its discrete and combinatorial nature. When we form sentences, we can string together arbitrary words from our vocabulary, as long as we follow the rules of some highly structured grammar. In some sense, the essential difficulty in NLP lies in handling these complicated structured problems.
 
 Linguistics attempts to answer this by building a formal theory of language. Indeed, many ideas from linguistics, including sentence parses, morphology, and semantics are invaluable in NLP for understanding the rules for how sentences and phrases can be put together.
 In order to solve a language problem, we might begin by enriching the surface form of text (the raw sentences and paragraphs) with the parse structure, parts of speech, coreferent entities, etc. We can then use this featurized form of language in whichever way we prefer.
@@ -67,13 +67,13 @@ In order to solve a language problem, we might begin by enriching the surface fo
 \begin{figure}[t]
 \centering
 \includegraphics[scale=0.5]{images/zipf}
-\caption{Zipf's law, indicating the relationship between English words and their frequency. The distribution approximately follows an inverse power law. Image from CS287}
+\caption{Zipf's law, indicating the relationship between English words and their frequency. The distribution approximately follows an inverse power law. Image from CS287.}
 \label{fig:zipf}
 \end{figure}
 
-Another mode of thought focuses on the role of statistics in language. A cursory examination of the distribution of English words reveals an interesting power law distribution known as Zipf's law (figure~\ref{fig:zipf}). By drawing from ideas of information theory \citep{Shannon1948}, we can treat language as the result of some noisy probabilistic process, and we can reduce problems such as language modeling to learning parameters of some simple distributions.
+Another mode of thought focuses on the role of statistics in language. A cursory examination of the distribution of English words reveals an interesting power law distribution known as Zipf's law (Figure~\ref{fig:zipf}). By drawing from ideas of information theory \citep{Shannon1948}, we can treat language as the result of some noisy probabilistic process, and we can reduce problems such as language modeling to learning parameters of some simple distributions.
 
-Historically, there has been contention about the roles of linguistics and statistics in NLP. Certain practical problems seem to be better off without linguistic theory; as IBM researcher Frederick Jelinek famously said, ``Every time I fire a linguist, the performance of the speech recognizer goes up.'' \todo{citation} Indeed, even naive models of language seem to perform well if given enough training data, as evidenced by the IBM models for machine translation \citep{Brown1993}.
+Historically, there has been contention about the roles of linguistics and statistics in NLP. Certain practical problems seem to be better off without linguistic theory; as IBM researcher Frederick Jelinek famously said, ``Every time I fire a linguist, the performance of the speech recognizer goes up.'' \todo{citation} Indeed, even naive models of language perform well if given enough training data, as evidenced by the IBM models for machine translation \citep{Brown1993}.
 
 Today, the linguistics-free approach has been taken to an extreme by deep learning systems. For the first time, neural networks are able to learn to perform language tasks in an end-to-end fashion \citep{Collobert2011}, i.e. without the linguistic preprocessing that was once considered necessary.
 Neural methods have been adopted by user-facing systems like Google Translate with great success \citep{GoogleTranslate2016}.
@@ -85,11 +85,14 @@ Neural methods have been adopted by user-facing systems like Google Translate wi
 In this thesis, we will consider the particular problem of \emph{text summarization}. That is, given a document with several sentences of text, the goal is to produce a short summary that captures most or all of its salient points.
 
 
+\todo{why is this important}
+
+
 \citet{Nenkova2011} give a comprehensive overview of the problem of summarization. In particular, they provide a taxonomy of methods that researchers have developed to tackle the task:
 
 \paragraph{Extractive vs. abstractive} Extractive summaries extract certain sentences or phrases from the document, while abstractive summaries take a more holistic view and can in practice be anything (similar to how humans produce summaries). 
 
-Extractive methods are by far more popular due to the simplicity of building an extraction algorithm. Abstractive methods is much more difficult, as not only do we need to extract relevant content, but we also need to ensure grammaticality of the output (a difficult problem in itself).
+Extractive methods are by far more popular due to the simplicity of building an extraction algorithm. Abstractive methods are much more difficult, as we need to both extract relevant content and also ensure grammaticality of the output (a difficult problem in itself).
 
 \paragraph{Single- vs. multi-document} Summarization was originally posed as the problem of producing a summary for a single document. However, with the onset of the Internet, there are often multiple documents on the same topic, and so a summarization system should be able to use all of them to produce a summary.
 
@@ -114,7 +117,8 @@ While DUC did not lead to any definitive answers on how best to summarize docume
 For the generic summarization tasks, it was found that the first sentence of news articles was a strong baseline that more sophisticated methods found hard to beat. Thus, the generic summary task was seen as ill-formed and not as interesting, leading to the more query-focused tasks in the later years.
 
 
-DUC also inspired a lot of thinking on the best way to evaluate summaries. Evaluating a good summary is inherently ambiguous, and probably one of the hardest parts of the problem. While a single most effective metric for summarization may not exist, DUC established several important criteria, including grammaticality, non-redundancy, and content coverage.
+DUC also inspired a lot of thinking on the best way to evaluate summaries. Evaluating a summary is inherently ambiguous, as even humans tend to disagree on what makes for a good summary.
+Finding a quantitative metric for evaluating summaries turns out to be one of the hardest parts of the problem. While a single most effective metric for summarization may not exist, DUC established several important criteria, including grammaticality, non-redundancy, and content coverage.
 
 
 For extractive summaries, people have proposed simple metrics such as precision and recall on selected sentences. These naturally do not work too well since 1) not all sentences are equally informative, and 2) not all parts of a sentence are relevant.
@@ -189,17 +193,23 @@ Outside of the academic realm, summarization is an important problem in industry
 
 Smmry's algorithm is a simple extractive method. It counts word occurrences, splits discussions by sentence, and ranks the sentences based on the sum of their word scores. This algorithm bears extraordinary similarity to \citet{luhn1958automatic} --- although a variety of work has been done since then, the simplest approaches turn out to be the most practical.
 
-\section{Outline}
+\section{This Work}
 
-Inspired by advances in deep learning for NLP, we set out to build a deep model to abstractively generate summaries. Along the way, we propose a new model architecture that extends the sequence-to-sequence model that attempts to reduce the computational complexity of the document summarization problem.
+Inspired by advances in deep learning for NLP, we set out to build a deep model to abstractively generate summaries. Because deep learning is computationally expensive even for short lengths of text such as sentences, this creates a challenge for the general document summarization problem.
+
+Hence, we will survey the literature for methods that alleviate the computation of training deep models. Along the way, we propose a new model architecture that extends the sequence-to-sequence model and attempts to reduce the computational complexity of the document summarization problem.
+
+\section{Outline}
 
 
 We provide an outline for the rest of this thesis.
+
 In Chapter~\ref{chap:related}, we give a survey of deep learning and motivate its use in solving our problem.
 In Chapter~\ref{chap:background}, we provide the necessary background material for understanding our models and algorithms.
+In Chapter~\ref{chap:algorithms}, we describe our training algorithm formally.
 In Chapter~\ref{chap:models}, we describe our models formally.
 In Chapter~\ref{chap:experiments}, we describe the experimental setup, including our dataset, baselines, and practical details for training our models.
-In Chapter~\ref{chap:results}, we show results and analyze the outputs of our models.
+In Chapter~\ref{chap:results}, we show results, analyze the outputs of our models, and provide discussion.
 Finally, we conclude in Chapter~\ref{chap:conclusion}.
 
 %%%%%%%%%%
@@ -212,27 +222,32 @@ Finally, we conclude in Chapter~\ref{chap:conclusion}.
 
 The history of neural networks dates back to the perceptron \citep{Rosenblatt1958}, a simple model that assumes data can be linearly separated. Due to this strict requirement, the machine learning community dismissed the idea as impractical, and research was sidelined for most of the 20th century.
 
-Some other work continued: \citet{Rumelhart1986} showed that the backpropagation algorithm could be used to efficiently train general neural networks, but this was before the era of GPUs and modern computing, and so the algorithm could not be practically used.
+Later, \citet{Rumelhart1986} showed that the backpropagation algorithm could be used to efficiently train general neural networks, reviving interest in the subject. However, this was before the era of GPUs and modern computing, and so the algorithm could not be put to practical use.
 
-Recently, neural networks have made a resurgence. In the ImageNet image classification competition in 2012, \citet{Krizhevsky2012} won using deep convolutional neural networks \citep{LeCun1995}, beating the competition by a significant margin. This led to a renewed wave of research, especially due to the advancement of modern computing power and GPUs, which can train networks at 10 to 20 times the speed of standard CPUs. Today, deep models are successfully used in image recognition \citep{Farabet2013}, speech recognition \citep{Hinton2012}, and Go playing \citep{Silver2016}, just to name a few.
+Recently, neural networks have made a resurgence. In the ImageNet image classification competition in 2012, \citet{Krizhevsky2012} won using deep convolutional neural networks \citep{LeCun1995}, beating the competition by a significant margin. This led to a renewed wave of research, especially due to the advancement of GPU computing power, which can train networks at 10 to 20 times the speed of standard CPUs. Today, deep models are successfully used in image recognition \citep{Farabet2013}, speech recognition \citep{Hinton2012}, and Go playing \citep{Silver2016}, just to name a few.
 
-\begin{figure}
-\centering
-\includegraphics[width=\textwidth]{images/graph}
-\caption{A visualization of word2vec word embeddings clusters \citep{mikolov2013word2vec}, projected to two dimensional space (how?). Words with similar semantic meaning tend to be close together in the space. Image from CS287.}
-\label{fig:word2vec}
-\end{figure}
 
-While neural networks are often treated as black box classifiers, \citet{Zeiler2014} show that the intermediate layers of deep convolutional networks contain abstracted qualities of the input, such as patterns, textures, and objects of the input. This suggests that neural networks are discovering features of the input and building generalized \emph{representations} of their inputs.
-
-The idea of learning representations of the input is quite general, and so it comes as no surprise that deep networks soon found applications in NLP. \citet{mikolov2013word2vec} show that by training a neural network on a Google News text corpus, the network learned to map words in the English language to a vector of real numbers known as \emph{word embeddings}. These word embeddings are actually able to capture semantic properties of the words --- for example, taking the vectors for \emph{king}, \emph{man}, and \emph{woman}, we find that $v_{king} - v_{man} + v_{woman} \approx v_{queen}$, preserving the analogy that we usually make with text.
-
-% diagram of vectors
+In NLP, one of the first successful neural models was \citet{Bengio2003}, which builds a neural language model using multi-layered perceptrons. Later, \citet{Collobert2011} demonstrate that neural models can be used to train end-to-end models without any of the preprocessing that was once considered necessary.
 
 Since the onset of deep learning, deep models have found their way into nearly every corner of NLP. Much of their success relies on the ubiquity of the \emph{long short-term memory} (LSTM) recurrent neural network \citep{hochreiter1997long}, a model used to both process and generate sequences of text.
 Several state-of-the-art algorithms are now based upon deep learning tools such as word vectors and LSTMs. While there is too much to cover here, \citet{goldberg2015primer} provides a concise summary of the models that have had the greatest impact on NLP. % weak
 
+\section{Representation Learning}
 
+While neural networks are often treated as black box classifiers, \citet{Zeiler2014} show that the intermediate layers of deep convolutional networks contain abstracted qualities of the input, such as patterns, textures, and objects of the input. This suggests that neural networks are discovering features of the input and building generalized \emph{representations} of their inputs.
+
+\begin{figure}
+\centering
+\includegraphics[trim={15cm 15cm 15cm 15cm},clip,width=\textwidth]{images/graph}
+\caption{A visualization of word2vec word vectors \citep{mikolov2013word2vec}, projected to two dimensional space (how?). Words with similar semantic meaning tend to cluster together in the space. Image from CS287.}
+\label{fig:word2vec}
+\end{figure}
+
+The idea of learning representations of the input is quite general, and also applies in NLP.
+\citet{mikolov2013word2vec} show that by training a neural network on a Google News text corpus, the network learned to map words in the English language to a vector of real numbers known as \emph{word embeddings}. These word embeddings are actually able to capture semantic properties of the words --- for example, taking the vectors for \emph{king}, \emph{man}, and \emph{woman}, we find that $v_{king} - v_{man} + v_{woman} \approx v_{queen}$, preserving the analogy that we usually make with text. Figure~\ref{fig:word2vec} shows some of the word2vec vectors when projected to two dimensional space.
+
+Representation learning has become a central topic in NLP. Word vectors trained on a general text corpus can successfully be applied to almost any NLP task \citep{mikolov2013word2vec, Pennington2014}.
+It remains to be seen whether it is possible to represent longer pieces of text, such as sentences, in a general way, and research in the area is active \citep{Bowman2016}.
 
 %\section{Summary}
 %
@@ -280,7 +295,7 @@ With this goal in mind, we attempt to interpretably extend the attention mechani
 \chapter{Background}
 \label{chap:background}
 
-In this chapter, we set up the relevant background ideas for our models.
+In this chapter, we set up the relevant background ideas for our models. We describe the sequence-to-sequence attention model at a high level, then survey the literature for methods in reducing the computation cost of deep models. Finally, we introduce the framework of reinforcement learning, which will provide the foundation for one of these methods.
 
 \section{Sequence-to-Sequence Attention Models}
 
@@ -347,7 +362,7 @@ In general, we may want to sample from multinomial distributions, i.e. select on
 
 
 
-%\citet{Maddison2017} apply a smoothed version of the Gumbel max trick in order to approximate the sampling process. The Gumbel max trick is an alternative method for sampling multinomial random variables: by drawing i.i.d. uniform variables $U_i \sim \mathrm{Unif}(0,1)$, taking the argmax of $z_i - \log(-\log(U_i))$ gives us a sample with the correct probability. While this process is still discrete and has no gradient, \citet{Maddison2017} use a softmax instead of a max to obtain a smooth approximation that can be differentiated.
+\citet{Maddison2017} apply a smoothed version of the Gumbel max trick in order to approximate the sampling process. The Gumbel max trick is an alternative method for sampling multinomial random variables: by drawing i.i.d. uniform variables $U_i \sim \mathrm{Unif}(0,1)$, taking the argmax of $z_i - \log(-\log(U_i))$ gives us a sample with the correct probability. While this process is still discrete and has no gradient, \citet{Maddison2017} use a softmax instead of a max to obtain a smooth approximation that can be differentiated.
 
 
 Reinforcement learning has also been proposed as an approach to handling discrete units in a network.
@@ -376,7 +391,7 @@ There are several methods for solving the general RL problem. Some are model-bas
 
 Another method is to learn a direct policy function $\pi( \cdot ; \theta) : \mcS \to \mcA$, where $\pi$ is parametrized by weights $\theta$. We can train $\pi$  to maximize expected reward through a gradient ascent method known as \emph{policy gradient}, or the REINFORCE algorithm \citep{williams1992reinforce}.
 
-It turns out that REINFORCE can be used to train deep neural networks with stochastic units by a simple extension of the backpropagation algorithm. In the next section, we derive the training algorithm.
+It turns out that REINFORCE can be used to train deep neural networks with stochastic units by a simple extension of the backpropagation algorithm. In the next chapter, we connect reinforcement learning and deep learning, and we derive the training algorithm for these deep networks.
 
 %When the transition distribution $p(s_{t+1} | s_t, a_t)$ and reward function $R(s,a)$ is known, our problem is also known as a Markov decision process (MDP), and can be 
 %
@@ -430,6 +445,12 @@ It turns out that REINFORCE can be used to train deep neural networks with stoch
 
 %occasionally choosing random actions to better explore the state space (also known as an $\epsilon$-greedy exploration policy).
 
+\chapter{Algorithms}
+\label{chap:algorithms}
+
+While reinforcement learning is an attractive framework for posing our models, the details of training become more complicated in the context of deep learning.
+In this chapter, we describe how both deep learning and reinforcement learning both fit into the rigorous model of stochastic computation graphs.
+We then give the corresponding training algorithm in detail.
 
 \section{Stochastic Computation Graphs}
 
@@ -443,13 +464,15 @@ We can formulate a training problem for SCGs by choosing certain terminal nodes 
 
 Note that the SCG formulation captures both supervised deep learning and RL policy functions. Deep neural networks are just SCGs with all deterministic nodes, and the loss function $\mcL$ of the task is the objective. The RL policy function is an SCG with actions at the stochastic nodes, and the expected reward $\mathbb{E}[r]$ is the objective. As we will see, SCGs will turn out to be a generalization of the REINFORCE algorithm.
 
-\begin{figure}
-% todo
-\caption{Simple examples of stochastic computation graphs (SCGs). Nodes in circles are stochastic, nodes in squares are deterministic, and the rest are input nodes. Image from \citet{schulman2015backprop}.}
+\begin{figure}[t]
+\includegraphics[width=\textwidth]{images/SCGs}
+\caption{Simple examples of stochastic computation graphs (SCGs), along with the objective and corresponding gradient estimator. Nodes in circles are stochastic, nodes in squares are deterministic, and the rest are input nodes. Diagrams from \citet{schulman2015backprop}.}
 \label{fig:scg}
 \end{figure}
 
-Figure~\ref{fig:scg} shows examples of simple SCGs, as well as the gradient of the objective for the parameter $\theta$. Using the gradient, we optimize the objective function using gradient descent.
+Figure~\ref{fig:scg} shows examples of simple SCGs, as well as the estimator of the objective gradient for the parameter $\theta$. Using the estimated gradient, we optimize the objective function using gradient descent.
+
+For these special cases, notice that for all stochastic nodes, the gradient estimator includes a term of the form $\partial \log p( - | -) / \partial \theta$. On the other hand, deterministic nodes lead to derivatives as in the chain rule from backpropagation.
 
 Next, we derive the gradient of the objective with respect to parameter input nodes in the general case.
 
@@ -531,9 +554,9 @@ But this follows since
 Thus, the gradient with baseline is unbiased.
 \end{proof}
 
-Including a baseline is proven to reduce the variance of the estimator \citep{Weaver2001}. There are several different methods for producing baselines, and we will not cover all of them here.
+Including a baseline is proven to reduce the variance of the estimator \citep{Weaver2001}. There are several different methods for producing baselines, such as taking the average of all previously seen cost terms, and we will not cover all of them here.
 
-\subsection{Algorithm}
+\subsection{Training}
 \label{sec:algorithm}
 
 In order to compute the gradients of SCGs in practice, we make a slight tweak to the backpropagation algorithm.
@@ -586,9 +609,9 @@ Algorithm~\ref{alg:reinforce} gives the complete algorithm for gradient descent 
 %w^{(t+1)} \gets w^{(t)} + \eta \mathbb{E}_{a_t} \left[ (R_t - b) \frac{\partial \log p(a_t | s_t; w)}{\partial w} \right]
 %\end{equation}
 
-While SCGs are a very useful and general framework, it is often simpler to pose certain SCGs in the language of reinforcement learning.
+While SCGs are a very useful and general framework, the language of reinforcement learning is more intuitive and easy to understand.
 
-Consider in particular the sequential decision problem of RL. Suppose we have a trajectory of states $s_t$ and we make actions $a_t$ at time $t$ based on some parameterized policy function. Each action leads to a reward $r_t$, and influences total future reward $\sum_{s=t}^T r_s$ where $T < \infty$ is the time horizon.
+We will be most interested in the sequential decision problem of RL. That is, suppose we have a trajectory of states $s_t$ and we make actions $a_t$ at time $t$ based on some parameterized policy function. Each action leads to a reward $r_t$, and influences total future reward $\sum_{s=t}^T r_s$ where $T < \infty$ is the time horizon.
 
 Note that we can treat our actions $a_t$ for $ t = 0, \ldots, T$ as stochastic nodes in an SCG, and the costs $\hat{c}$ are the rewards we receive for each $t$. Then instead of computing $\hat{C}_{a_t} = \sum_{s=t}^T r_s$, we can scale later rewards with a discount factor $\gamma $, giving
 \begin{equation}
@@ -626,8 +649,7 @@ In the next chapter we describe our models in detail.
 \chapter{Models}
 \label{chap:models}
 
-
-\todo{lots of figures needed}
+In this chapter, we describe our models. We begin by introducing the standard sequence-to-sequence attention model, then describe our extensions of the basic architecture.
 
 \section{Sequence-to-sequence (seq2seq)}
 
@@ -666,7 +688,7 @@ A context vector is produced at each time step using an attention function $a$ t
 \begin{equation}
 \boldc_t = a([\boldh_1, \ldots, \boldh_n], \boldh_t^{dec})
 \end{equation}
-As in \citet{luong2015effective}, it is helpful to feed the context vector at time $t-1$ back into the decoder RNN at time $t$, i.e. $\boldh_t^{dec} = f_{dec}([y_{t-1}, \boldc_t], \boldh_{t-1}^{dec})$.
+As in \citet{luong2015effective}, it is helpful to feed the context vector at time $t-1$ back into the decoder RNN at time $t$, i.e. $\boldh_t^{dec} = f_{dec}([y_{t-1}, \boldc_{t-1}], \boldh_{t-1}^{dec})$.
 
 Finally, a linear projection produces a distribution over output words $y_t \in \mcV$:
 \begin{equation}
@@ -680,11 +702,11 @@ Given document-summary pairs $\{ (\boldx^{(i)}, \boldy^{(i)}) \}_{i=1}^N$ for tr
 \end{align*}
 As the model is fully differentiable with respect to its parameters, we can train it end-to-end with stochastic gradient descent and the backpropagation algorithm.
 
-We note that we have great flexibility in how our attention function $a$ combines the encoder context and the current decoder hidden state. In the next few sections, we explain standard choices for $a$ as well as our proposed coarse-to-fine attention model.
+We note that we have great flexibility in how our attention function $a(\cdot)$ combines the encoder context and the current decoder hidden state. In the next few sections, we explain standard choices for $a(\cdot)$ as well as our proposed model of \emph{coarse-to-fine attention}.
 
 \section{Model 0: Standard Attention}
 
-In \cite{bahdanau2014neural}, the function $a$ is implemented with an \emph{attention network}. We compute attention weights for each encoder hidden state $h_i$ as follows:
+In \citet{bahdanau2014neural}, the function $a(\cdot)$ is implemented with an \emph{attention network}. We compute attention weights for each encoder hidden state $h_i$ as follows:
 \begin{align}
 \beta_{t,i} &= \boldh_i^\top \boldW^{attn} \boldh_t^{dec} \quad \forall i = 1, \ldots, n\\
 \balpha_t &= \mathrm{softmax}(\bbeta_t) \\
@@ -715,25 +737,22 @@ Going forward, we call this instantiation of the attention function \textsc{Mode
 \label{fig:coarsetofine}
 \end{figure}
 
-We can leverage the same idea for text summarization, assuming we have a suitable representation of our input document. The simplest method for doing so would be to run an LSTM over the document.
-
-However, the attention step becomes computationally difficult --- for each word we generate, we need to compare it to every word of the document in order to determine which part to attend to. Therefore, we propose a hierarchical method of attending to the document by first attending to sentences, then to the words within sentences. We call this method \emph{coarse-to-fine attention}
+We can also leverage sequence-to-sequence for text summarization. However, the attention step becomes computationally expensive --- for each word we generate, we need to compare it to every word of the document in order to determine which part to attend to. Intuitively, we should only need to attend to a few important sentences of the document instead of all of it. Therefore, we propose a hierarchical method of attending to the document by first attending to sentences, then to the words within sentences. We call this method \emph{coarse-to-fine attention}
 \footnote{The term coarse-to-fine attention has previously been introduced in the literature \citep{mei2016}. However, their idea is different: they use coarse attention to reweight the fine attention computed over the entire input. This idea has also been called hierarchical attention \citep{nallapati2016seq2seq}.}.
 
 
 
-To be able to attend to both sentences and words in a hierarchical manner, we need to construct encodings of the document at both levels. Thus, we run a low-level LSTM encoder on the words of each sentence for a fine-grained representation of the text, and a simpler encoder model (e.g. bag of words) for coarse-grained sentence representations.
+To be able to attend to both sentences and words in a hierarchical manner, we need to construct encodings of the document at both levels. For the coarse-grained sentence representations, we use a simple encoding model (e.g. bag of words), and for the fine-grained representations, we run an LSTM encoder on the words of a sentence.
 \citet{Sukhbaatar2015} demonstrate how coarse representations can be useful by using memory networks to access information for simple question-answering tasks.
-\citet{li2015autoencoder} use the idea of coarse and fine encodings to develop a hierarchical autoencoder for representing paragraphs of text.
+\citet{li2015autoencoder} use the idea of a hierarchical representation of text to develop a two-layer LSTM autoencoder for paragraph representation.
 %by using low-level LSTMs on words to build sentence representations, then a high-level LSTM on the sentences for the final paragraph representation.
 
-Therefore, if we can make our model first use coarse attention to choose sentences, then use fine attention to choose words only from that sentence, then we avoid the computational cost of searching over the entire document. This idea runs into a very serious problem, however: by posing the attention as a discrete selection process, the neural network loses the key property of being differentiable, and so standard backpropagation no longer applies.
+Therefore, if we can make our model first use coarse attention to choose sentences, then use fine attention to choose words only from that sentence, then we avoid the computational cost of searching over the entire document.
 
-%%%
-
-For a large source input like a document, it may be computationally inefficient to run an RNN over the entire source. Instead, we can consider organizing the document into distinct sentences and select one sentence to attend to at a time.
-
-Specifically, suppose we have sentences $s_1, \ldots, s_m$ with words $w_{i,1}, \ldots, w_{i,n_i}$ for sentence $s_i$, so that we can apply an RNN to each separately to get corresponding hidden states $\boldh_{i,j}$ for $i = 1, \ldots, m$ and $j = 1, \ldots, n_i$.
+Specifically, suppose we have sentences $s_1, \ldots, s_m$ with words $w_{i,1}, \ldots, w_{i,n_i}$ for sentence $s_i$. We apply an RNN to each sentence separately to get corresponding hidden states $\boldh_{i,j}$ for $i = 1, \ldots, m$ and $j = 1, \ldots, n_i$, so that
+\begin{equation}
+\boldh_{i,j} = \on{RNN}(\boldh_{i,j-1}, w_{i,j})
+\end{equation}
 For attention, we then consider two options.
 
 \paragraph{Model 1} We can follow \textsc{Model 0} and compute attention weights $\alpha_{i,j}$ for each hidden state $\boldh_{i,j}$ by normalizing over all states. We call this \textsc{Model 1}.
@@ -755,7 +774,7 @@ In order to compute the sentence attention weights $\alpha_i^s$, we need to prod
 	\caption{Convolution}
 	\label{fig:bow_encoder_conv}
 \end{subfigure}
-\caption{Options for producing sentence representations. We can either use a bag of words by summing the word embeddings, or apply convolutions and max-over-time pooling.}
+\caption{Options for producing sentence representations from the word embeddings. We can either use a bag of words by summing the embeddings, or apply convolutions and max-over-time pooling.}
 \label{fig:sent_reps}
 \end{figure}
 
@@ -774,7 +793,7 @@ Our final output is given by
 \begin{equation}
 \boldh^s = \max_j(\tanh(\boldu_j))
 \end{equation}
-where the max-over-time takes the maximum along the word indexing dimension.
+where the max-over-time takes the maximum along the word indexing dimension. See Figure~\ref{fig:sent_reps} for diagrams of the sentence representation models.
 
 
 Thus, using the sentence representations, we can compute attention over the sentences.
@@ -791,7 +810,7 @@ However, if we are able to perform conditional computation and only compute on $
 In our experiments, we will apply stochastic sampling to the attention distribution $\balpha$ in the spirit of \citet{xu2015captioning} and ``hard attention''.
 Specifically, rather than computing the context $\widetilde{\boldc}$ as an expectation over $\balpha$ (i.e. $\boldc = \sum_{i=1}^n \alpha_i \boldh_i$), we can sample from the probability distribution $\balpha$ to obtain a single state $\boldh_i$, and we set $\widetilde{\boldc} = h_i$ as the sampled hidden state.
 
-In our case, we take \textsc{Model 2} and apply hard attention at the sentence level, but keep the word level attention per sentence as is. That is, we sample from the attention weights $\alpha_1^s, \ldots, \alpha_m^s$ to obtain a one-hot encoding for the sentence attention, and apply the same multiplication with this one-hot vector on the word-level attention weights $\alpha_{i,1}^w, \ldots, \widetilde{\alpha}_{i,n_i}^w$ for all $i = 1, \ldots, m$. We call this \textsc{Model 3}.
+In our case, we take \textsc{Model 2} and apply hard attention at the sentence level, but keep the word level attention per sentence as is. That is, we sample from the attention weights $\alpha_1^s, \ldots, \alpha_m^s$ to obtain a one-hot encoding for the sentence attention, and apply the same multiplication with this one-hot vector on the word-level attention weights $\alpha_{i,1}^w, \ldots, \alpha_{i,n_i}^w$ for all $i = 1, \ldots, m$. We call this \textsc{Model 3}.
 
 
 Because the hard attention model loses the property of being end-to-end differentiable, we use reinforcement learning to train our network.
@@ -829,9 +848,29 @@ The backpropagated gradient is then the standard soft attention gradient instead
 
 While this method helps stabilize training, it's aesthetically not very pleasing. Our goal in coarse-to-fine attention is to reduce computation over the encoded hidden states, while this method requires that we perform the full amount of computation as soft attention for a random subset of minibatches. However, we include this training method in our experiments to test how feasible hard attention is.
 
+
+\paragraph{Multiple samples} 
+From our initial experiments with \textsc{Model 3}, we found that taking a single sample was not very effective. However, we discovered that sampling multiple times from the distribution $\alpha$ improves performance.
+
+To be precise, we sample based on the multinomial distribution $\mathrm{Mult}(k_{mul}, \{\alpha_i\}_{i=1}^n)$ to produce the sentence-level attention vector $\balpha_t$ at time $t$, with $\alpha_i = x_i / k_{mul}$, where $x_i$ is the $i$th entry of the multinomial sample. $k_{mul}$ is a hyperparameter which can be tuned (standard hard attention is $k_{mul} = 1$).
+
+Intuitively, $k_{mul}$ is the number of sentences we select to produce the context. With higher $k_{mul}$, the hard attention model more closely approximates the soft attention model, and hence leads to better performance. This, however, incurs a cost in computational complexity.
+
 \section{Beam Search}
 
-At test time decoding, we use beam search. \todo{do we need this?}
+Once we have our trained model, we use beam search at test time to produce the output summaries.
+
+In beam search, we keep a beam of 
+
+\begin{algorithm}[b]
+\caption{Beam Search}
+\label{alg:beam_search}
+\begin{algorithmic}
+\State hi
+\end{algorithmic}
+\end{algorithm}
+
+
 
 %We also include an entropy-increasing term to encourage exploration during the training process, which is important to speed up convergence of learning. Our policy gradient equation then becomes
 %\begin{equation}
@@ -841,13 +880,6 @@ At test time decoding, we use beam search. \todo{do we need this?}
 %where $H(\balpha_t) = -\sum_{i=1}^n \alpha_t \log \alpha_t$ is the entropy function and $\lambda_{ent}$ is a hyperparameter.
 
 
-%\subsection{Multiple Samples}
-%
-%From our initial experiments with Model 3, we found that taking a single sample was not very effective. However, we discovered that sampling multiple times from the distribution $\alpha$ significantly improves performance.
-%
-%We sample based on the multinomial distribution $\mathrm{Mult}(k, \{\alpha_i\}_{i=1}^n)$ to produce the sentence-level attention vector $\alpha$ of length $n$, with $\alpha_i = x_i / k$, where $x_i$ is the number of times index $i$ was sampled. $k$ is a hyperparameter which can be tuned, and we found that $k=5$ works well in our experiments.
-%
-%The intuition here is for the hard attention model to more closely approximate the soft attention model, as it can select more sentences to produce the context.
 
 %\subsection{Curriculum}
 %
@@ -924,20 +956,20 @@ Ideally, we would prefer to not truncate documents, especially since later conte
 \paragraph{Baselines}
 For a baseline, we take the first sentence of the document (chosen as the average length of a sentence in the training dataset). We call this \textsc{First}.
 
-We also consider the feature-based document summarizer of \citet{Durrett2016}, which uses ILP methods to compress extracted sentences. We apply the code \footnote{https://github.com/gregdurrett/berkeley-doc-summarizer} directly on the test set without retraining the system. Their system requires that the documents are preprocessed in CONLL format, and we use the Berkeley coreference system\footnote{https://github.com/gregdurrett/berkeley-entity}.
+We also consider the feature-based document summarizer of \citet{Durrett2016}, which uses ILP methods to compress extracted sentences. We apply the code \footnote{https://github.com/gregdurrett/berkeley-doc-summarizer} directly on the test set without retraining the system. Their system requires that the documents are preprocessed in CONLL format, so we use the Berkeley coreference system\footnote{https://github.com/gregdurrett/berkeley-entity} with the coreference and NER settings. We call this \textsc{Berkeley}.
 
 \paragraph{Our models}
 
 We ran experiments with Models 0 to 3 as described above.
 
 \begin{itemize}
-\item Model 0: Soft attention.
-\item Model 1: Organized by sentence, soft attention over all.
-\item Model 2: Hierarchical LSTM, coarse-to-fine with soft attention.
-\item Model 3: Hierarchical LSTM, coarse-to-fine with hard attention over sentences.
-%\item Model 3+multisampling: We include multisampling with $k=5$.
+\item \textsc{Model 0}: Soft attention.
+\item \textsc{Model 1}: Organized by sentence, soft attention over all.
+\item \textsc{Model 2}: Hierarchical LSTM, coarse-to-fine with soft attention.
+\item \textsc{Model 3}: Hierarchical LSTM, coarse-to-fine with hard attention over sentences.
 \end{itemize}
 
+We also 
 
 
 \section{Training}
@@ -954,7 +986,10 @@ We use 2 layer LSTMs with 500 hidden units, and we initialize word embeddings wi
 
 
 
-Our models are implemented using Torch \citep{Torch} based on a past version of Harvard's OpenNMT system\footnote{https://github.com/harvardnlp/seq2seq-attn}. We ran our experiments on a GPU (specs?). All of our code is available open source\footnote{https://github.com/jeffreyling/seq2seq-hard}.
+Our models are implemented using Torch \citep{Torch} based on a past version of Harvard's OpenNMT system\footnote{https://github.com/harvardnlp/seq2seq-attn}. We ran our experiments on a GPU (specs?). 
+The models take between 2-2.5 hours to train per epoch.
+
+All of our code is available open source\footnote{https://github.com/jeffreyling/seq2seq-hard}.
 
 In the next chapter we show results.
 
@@ -963,7 +998,8 @@ In the next chapter we show results.
 
 \section{Evaluation}
 
-We report metrics for perplexity and ROUGE scores \citep{lin2004rouge} on the test set. % will I have time to do the test set??? main problem is running the Berkeley system
+We report metrics for perplexity and ROUGE scores \citep{lin2004rouge} on the test set.
+
 ROUGE-n computes n-gram overlap between a gold summary and a predicted summary, and ROUGE-L computes the longest common subsequence.
 We use ROUGE balanced F-scores and report numbers for ROUGE-1 (unigrams), ROUGE-2 (bigrams), and ROUGE-L. While ROUGE traditionally uses the recall metric, we choose F-score since recall is biased towards longer predicted sentences.
 
@@ -977,25 +1013,28 @@ With multiple gold summaries in the CNN/Dailymail highlights, we choose to take 
  \toprule
  Model &  & PPL & ROUGE-1 & ROUGE-2 & ROUGE-L \\
  \midrule
-\textsc{First} & & - & 23.1 & 9.8 & 20.5 \\
-\textsc{Berkeley} & & - & \\
-\textsc{Model 0} & & 13.6 &  \\
+\textsc{First} & & - & 32.3 & 15.5 & 27.4 \\
+\textsc{Berkeley} & & - &  \\
+\textsc{Model 0} & & 13.9 &  \\
  \textsc{Model 1} & & \\
 \textsc{Model 2 conv} & & 15.8 & & \\
-\textsc{Model 2 sparsemax} & & 16.1 \\
-\textsc{Model 3 hard only} & & 32.3 \\
+%\textsc{Model 2 sparsemax} & & 16.1 \\
+\textsc{Model 3 conv} & & 32.3 \\
 \midrule
 \textsc{Model 2 BOW} & & 16.4 & & \\
 \textsc{Model 2 LSTM} & & 15.5 \\
-\textsc{Model 2 5x80 conv} & & 14.8 \\
-\textsc{Model 2 2x200 conv} & & 14.2  \\
 \textsc{Model 2 conv +pos} & & 15.3 & & \\
 \midrule
-\textsc{Model 3 hard sample 2} & & 25.0 \\
-\textsc{Model 3 hard sample 3} & &  \\
+\textsc{Model 2 5x80 conv} & & 14.8 \\
+\textsc{Model 2 2x200 conv} & & 14.2  \\
+\midrule
+\textsc{Model 3 conv +pos} & & 25.0 \\
+\textsc{Model 3 conv +multi2} & & 25.0 \\
+\textsc{Model 3 conv +pos +multi2} & & 25.0 \\
+\textsc{Model 3 conv +multi3} & &  \\
  \bottomrule
 \end{tabular}
-\caption{Summarization results for CNN/Dailymail.}
+\caption{Summarization results for CNN/Dailymail on the test set.}
 \label{table:summary}
 \end{table}
 
@@ -1010,7 +1049,8 @@ Model & & Entropy \\
 \textsc{Model 2 conv} \\
 \textsc{Model 2 BOW} \\
 \textsc{Model 2 conv +entropy}  \\
-\textsc{Model 2 sparsemax} \\
+\textsc{Model 2 conv +pos} \\
+%\textsc{Model 2 sparsemax} \\
 \bottomrule
 \end{tabular}
 \caption{Entropy over sentence attention. We computed \textsc{Model 0} and \textsc{Model 1} entropy by summing over each row.}
@@ -1023,14 +1063,16 @@ Model & & Entropy \\
 
 See Table~\ref{table:summary} for summary results.
 
+
+% training curves
+We see hard attention takes longer to converge.
+
 We investigate the entropy of the sentence attention on the validation set in Table~\ref{table:entropy}.
 
 % synthetic data
 
 % MT?
 
-% training curves
-We see hard attention takes longer to converge.
 
 %% attention figures 
 We see that the attention is very spread out over sentences. In particular, we notice that the word-level attention focuses on specific stop words for all decoder time steps. We posit this may be due to ???
