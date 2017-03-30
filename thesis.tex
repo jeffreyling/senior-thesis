@@ -23,7 +23,7 @@
 \onehalfspacing
 
 \begin{abstract} % needs work
-While humans are naturally able to produce high-level summaries upon reading paragraphs of text, computers still find such a task enormously difficult. Despite progress over the years, the general problem of document summarization remains intractable
+While humans are naturally able to produce high-level summaries upon reading paragraphs of text, computers still find such a task enormously difficult. Despite progress over the years, the general problem of document summarization remains intractable, and simple models prove to be hard to beat.
 
 Inspired by recent work in deep learning, we apply the sequence-to-sequence (seq2seq) model with attention to the summarization problem. While seq2seq models are successful in a variety of natural language processing tasks, the computation does not scale well to tasks with long sequences such as documents. To that end, we propose a novel coarse-to-fine attention method to reduce the computational complexity of the standard attention model.
 %By organizing the source sequence into a 2-dimensional image, we hierarchically apply attention, using a coarse mechanism for the first layer to select a row sequence, and a finer mechanism for the second soft attention layer. While the computation for training standard seq2seq models scales linearly with source sequence length, our method is invariant to length and thus can scale arbitrarily.
@@ -1120,16 +1120,18 @@ Note also that train curves are well correlated with valid curves. Therefore, we
 \toprule
 Model & & Entropy \\
 \midrule
-\textsc{Model 0} & & \\
-\textsc{Model 1} & & \\
-\textsc{Model 2 conv} & & \\
-\textsc{Model 2 BOW} & & \\
-\textsc{Model 2 conv +entropy} & &  \\
-\textsc{Model 2 conv +pos} & & \\
+\textsc{Model 0} & & 1.31 \\
+\textsc{Model 1} & & 1.58 \\
+\textsc{Model 2 conv} & & 2.14\\
+\textsc{Model 2 BOW} & & 2.12 \\
+\textsc{Model 2 conv +pos} & & 2.06 \\
+\textsc{Model 2 conv +entropy} & & 0.21 \\
+\textsc{Model 3 conv} & & 0.15 \\
+\textsc{Model 3 conv +multi2} & & 0.59 \\
 %\textsc{Model 2 sparsemax} \\
 \bottomrule
 \end{tabular}
-\caption{Entropy over sentence attention. We computed \textsc{Model 0} and \textsc{Model 1} entropy by summing over each row.}
+\caption{Entropy over sentence attention, averaged over all attention distributions in the validation set. For reference, uniform attention gives entropy $\approx 2.30$.}
 \label{table:entropy}
 \end{table}
 
@@ -1137,7 +1139,13 @@ We investigate the entropy of the sentence attention on the validation set in Ta
 $$H(Z) = -\sum_{z} p(Z = z) \log p(Z = z)$$
 Intuitively, higher entropy means the attention is more spread out, while lower entropy means the attention is concentrated.
 
-We see that the entropy of \textsc{Model 0} attention is quite low, suggesting that a factorization over sentence
+We compute the entropy numbers by averaging over all generated words in the validation set. Because each document has 10 sentences, perfectly uniform entropy would be $\approx 2.30$.
+
+We see that the entropy of \textsc{Model 0} attention is quite low, suggesting that a factorization of attention into sentence-level and word-level is reasonable. However, our \textsc{Model 2} results have very high entropy --- it seems as if it uses attention to essentially average all of the encoder hidden states. We examine this more carefully in Section~\ref{sec:attn}.
+
+We attempted to reduce the entropy of \textsc{Model 2} by adding a penalty term with a scale factor of 0.01. We note that this effectively lowers the entropy, but unfortunately weakens the performance of the model.
+
+Finally, we note that the entropy of \textsc{Model 3} is very low (before taking the argmax at test time). This is exactly what we had hoped for --- we will see that the model in fact learns to focus on only a few sentences of the document over the course of generation. If we have multiple samples with \textsc{+multi2}, the model is allowed to use 2 sentences at a time, and so relaxes the entropy slightly.
 
 
 
