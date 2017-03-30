@@ -25,7 +25,7 @@
 \begin{abstract} % needs work
 While humans are naturally able to produce high-level summaries upon reading paragraphs of text, computers still find such a task enormously difficult. Despite progress over the years, the general problem of document summarization remains intractable, and simple models prove to be hard to beat.
 
-Inspired by recent work in deep learning, we apply the sequence-to-sequence (seq2seq) model with attention to the summarization problem. While seq2seq models are successful in a variety of natural language processing tasks, the computation does not scale well to tasks with long sequences such as documents. To that end, we propose a novel coarse-to-fine attention method to reduce the computational complexity of the standard attention model.
+Inspired by recent work in deep learning, we apply the sequence-to-sequence model with attention to the summarization problem. While seq2seq models are successful in a variety of natural language processing tasks, the computation does not scale well to tasks with long sequences such as documents. To that end, we propose a novel coarse-to-fine attention method to reduce the computational complexity of the standard attention model.
 %By organizing the source sequence into a 2-dimensional image, we hierarchically apply attention, using a coarse mechanism for the first layer to select a row sequence, and a finer mechanism for the second soft attention layer. While the computation for training standard seq2seq models scales linearly with source sequence length, our method is invariant to length and thus can scale arbitrarily.
 
 We evaluate our model on the CNN/Dailymail document summarization dataset. Results...
@@ -61,7 +61,7 @@ We have established that NLP is a difficult yet worthwhile undertaking. In this 
 
 The key property of language that makes it difficult for machines to handle is its discrete and combinatorial nature. When we form sentences, we can string together arbitrary words from our vocabulary, as long as we follow the rules of some highly structured grammar. In some sense, the essential difficulty in NLP lies in handling these complicated structured problems.
 
-Linguistics attempts to answer this by building a formal theory of language. Indeed, many ideas from linguistics, including sentence parses, morphology, and semantics are invaluable in NLP for understanding the rules for how sentences and phrases can be put together.
+Linguistics attempts to answer this by building a formal theory of language. Indeed, many ideas from linguistics, including sentence parses, morphology, and semantics are invaluable in NLP for understanding how sentences and phrases are put together.
 In order to solve a language problem, we might begin by enriching the surface form of text (the raw sentences and paragraphs) with the parse structure, parts of speech, coreferent entities, etc. We can then use this featurized form of language in whichever way we prefer.
 
 \begin{figure}[t]
@@ -73,7 +73,7 @@ In order to solve a language problem, we might begin by enriching the surface fo
 
 Another mode of thought focuses on the role of statistics in language. A cursory examination of the distribution of English words reveals an interesting power law distribution known as Zipf's law (Figure~\ref{fig:zipf}). By drawing from ideas of information theory \citep{Shannon1948}, we can treat language as the result of some noisy probabilistic process, and we can reduce problems such as language modeling to learning parameters of some simple distributions.
 
-Historically, there has been contention about the roles of linguistics and statistics in NLP. Certain practical problems seem to be better off without linguistic theory; as IBM researcher Frederick Jelinek famously said, ``Every time I fire a linguist, the performance of the speech recognizer goes up.'' \todo{citation} Indeed, even naive models of language perform well if given enough training data, as evidenced by the IBM models for machine translation \citep{Brown1993}.
+Historically, there has been contention about the roles of linguistics and statistics in NLP. Certain practical problems seem to be better off without linguistic theory; as IBM researcher Frederick Jelinek famously said, ``Every time I fire a linguist, the performance of the speech recognizer goes up'' \citep{Jurafsky2009}. Indeed, even naive models of language perform well if given enough training data, as evidenced by the IBM models for machine translation \citep{Brown1993}.
 
 Today, the linguistics-free approach has been taken to an extreme by deep learning systems. For the first time, neural networks are able to learn to perform language tasks in an end-to-end fashion \citep{Collobert2011}, i.e. without the linguistic preprocessing that was once considered necessary.
 Neural methods have been adopted by user-facing systems like Google Translate with great success \citep{GoogleTranslate2016}.
@@ -82,25 +82,24 @@ Neural methods have been adopted by user-facing systems like Google Translate wi
 \section{Automatic Summarization}
 \label{sec:taxonomy}
 
-In this thesis, we will consider the particular problem of \emph{text summarization}. That is, given a document with several sentences of text, the goal is to produce a short summary that captures most or all of its salient points.
+In this thesis, we will consider the particular problem of \emph{text summarization}.
+That is, given a document with several sentences of text, the goal is to produce a concise and fluent summary that captures most of its salient points.
 
-
-\todo{why is this important}
-
+Text summarization is one of the biggest open problems in NLP, as identifying the key information of a document seems to require a deep understanding of its content. Nevertheless, there is an urgent need for successful summarization algorithms in the text-dominated discourse of the web.
 
 \citet{Nenkova2011} give a comprehensive overview of the problem of summarization. In particular, they provide a taxonomy of methods that researchers have developed to tackle the task:
 
-\paragraph{Extractive vs. abstractive} Extractive summaries extract certain sentences or phrases from the document, while abstractive summaries take a more holistic view and can in practice be anything (similar to how humans produce summaries). 
+\paragraph{Extractive vs. abstractive} Extractive summaries extract certain sentences or phrases from the document with minimal further processing, while abstractive summaries might include paraphrasing and original word choice (similar to how humans produce summaries). 
 
 Extractive methods are by far more popular due to the simplicity of building an extraction algorithm. Abstractive methods are much more difficult, as we need to both extract relevant content and also ensure grammaticality of the output (a difficult problem in itself).
 
 \paragraph{Single- vs. multi-document} Summarization was originally posed as the problem of producing a summary for a single document. However, with the onset of the Internet, there are often multiple documents on the same topic, and so a summarization system should be able to use all of them to produce a summary.
 
-Interestingly, it has been noted that the multi-document problem is often easier due to redundant information across sources.
+Interestingly, it has been noted that the multi-document problem is often easier due to redundant information across sources. 
 
 %\paragraph{Indicative (style) vs. informative (facts)} Indicative summaries provide a sense for what a certain document is about without necessarily giving all of its details, while informative summaries are meant to replace the original document in terms of content.
 
-\paragraph{Keyword vs. headline} Keyword summaries are allowed to simply be a bag-of-words of important keywords from the document, while headline summaries must form a coherent sentence.
+%\paragraph{Keyword vs. headline} Keyword summaries are allowed to simply be a bag-of-words of important keywords from the document, while headline summaries must form a coherent sentence.
 
 \paragraph{Generic vs. query-focused} Generic summaries make no assumptions about the reader and are meant to be generally informative, while query-focused summaries take into consideration a query and only return relevant information.
 
@@ -117,13 +116,14 @@ While DUC did not lead to any definitive answers on how best to summarize docume
 For the generic summarization tasks, it was found that the first sentence of news articles was a strong baseline that more sophisticated methods found hard to beat. Thus, the generic summary task was seen as ill-formed and not as interesting, leading to the more query-focused tasks in the later years.
 
 
-DUC also inspired a lot of thinking on the best way to evaluate summaries. Evaluating a summary is inherently ambiguous, as even humans tend to disagree on what makes for a good summary.
-Finding a quantitative metric for evaluating summaries turns out to be one of the hardest parts of the problem. While a single most effective metric for summarization may not exist, DUC established several important criteria, including grammaticality, non-redundancy, and content coverage.
+DUC also inspired a lot of thinking on how to best evaluate summaries. Evaluating a summary is inherently ambiguous, as even humans tend to disagree on what makes for a good summary.
+Finding a quantitative metric for evaluation turns out to be one of the hardest parts of the problem; while a single best metric may not exist, DUC established several important criteria, including grammaticality, non-redundancy, and content coverage.
 
+One proposed metric for evaluation is recall on elementary discourse units (EDUs), labeled clauses within a summary that ought to be captured. ROUGE \citep{lin2004rouge}, inspired by the BLEU metric for machine translation \citep{Papineni2002}, is a cheap and fast method based on overlapping n-grams, and does not require the summary to be annotated further.
 
-For extractive summaries, people have proposed simple metrics such as precision and recall on selected sentences. These naturally do not work too well since 1) not all sentences are equally informative, and 2) not all parts of a sentence are relevant.
+%For extractive summaries, people have proposed simple metrics such as precision and recall on selected sentences. These naturally do not work too well since 1) not all sentences are equally informative, and 2) not all parts of a sentence are relevant.
+%When we don't have sentence labels as in the extractive case, evaluation is harder.
 
-When we don't have sentence labels as in the extractive case, evaluation is harder. One proposed metric is recall on elementary discourse units (EDUs), labeled clauses within a summary that ought to be captured. ROUGE \citep{lin2004rouge}, inspired by the BLEU metric for machine translation \citep{Papineni2002}, is a cheap and fast method based on n-gram precision, recall, and length considerations.
 
 
 None of these methods directly address the grammaticality of the output. Aside from using human evaluation, meaningful metrics for summaries is still very much an open question \citep{toutanova2016summarymetrics}.
@@ -136,7 +136,7 @@ None of these methods directly address the grammaticality of the output. Aside f
 %It is important to highlight these differences to understand how people thought about the problem. The complexity of this taxonomy indicates that the summarization problem in its simplest formulation is very poorly defined. Indeed, query-focused summarization may well be a useful task, but it may be more accurate to classify it as question-answering rather than summarization.
 
 
-Going forward, we will limit our scope to the single-document, headline, and generic summarization case. We will explore a few different algorithms in extractive and abstractive summarization, and connect these approaches with recent trends in deep learning.
+Going forward, we will limit our scope to the single-document and generic summarization case. We will explore a few different algorithms in extractive and abstractive summarization, and connect these approaches with recent trends in deep learning.
 
 \section{Summarization Methods}
 
@@ -144,42 +144,41 @@ One of the first treatises on automatically producing summaries was \citet{luhn1
 
 \citet{luhn1958automatic} proposed a simple sentence-ranking method to produce summaries. The algorithm gives each sentence a score based on the occurrence of frequently appearing words. This is one of the first examples of an extractive summarization method.
 
-Since then, a variety of approaches have been used to solve summarization. We highlight some notable work in both the extractive and abstractive frameworks.
+Since then, a variety of approaches have been applied. We highlight some notable work in both the extractive and abstractive frameworks.
 
-\subsection{Extractive} The most popular methods for document summarization have generally been extractive due to their simplicity.
+\subsection{Extractive}
+The most popular methods for document summarization have generally been extractive due to their simplicity.
 
-There are two natural procedures for extractive summarization: one is to produce a ranking of sentences based on some scoring function, and two is to classify sentences as either in the summary or not. \citet{luhn1958automatic} is an example of the first approach.
+There are two natural procedures for extractive summarization: one is to produce a ranking of sentences based on some scoring function, and two is to train a classifier to determine if a sentences should be in the summary or not. \citet{luhn1958automatic} is an example of the first approach.
 
 \citet{Carbonell1998} extend on the scoring-ranking method with an information metric, MMR (maximum marginal relevance), that penalizes pairwise similarity between sentences. Their work is one of the first that attempt to reduce redundancy in the summary.
 
-\citet{Kupiec1995} pioneer the second method by treating sentence selection as a classification problem. They obtain a training corpus and apply a naive Bayes approach to classify sentences.
+\citet{Kupiec1995} pioneer the second method by treating sentence selection as a classification problem, and they train a naive Bayes classifier on sentences.
 
-Ranking and classifying algorithms became more sophisticated over time, and most of these methods were soon applied to extractive summarization.
+Ranking and classifying algorithms have generally become more sophisticated over time. Today, deep learning systems prove to be some of the most powerful classifiers, and some have found applications in extractive summarization.
+\citet{Cao2015} use convolutional neural networks to extract features for each sentence, combining these with document-level features to produce ranking scores.
+\citet{Cheng2016} apply the encoder-decoder model using recurrent neural networks to jointly produce labels for each sentence.
 
-\citet{Shen2004} models sentence extraction as a sequential classification problem, training a linear-chain conditional random field to find the best subset of sentences.
+One key drawback of these trained extractive models, especially the deep ones, is the lack of annotated data. In extractive models, we require sentences of each document to be labeled as positive or negative in order to train a classifier, and data in this format can be hard to obtain.
 
- 
-\citet{svore2007} use a basic neural network as a sentence classifier.
+%\citet{Shen2004} models sentence extraction as a sequential classification problem, training a linear-chain conditional random field to find the best subset of sentences.
+%
+% 
+%\citet{svore2007} use a basic neural network as a sentence classifier.
 
 
-Deep learning models have also been used to extract sentences.
 
-\citet{Cao2015} use convolutional neural networks to extract features for each sentence, combining these with document-level features to produce scores.
 
-\citet{Cheng2016} apply the encoder-decoder model using recurrent neural networks to produce labels for each sentence.
+\subsection{Abstractive} While extraction has proven to be successful, the method is inherently limited in its ability to summarize. The more challenging method, and also the closest to what humans do, is \emph{abstractive} summarization. Instead of strictly requiring the summary to be a subset of the source document, any coherent text is allowed.
 
+The main technique used to produce abstractive summaries is sentence compression, which first extracts sentences, then applies postprocessing to remove unneeded information. \citet{knight2002summarization} employ a noisy channel model and probabilistic context-free grammars to deduce the ``most probable'' compression.
+%while \citet{clarke2008global} uses an integer linear program.
+%\citet{cohn2008sentence} extend the tree-based methods to allow for insertions and substitutions during compression, whereas prior methods were purely deletion based.
+\citet{zajic2004topiary} successfully use a sentence compression algorithm along with an unsupervised topic model on the DUC 2004 task.
+Recently, \citet{Durrett2016} apply an ILP approach, where they maximize a score based on textual and coreferent features with certain grammaticality and anaphora constraints.
+
+%Fusion: align parse trees and combine phrases that are similar
 \todo{finish}
-
-
-\subsection{Abstractive} While extraction has proven to be successful, the method is inherently limited in its ability to summarize. The more challenging method, and also the closest to what humans do, is \emph{abstractive} summarization. Instead of strictly requiring that all words of the summary come from the source document, any coherent text is allowed.
-
-Two methods used to produce abstractive summaries are sentence compression and sentence fusion. Compression removes less useful information from sentences, while fusion is harder and combines information from sentences. % cite Barzilay, MCkeown
-
-Compression: \citet{knight2002summarization} employs a noisy channel model, similar to machine translation, to deduce the ``most probable'' compression, while \citet{clarke2008global} uses an integer linear program. \citet{cohn2008sentence} extend the tree-based methods to allow for insertions and substitutions during compression, whereas prior methods were purely deletion based. \cite{zajic2004topiary} successfully use a sentence compression algorithm along with an unsupervised topic model on the DUC 2004 task.
-
-Fusion: align parse trees and combine phrases that are similar \todo{finish}
-
-\citet{Durrett2016} apply an ILP approach, where they maximize a score based on textual and coreferent features with certain grammaticality and anaphora constraints.
 
 
 Deep learning has also been successfully applied to abstractive summarization. \citet{rush2015neural} propose a completely data-driven model for headline generation by training an end-to-end model. More recently, \citet{nallapati2016seq2seq} apply the same approach on full documents.
@@ -209,7 +208,8 @@ In Chapter~\ref{chap:background}, we provide the necessary background material f
 In Chapter~\ref{chap:algorithms}, we describe our training algorithm formally.
 In Chapter~\ref{chap:models}, we describe our models formally.
 In Chapter~\ref{chap:experiments}, we describe the experimental setup, including our dataset, baselines, and practical details for training our models.
-In Chapter~\ref{chap:results}, we show results, analyze the outputs of our models, and provide discussion.
+In Chapter~\ref{chap:results}, we show results and analyze the outputs of our models.
+In Chapter~\ref{chap:discussion}, we discuss our results.
 Finally, we conclude in Chapter~\ref{chap:conclusion}.
 
 %%%%%%%%%%
@@ -220,9 +220,9 @@ Finally, we conclude in Chapter~\ref{chap:conclusion}.
 
 \section{Deep Learning}
 
-The history of neural networks dates back to the perceptron \citep{Rosenblatt1958}, a simple model that assumes data can be linearly separated. Due to this strict requirement, the machine learning community dismissed the idea as impractical, and research was sidelined for most of the 20th century.
+The history of neural networks dates back to the perceptron \citep{Rosenblatt1958}, a simple model that assumes data can be linearly separated. Due to this strict requirement, the machine learning community dismissed the idea as impractical for most of the 20th century.
 
-Later, \citet{Rumelhart1986} showed that the backpropagation algorithm could be used to efficiently train general neural networks, reviving interest in the subject. However, this was before the era of GPUs and modern computing, and so the algorithm could not be put to practical use.
+%Later, \citet{Rumelhart1986} showed that the backpropagation algorithm could be used to efficiently train general neural networks, reviving interest in the subject. However, this was before the era of GPUs and modern computing, and so the algorithm could not be put to practical use.
 
 Recently, neural networks have made a resurgence. In the ImageNet image classification competition in 2012, \citet{Krizhevsky2012} won using deep convolutional neural networks \citep{LeCun1995}, beating the competition by a significant margin. This led to a renewed wave of research, especially due to the advancement of GPU computing power, which can train networks at 10 to 20 times the speed of standard CPUs. Today, deep models are successfully used in image recognition \citep{Farabet2013}, speech recognition \citep{Hinton2012}, and Go playing \citep{Silver2016}, just to name a few.
 
@@ -243,8 +243,9 @@ While neural networks are often treated as black box classifiers, \citet{Zeiler2
 \label{fig:word2vec}
 \end{figure}
 
-The idea of learning representations of the input is quite general, and also applies in NLP.
-\citet{mikolov2013word2vec} show that by training a neural network on a Google News text corpus, the network learned to map words in the English language to a vector of real numbers known as \emph{word embeddings}. These word embeddings are actually able to capture semantic properties of the words --- for example, taking the vectors for \emph{king}, \emph{man}, and \emph{woman}, we find that $v_{king} - v_{man} + v_{woman} \approx v_{queen}$, preserving the analogy that we usually make with text. Figure~\ref{fig:word2vec} shows some of the word2vec vectors when projected to two dimensional space.
+The idea of learning representations of the input also applies in NLP.
+\citet{mikolov2013word2vec} show that by training a neural network on a Google News text corpus, the network learned to map words in the English language to vectors of real numbers known as \emph{word embeddings}.
+These word embeddings are actually able to capture semantic properties of the words --- for example, taking the vectors for \emph{king}, \emph{man}, and \emph{woman}, we find that $v_{king} - v_{man} + v_{woman} \approx v_{queen}$, preserving the analogy that we usually make with text. Figure~\ref{fig:word2vec} shows some of the word2vec vectors when projected to two dimensional space.
 
 Representation learning has become a central topic in NLP. Word vectors trained on a general text corpus can successfully be applied to almost any NLP task \citep{mikolov2013word2vec, Pennington2014}.
 It remains to be seen whether it is possible to represent longer pieces of text, such as sentences, in a general way, and research in the area is active \citep{Bowman2016}.
@@ -844,7 +845,7 @@ In addition to including a baseline, we also scale the rewards by a tuned hyperp
 
 
 
-\paragraph{\textsc{Through} training} \citet{xu2015captioning} explain that training hard attention with REINFORCE has very high variance, even when including a baseline. Thus, for every minibatch of training, they randomly use soft attention instead of hard attention with some probability (they use 0.5).
+\paragraph{\textsc{Alternate} training} \citet{xu2015captioning} explain that training hard attention with REINFORCE has very high variance, even when including a baseline. Thus, for every minibatch of training, they randomly use soft attention instead of hard attention with some probability (they use 0.5).
 The backpropagated gradient is then the standard soft attention gradient instead of the REINFORCE gradient. In our results, we label this as \textsc{+alternate}.
 
 While this method helps stabilize training, it requires soft attention at train time. Our goal in coarse-to-fine attention is to reduce computation over the encoded hidden states, while this method requires that we perform the full amount of computation as soft attention for a random subset of minibatches. However, this training method still allows for test time benefits, and we include it in our experiments to test the feasibility of hard attention.
@@ -970,14 +971,14 @@ A few implementation details were necessary to make minibatch training possible.
 
 Second, we pad short documents to the maximum length with a special padding word, and allow the model to attend to it. However, we zero out word embeddings for the padding states and also zero out their corresponding LSTM states. We found in practice that very little of the attention ended up on the padding words.
 
-Ideally, we would prefer to not truncate documents, but GPU memory limits the number of words we can use. However, we believe that this usually does not matter as the average document length is 800 words, and half of that should be sufficient context to summarize. Nonetheless, this should be explored in future work.
+Ideally, we would prefer to not truncate documents, but GPU memory limits the number of words we can use. However, we believe that this usually does not matter as the average document length is about 800 words, and half of that should be sufficient context to summarize. Nonetheless, this should be explored in future work.
 
 \section{Models}
 
 \paragraph{Baselines}
 For a baseline, we take the first sentence of the document. We call this \textsc{First}.
 
-We also consider the feature-based document summarizer of \citet{Durrett2016}, which uses ILP methods to compress extracted sentences. We apply the code \footnote{https://github.com/gregdurrett/berkeley-doc-summarizer} directly on the test set without retraining the system. Their system requires that the documents are preprocessed in CONLL format, so we use the Berkeley coreference system\footnote{https://github.com/gregdurrett/berkeley-entity} with the coreference and NER settings. We call this baseline \textsc{Berkeley}.
+We also consider the feature-based document summarizer of \citet{Durrett2016}, which uses integer linear programming (ILP) methods to compress extracted sentences. We apply the code \footnote{https://github.com/gregdurrett/berkeley-doc-summarizer} directly on the test set without retraining the system. Their system requires that the documents are preprocessed in CONLL format, so we use the Berkeley coreference system\footnote{https://github.com/gregdurrett/berkeley-entity} with the coreference and NER settings. We call this baseline \textsc{Berkeley}.
 
 \paragraph{Our models}
 
@@ -990,7 +991,9 @@ We ran experiments with Models 0 to 3 as described above.
 \item \textsc{Model 3}: Coarse-to-fine with hard attention over sentences.
 \end{itemize}
 
-We also include option \textsc{+pos} by including positional embeddings for sentence representations. For \textsc{Model 3}, we include options \textsc{+multi} for $k_{mul} > 1$, \textsc{+pretrain} for starting with a model pretrained with soft attention for 1 epoch, and \textsc{+alternate} for sampling between hard and soft attention with probability 0.5.
+We use convolutions for the coarse attention by default, and we write \textsc{BOW} when we use bag-of-words instead. For \textsc{BOW} models, we fix the word embeddings on the encoder side (in other models, they are fine tuned). We also include the option of including positional embeddings for sentence representations, which we denote as \textsc{+pos}.
+
+For \textsc{Model 3}, we include options \textsc{+multi} for $k_{mul} > 1$, \textsc{+pretrain} for starting with a model pretrained with soft attention for 1 epoch, and \textsc{+alternate} for sampling between hard and soft attention with probability 0.5.
 
 For \textsc{Model 2}, our default document arrangement is a 10 by 40 grid of words. We also experiment with shapes of 5 by 80 and 2 by 200 (denoted \textsc{5x80}, \textsc{2x200} resp.). These should more closely approximate \textsc{Model 0} as the shape approaches a single sequence.
 
@@ -1046,20 +1049,20 @@ With multiple gold summaries in the CNN/Dailymail highlights, we choose to take 
  \textsc{Model 1} & & 14.9 & 33.0 & 17.5 & 30.7 \\
 %\textsc{Model 2 sparsemax} & & 16.1 \\
 \midrule
-\textsc{Model 2 conv} & & 16.0 & 33.3 & 17.5 & 31.0 \\
+\textsc{Model 2 } & & 16.0 & 33.3 & 17.5 & 31.0 \\
 \textsc{Model 2 BOW} & & 16.3 & 33.0 & 17.4 & 30.7 \\
 %\textsc{Model 2 LSTM} & & 15.5 \\
-\textsc{Model 2 conv +pos} & & 15.4 & 34.2 & 18.3 & 31.8 \\
-\textsc{Model 2 5x80 conv} & & 15.0 & 33.9 & 18.0 & 31.5 \\
-\textsc{Model 2 2x200 conv} & & 14.5 & 33.9 & 18.1 & 31.6 \\
+\textsc{Model 2  +pos} & & 15.4 & 34.2 & 18.3 & 31.8 \\
+\textsc{Model 2 5x80 } & & 15.0 & 33.9 & 18.0 & 31.5 \\
+\textsc{Model 2 2x200 } & & 14.5 & 33.9 & 18.1 & 31.6 \\
 \midrule
-\textsc{Model 3 conv} & & 32.8 & 28.2 & 12.9 & 26.2 \\
-\textsc{Model 3 conv +pos} & &  \\
-\textsc{Model 3 conv +multi2} & & 25.5 & 30.0 & 14.4 & 27.9 \\
-\textsc{Model 3 conv +pos +multi2} & &  \\
-\textsc{Model 3 conv +multi3} & & 22.9 & 30.4 & 14.9 & 28.3 \\
-\textsc{Model 3 conv +pretrain} & & 26.3 & 29.7 & 14.2 & 27.5\\
-\textsc{Model 3 conv +through} & & 23.6 & 31.1 & 15.4 & 28.8 \\
+\textsc{Model 3 } & & 32.8 & 28.2 & 12.9 & 26.2 \\
+\textsc{Model 3 +pos} & & 37.8 & 28.3 & 12.5 & 26.1 \\
+\textsc{Model 3 +multi2} & & 25.5 & 30.0 & 14.4 & 27.9 \\
+\textsc{Model 3 +pos +multi2} & & 21.9 & 31.2 & 15.3 & 29.0 \\
+\textsc{Model 3 +multi3} & & 22.9 & 30.4 & 14.9 & 28.3 \\
+\textsc{Model 3 +pretrain} & & 26.3 & 29.7 & 14.2 & 27.5\\
+\textsc{Model 3 +alternate} & & 23.6 & 31.1 & 15.4 & 28.8 \\
  \bottomrule
 \end{tabular}
 \caption{Summarization results for CNN/Dailymail on the test set. The ROUGE numbers are balanced F-scores. Lower PPL is better, higher ROUGE is better.}
@@ -1089,7 +1092,7 @@ We observe that \textsc{Model 3} results are significantly worse than soft atten
 
 While taking a single sample performs quite poorly, we see that taking more than one sample gives a significant boost to scores (\textsc{+multi2}, \textsc{+multi3}). There seem to be diminishing returns as we take more samples.
 
-Finally, we note that positional embeddings (\textsc{+pos}) give a nontrivial boost to scores. This makes sense since the position of the sentence in the document should be relevant for determining its importance --- for example, we would expect sentences near the start of the document to be more useful for summarization.
+Finally, we note that positional embeddings (\textsc{+pos}) give a nontrivial boost to scores (except for \textsc{Model 3 +pos}). This makes sense since the position of the sentence in the document should be relevant for determining its importance --- for example, we would expect sentences near the start of the document to be more useful for summarization. In the exception, we believe this may be due to difficulty in training the embeddings.
 
 An extended table of results can be found in Appendix ???.
 
@@ -1124,12 +1127,13 @@ Model & & Entropy \\
 \midrule
 \textsc{Model 0} & & 1.31 \\
 \textsc{Model 1} & & 1.58 \\
-\textsc{Model 2 conv} & & 2.14\\
+\textsc{Model 2} & & 2.14\\
 \textsc{Model 2 BOW} & & 2.12 \\
-\textsc{Model 2 conv +pos} & & 2.06 \\
-\textsc{Model 2 conv +entropy} & & 0.21 \\
-\textsc{Model 3 conv} & & 0.15 \\
-\textsc{Model 3 conv +multi2} & & 0.59 \\
+\textsc{Model 2 +pos} & & 2.06 \\
+\textsc{Model 2  +entropy} & & 0.21 \\
+\textsc{Model 3 } & & 0.15 \\
+\textsc{Model 3  +multi2} & & 0.59 \\
+\textsc{Model 3  +pos +multi2} & & 0.46 \\
 %\textsc{Model 2 sparsemax} \\
 \bottomrule
 \end{tabular}
@@ -1166,12 +1170,11 @@ Appendix ??? shows some more predicted summaries.
 \begin{figure}[p]
 \centering
 %\renewcommand{\arraystretch}{1.5}
-\begin{tabular}{ll p{0.7\linewidth}}
+\begin{tabular}{ll p{0.65\textwidth}}
 \toprule
 Model & & \\
 \midrule
-Source & & jasmine coleman , \#\# , has been found safe and well some \#\# miles from her home a \#\# - year - old girl who went missing from her family home at \#am amid fears she was driven away by an ' older man ' has been found safe and well . jasmine coleman was reported as missing this morning after disappearing from her home in \texttt{<unk>} , west sussex . the child was found this afternoon following a police appeal some \#\#miles away in croydon , south east london . police feared she may have been driven to london by an older man when they launched an appeal for information this morning . the schoolgirl had not been seen since \#\#.\#\#pm on friday night . sussex police said she may have been talking with someone on facetime before disappearing at around \#am . ... \\
-%the force launched a public appeal for information on her whereabouts on saturday morning . in it , she was described as fair with long , blonde hair and as having possibly been wearing black riding trousers and a polo shirt or a paisley pattern dress . on saturday afternoon the force confirmed she had been found safe and well in croydon but could not confirm the circumstances under which police located her . no one has been arrested in connection with her disappearance . shortly after \#pm a spokesman said : ' jasmine coleman , the \#\# - year - old girl from \texttt{<unk>} reported missing from home during the early hours of saturday ( \#\# march ) was found safe and well later the same day in croydon . ' police would like to thank the media and members of the public for help given during efforts to trace her . ' west sussex police ( headquarters pictured above ) confirmed the child was found on saturday afternoon </s>  \\
+Source & & jasmine coleman , \#\# , has been found safe and well some \#\# miles from her home a \#\# - year - old girl who went missing from her family home at \#am amid fears she was driven away by an ' older man ' has been found safe and well . jasmine coleman was reported as missing this morning after disappearing from her home in \texttt{<unk>} , west sussex . the child was found this afternoon following a police appeal some \#\#miles away in croydon , south east london . police feared she may have been driven to london by an older man when they launched an appeal for information this morning .  ... \\
 \midrule
 \textsc{Gold} & & jasmine coleman disappeared from her home at around \#am this morning \\
 %the fugitive who killed the marshal was " extremely dangerous , " u.s. marshals service director says \\
@@ -1193,24 +1196,24 @@ Source & & jasmine coleman , \#\# , has been found safe and well some \#\# miles
 % there are bare patches of grass and mud on the alaska range
 %\textsc{Model 2 sparsemax} & & 16.1 \\
 \midrule
-\textsc{Model 2 conv} & & jasmine coleman , \#\# , was found safe and well in croydon \\
+\textsc{Model 2} & & jasmine coleman , \#\# , was found safe and well in croydon \\
 % new : u.s. marshals service director \texttt{<unk>} a. \texttt{<unk>} died in baton rouge , louisiana \\
 %the \texttt{<unk>} gorge sled dog race starts saturday \\
 \textsc{Model 2 BOW} & & jasmine coleman , \#\# , has been found safe and well in croydon \\
 % the man suspected of killing deputy u.s. marshal killed deputy u.s. marshal \\
 % the \texttt{<unk>} gorge dog race starts saturday \\
-\textsc{Model 2 conv +pos} & & jasmine coleman disappeared from her home in \texttt{<unk>} , west sussex \\
+\textsc{Model 2 +pos} & & jasmine coleman disappeared from her home in \texttt{<unk>} , west sussex \\
 % the cause of death is pending autopsy \\
 % the \texttt{<unk>} trail sled dog race starts saturday \\
 \midrule
-\textsc{Model 3 conv} & & jasmine coleman , \#\# , disappeared from family home in \texttt{<unk>} , south east sussex \\
+\textsc{Model 3} & & jasmine coleman , \#\# , disappeared from family home in \texttt{<unk>} , south east sussex \\
 % new : body of suspect found in baton rouge , louisiana \\
 % \texttt{<unk>} \texttt{<unk>} , \#\# , from anchorage , alaska , broke his back in \#\#\#\# \\
 %\textsc{Model 3 conv +pos} & &  \\
-\textsc{Model 3 conv +multi2} & & jasmine coleman , \#\# , disappeared from her home in \texttt{<unk>} , west sussex \\
+\textsc{Model 3 +multi2} & & jasmine coleman , \#\# , disappeared from her home in \texttt{<unk>} , west sussex \\
 % new : death toll rises to \#\# , police say \\
 % \texttt{<unk>} \texttt{<unk>} 's team runs across the alaskan lake \\
-%\textsc{Model 3 conv +pos +multi2} & &  \\
+\textsc{Model 3 +pos +multi2} & &  jasmine coleman disappeared from her home in \texttt{<unk>} , west london\\
 \bottomrule
 \end{tabular}
 \caption{Predicted summaries for each model, given a short document (an easier example).}
@@ -1268,7 +1271,7 @@ Source & & jasmine coleman , \#\# , has been found safe and well some \#\# miles
 \begin{figure}[p]
 \centering
 %\renewcommand{\arraystretch}{1.5}
-\begin{tabular}{ll p{0.7\linewidth}}
+\begin{tabular}{ll p{0.65\linewidth}}
 \toprule
 Model & & \\
 \midrule
@@ -1292,14 +1295,14 @@ Islamic State militants have swept through huge tracts of Syria and Iraq , murde
  \textsc{Model 1} & & a mocking - up image of jack dorsey was posted on twitter \\
 %\textsc{Model 2 sparsemax} & & 16.1 \\
 \midrule
-\textsc{Model 2 conv} & & the message was posted in arabic and posted on twitter \\
+\textsc{Model 2 } & & the message was posted in arabic and posted on twitter \\
 \textsc{Model 2 BOW} & &  the message was posted on twitter and posted on twitter \\
-\textsc{Model 2 conv +pos} & & dorsey in \texttt{<unk>} was posted yesterday alongside a diatribe in arabic \\
+\textsc{Model 2 +pos} & & dorsey in \texttt{<unk>} was posted yesterday alongside a diatribe in arabic \\
 \midrule
-\textsc{Model 3 conv} & & ' lone war ' is a ' virtual war ' image of the islamic state \\
+\textsc{Model 3 } & & ' lone war ' is a ' virtual war ' image of the islamic state \\
 %\textsc{Model 3 conv +pos} & &  \\
-\textsc{Model 3 conv +multi2} & &  isis supporters say site 's policy of shutting down is a ' propaganda war ' \\
-%\textsc{Model 3 conv +pos +multi2} & &  \\
+\textsc{Model 3 +multi2} & &  isis supporters say site 's policy of shutting down is a ' propaganda war ' \\
+\textsc{Model 3 +pos +multi2} & & twitter users say they believe site 's policy of closure is a ' media war ' \\
 \bottomrule
 \end{tabular}
 \caption{Predicted summaries for each model, given a longer document.}
@@ -1311,7 +1314,7 @@ Islamic State militants have swept through huge tracts of Syria and Iraq , murde
 \begin{figure}[p]
 \centering
 %\renewcommand{\arraystretch}{1.5}
-\begin{tabular}{ll p{0.7\linewidth}}
+\begin{tabular}{ll p{0.65\linewidth}}
 \toprule
 Model & & \\
 \midrule
@@ -1332,19 +1335,19 @@ Source & & ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel
 % there are bare patches of grass and mud on the alaska range
 %\textsc{Model 2 sparsemax} & & 16.1 \\
 \midrule
-\textsc{Model 2 conv} & & new : u.s. marshals service director \texttt{<unk>} a. \texttt{<unk>} died in baton rouge , louisiana \\
+\textsc{Model 2 } & & new : u.s. marshals service director \texttt{<unk>} a. \texttt{<unk>} died in baton rouge , louisiana \\
 %the \texttt{<unk>} gorge sled dog race starts saturday \\
 \textsc{Model 2 BOW} & &  the man suspected of killing deputy u.s. marshal killed deputy u.s. marshal \\
 % the \texttt{<unk>} gorge dog race starts saturday \\
-\textsc{Model 2 conv +pos} & & the cause of death is pending autopsy \\
+\textsc{Model 2 +pos} & & the cause of death is pending autopsy \\
 % the \texttt{<unk>} trail sled dog race starts saturday \\
 \midrule
-\textsc{Model 3 conv} & & new : body of suspect found in baton rouge , louisiana \\
+\textsc{Model 3 } & & new : body of suspect found in baton rouge , louisiana \\
 % \texttt{<unk>} \texttt{<unk>} , \#\# , from anchorage , alaska , broke his back in \#\#\#\# \\
-%\textsc{Model 3 conv +pos} & &  \\
-\textsc{Model 3 conv +multi2} & &  new : death toll rises to \#\# , police say \\
+%\textsc{Model 3 +pos} & &  \\
+\textsc{Model 3 +multi2} & &  new : death toll rises to \#\# , police say \\
 % \texttt{<unk>} \texttt{<unk>} 's team runs across the alaskan lake \\
-%\textsc{Model 3 conv +pos +multi2} & &  \\
+\textsc{Model 3 +pos +multi2} & & the man was killed in baton rouge , louisiana \\
 \bottomrule
 \end{tabular}
 \caption{Predicted summaries for each model, given a more difficult document.}
@@ -1419,15 +1422,16 @@ Appendix~\ref{appendix:attn} contains a few more attention visualizations.
 \caption{\textsc{Model 3 +multi2}}
 \end{figure}
 
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/1predsent}
-%\caption{\textsc{Model 3 +multi2 +pos}}
-%\end{figure}
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/1predsent}
+\caption{\textsc{Model 3 +multi2 +pos}}
+\end{figure}
 
 
 
 \chapter{Discussion}
+\label{chap:discussion}
 
 As shown by the results, coarse-to-fine attention generally performs worse than standard sequence-to-sequence attention.
 
@@ -1436,7 +1440,7 @@ We first discuss the weakness of the soft attention model, i.e. \textsc{Model 2}
 Assuming we can learn the attention distribution, another possible cause for the worse performance of coarse-to-fine models is lower modeling power. Because we run the encoder LSTM across each sentence separately, it may not capture the full context in same way as running the LSTM across the entire document as in \textsc{Model 0}.
 However, we found in additional experiments that even if we run an LSTM over the full document to encode, and then learn the word-level attention over it, there was not a significant change in performance. This does not conclusively rule out this possibility, but only shows that the performance bottleneck is in learning the attention.
 
-Another modeling issue is in the sentence representations. While bag-of-words and convolutional models are effective for simple tasks, we would be interested to see if more sophisticated representations could allow us to obtain better attention. There is some research on developing general sentence representations for transfer learning \citep{Bowman2015}, and we leave this area to future work.
+Another modeling issue is in the sentence representations. While bag-of-words and convolutional models are effective for simple tasks, we would be interested to see if more sophisticated representations can allow us to obtain better attention. There is some research on developing general sentence representations for transfer learning \citep{Bowman2015}, and we leave this area to future work.
 
 
 %%%
@@ -1446,21 +1450,27 @@ Second, sampling multiple times with $k_{mul} > 1$ seems to do well, and only in
 
 
 Third, we see that pretraining the hard attention model with soft attention helps performance. While pretraining with soft attention on the task at hand defeats the purpose of conditional computation, we can imagine starting with a pretrained LSTM on the encoder side from another task to possibly achieve the same effect.
-In addition, we see that the fixed bag-of-words coarse attention performs almost as well as the higher powered convolutional model --- therefore, we can conclude that lower variance in the training process will lead to better performance. Transfer learning of a pretrained LSTM may partially solve this problem.
+In addition, we see that the fixed bag-of-words coarse attention performs almost as well as the higher powered convolutional model --- because the word embeddings were fixed in this case, we can conclude that lower variance in the training process will lead to better performance. Transfer learning of a pretrained LSTM may partially solve this problem.
 
-Therefore, we conclude that while reinforcement learning methods have promise in building large-scale models with conditional computation, the noisiness of training is a difficult barrier to overcome. There are possible directions in reducing the burden of RL training (e.g., the aforementioned pretraining), but it would also be wise to consider alternative techniques for sparseness.
+We conclude that while reinforcement learning has promise in building large-scale models with conditional computation, the noisiness of training is a difficult barrier to overcome. There are possible directions in reducing the burden of RL training (e.g., the aforementioned pretraining), but further research is needed.
 
 
-\subsection{Future Work}
+\section{Future Work}
 
 We propose the following as concrete future work.
 
-We would like to explore alternative methods of sentence representation to improve the coarse attention. This requires researching ...
+We would like to explore alternative methods of sentence representation to improve the coarse attention. These methods would need to be able to encode a sentence faster than the fine-grained LSTM encoder, and as a bonus, should be trainable in an unsupervised way on an auxiliary text corpus (as in word2vec).
+%Better optimization methods are also worth looking into, as our coarse-to-fine attention model seems to get stuck in local optima quite often.
 
-For future work, we want to apply this at a larger scale. Ten sentences is still not that many.
+We can reconsider our approach to conditional computation. As we have seen, reinforcement learning is a very noisy training method, and it is especially difficult to use for NLP \citep{}.
+Alternative methods we can consider include approximate nearest neighbors (ANN) techniques \citep{rae2016sparsememory}, the key-value memory networks of \citet{Miller2016}, or sparsemax \citep{martins2016sparsemax}.
 
+We also would like to scale up the summarization task. In our experiments, we use truncated news articles, and the sentence selection problem is relatively easy (choosing 1 out of 10 in our experiments). 
+We would be interested to see if our techniques can be applied to larger documents, such as Wikipedia articles or scientific papers, without sacrificing too much in terms of performance.
+Unfortunately, we then hit the bottleneck of GPU memory, so this would require either a large amount of computational resources or more clever training techniques.
 
-Different conditional computation methods
+Along these lines, we would also be interested to see if our model can be applied to question-answering tasks (QA). QA is a more clearly posed problem than summarization, and the metrics tend to be less ambiguous.
+Classical QA tasks have relied on the use of Knowledge Bases such as Freebase \citep{Bollacker2008}, but there has been work in using free-form text such as Wikipedia as an information source \citep{Miller2016}.
 
 \chapter{Conclusion}
 \label{chap:conclusion}
