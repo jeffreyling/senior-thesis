@@ -809,7 +809,7 @@ We call this method of attention \textsc{Model 2}.
 
 With the previous models, we are required to compute hidden states over all words and sentences in the document, so that if we have $M$ sentences and $N$ words per sentence, the computational complexity is $O(MN)$ for each attention step.
 
-However, if we are able to perform conditional computation and only compute on $M^+$ of the sentences, we can reduce the complexity to $O(M^+N)$. If we are able to make $M^+$ constant or even 1, this would give significant benefits to our overall complexity.
+However, if we are able to perform conditional computation and only compute on $M^+$ of the sentences, we can reduce the complexity to $O(M^+N)$. If we are able to make $M^+$ constant or even 1, this would give significant benefits to our overall complexity at both train and test time.
 
 In our experiments, we will apply stochastic sampling to the attention distribution $\balpha$ in the spirit of \citet{xu2015captioning} and ``hard attention''.
 Specifically, rather than computing the context $\widetilde{\boldc}$ as an expectation over $\balpha$ (i.e. $\boldc = \sum_{i=1}^n \alpha_i \boldh_i$), we can sample from the probability distribution $\balpha$ to obtain a single state $\boldh_i$, and we set $\widetilde{\boldc} = h_i$ as the sampled hidden state.
@@ -847,9 +847,9 @@ In addition to including a baseline, we also scale the rewards by a tuned hyperp
 
 
 \paragraph{\textsc{Through} training} \citet{xu2015captioning} explain that training hard attention with REINFORCE has very high variance, even when including a baseline. Thus, for every minibatch of training, they randomly use soft attention instead of hard attention with some probability (they use 0.5).
-The backpropagated gradient is then the standard soft attention gradient instead of the REINFORCE gradient. In our results, we label this as \textsc{+through}.
+The backpropagated gradient is then the standard soft attention gradient instead of the REINFORCE gradient. In our results, we label this as \textsc{+alternate}.
 
-While this method helps stabilize training, it's aesthetically not very pleasing. Our goal in coarse-to-fine attention is to reduce computation over the encoded hidden states, while this method requires that we perform the full amount of computation as soft attention for a random subset of minibatches. However, we include this training method in our experiments to test how feasible hard attention is.
+While this method helps stabilize training, it requires soft attention at train time. Our goal in coarse-to-fine attention is to reduce computation over the encoded hidden states, while this method requires that we perform the full amount of computation as soft attention for a random subset of minibatches. However, this training method still allows for test time benefits, and we include it in our experiments to test the feasibility of hard attention.
 
 
 \paragraph{Multiple samples} 
@@ -907,7 +907,7 @@ While the dataset was created for a question-answering task, the dataset format 
 
 
 
-Train, validation, and test splits are provided along with document tokenization and sentence splitting. We do additional preprocessing by replacing all numbers with \# and appending end of sentence tokens to each sentence. We limit our vocabulary size to 50000 most frequent words, replacing the rest with \texttt{<unk>} tokens. We dropped the documents which had an empty source (which came from photo articles).
+Train, validation, and test splits are provided along with document tokenization and sentence splitting. We do additional preprocessing by replacing all numbers with \# and appending end of sentence tokens \texttt{<s>} to each sentence. We limit our vocabulary size to the 50000 most frequent words, replacing the rest with \texttt{<unk>} tokens. We dropped the documents which had an empty source (which came from photo articles).
 
  Table~\ref{table:data_stats} lists statistics for the CNN/Dailymail dataset. Figure~\ref{fig:data_examples} shows examples source and target pairs from the dataset.
 
@@ -958,7 +958,7 @@ much of the start of the world 's most famous sled dog race is covered in barren
 \label{fig:data_examples}
 \end{figure}
 
-In the context of these new datasets, the summarization task has not yet been fully standardized. Research in the area is still largely preliminary, with only a few papers reporting results \citep[][e.g.]{nallapati2016seq2seq}. While CNN/Dailymail may not be the most suitable dataset for the task due to its noisiness \citep{Chen2016}, a better alternative is yet to exist.
+In the context of these new datasets, the summarization task has not yet been fully standardized. Research in the area is still largely preliminary, with only a few papers reporting results \citep[e.g.][]{nallapati2016seq2seq}. While CNN/Dailymail may not be the most suitable dataset for the task due to its noisiness \citep{Chen2016}, a better alternative is yet to exist.
 
 
 
@@ -972,7 +972,7 @@ A few implementation details were necessary to make minibatch training possible.
 
 Second, we pad short documents to the maximum length with a special padding word, and allow the model to attend to it. However, we zero out word embeddings for the padding states and also zero out their corresponding LSTM states. We found in practice that very little of the attention ended up on the padding words.
 
-Ideally, we would prefer to not truncate documents, especially since later context can be useful for summarizing the document. Due to memory issues, this should be explored in future work.
+Ideally, we would prefer to not truncate documents, but GPU memory limits the number of words we can use. However, we believe that this usually does not matter as the average document length is 800 words, and half of that should be sufficient context to summarize. Nonetheless, this should be explored in future work.
 
 \section{Models}
 
@@ -986,15 +986,15 @@ We also consider the feature-based document summarizer of \citet{Durrett2016}, w
 We ran experiments with Models 0 to 3 as described above.
 
 \begin{itemize}
-\item \textsc{Model 0}: Soft attention.
-\item \textsc{Model 1}: Organized by sentence, soft attention over all.
-\item \textsc{Model 2}: Hierarchical LSTM, coarse-to-fine with soft attention.
-\item \textsc{Model 3}: Hierarchical LSTM, coarse-to-fine with hard attention over sentences.
+\item \textsc{Model 0}: Sequence-to-sequence model.
+\item \textsc{Model 1}: LSTM encoder per sentence, soft attention over all.
+\item \textsc{Model 2}: Coarse-to-fine with soft attention.
+\item \textsc{Model 3}: Coarse-to-fine with hard attention over sentences.
 \end{itemize}
 
-We also include option \textsc{+pos} by including positional embeddings for sentence representations. For \textsc{Model 3}, we include options \textsc{+multi} for $k_{mul} > 1$, \textsc{+pretrain} for starting with a model pretrained with soft attention for 1 epoch, and \textsc{+through} for sampling between hard and soft attention with probability 0.5.
+We also include option \textsc{+pos} by including positional embeddings for sentence representations. For \textsc{Model 3}, we include options \textsc{+multi} for $k_{mul} > 1$, \textsc{+pretrain} for starting with a model pretrained with soft attention for 1 epoch, and \textsc{+alternate} for sampling between hard and soft attention with probability 0.5.
 
-For \textsc{Model 2}, while our default document arrangement is a 10 by 40 image, we also experiment with shapes of 5 by 80 and 2 by 200 (denoted \textsc{5x80}, \textsc{2x200} resp.). These should more closely approximate \textsc{Model 0} as the shape approaches a single sequence.
+For \textsc{Model 2}, our default document arrangement is a 10 by 40 grid of words. We also experiment with shapes of 5 by 80 and 2 by 200 (denoted \textsc{5x80}, \textsc{2x200} resp.). These should more closely approximate \textsc{Model 0} as the shape approaches a single sequence.
 
 
 \section{Training}
@@ -1002,7 +1002,7 @@ For \textsc{Model 2}, while our default document arrangement is a 10 by 40 image
 %% fix batch size and other details, and also note we train until convergence (which is slightly longer for hard attn)
 We train with minibatch stochastic gradient descent (SGD) with batch size 20 for 20 epochs, renormalizing gradients below norm 5. We initialize the learning rate to 0.1 for the sentence encoder and 1 for the rest of the model, and begin decaying it by a factor of 0.5 each epoch after the validation perplexity stops decreasing.\footnote{We tried more complicated SGD optimization methods such as Adagrad \citep{Duchi2011} and Adam \citep{Kingma2015}, but found that they did not perform as well. This could be due to gradient norms that are too large.}
 
-We use 2 layer LSTMs with 500 hidden units, and we initialize word embeddings with 300-dimensional word2vec embeddings \citep{mikolov2013word2vec}. For convolutional layers, we use a kernel width of 6 and 600 filters. Positional embeddings had dimension 25.
+We use 2 layer LSTMs with 500 hidden units, and we initialize word embeddings with 300-dimensional word2vec embeddings \citep{mikolov2013word2vec}. For convolutional layers, we use a kernel width of 6 and 600 filters. Positional embeddings have dimension 25.
 
 % talk about LSTM soft attention?
 
@@ -1073,10 +1073,12 @@ With multiple gold summaries in the CNN/Dailymail highlights, we choose to take 
 
 
 Table~\ref{table:summary} shows summarization results. We see that our soft attention models comfortably beat the baselines, while hard attention falls slightly behind.
+For the most part, we see that PPL and ROUGE are properly correlated. 
 
 The \textsc{Berkeley} model ROUGE scores are surprisingly low. We attribute this due to the fact that our models usually produce a single summary, while the ILP system can produce multiple. The \textsc{Berkeley} model therefore has very high ROUGE recall, while suffering in precision. See Appendix~\ref{appendix:more_results} for numbers.
 
-Unfortunately, the \textsc{Model 0} sequence-to-sequence baseline proves to be difficult to beat. \textsc{Model 1} comes close, but we note that it is weaker in modeling power as the word-level LSTMs are truncated between rows.
+Unfortunately, the \textsc{Model 0} sequence-to-sequence baseline proves to be difficult to beat. \textsc{Model 1} performs surprisingly poorly in ROUGE, despite its good perplexity.
+
 
 \textsc{Model 2} has worse performance, likely due to our assumption that we can factor the attention distribution into a coarse distribution and a fine distribution.
 This assumption is quite strong --- we hypothesize that our deficit then exists because either (1) our sentence representations are not sufficiently strong, or (2) we did not properly solve the optimization problem.
@@ -1084,22 +1086,30 @@ We believe (1) may be true because with perfect modeling power, the model should
 We believe (2) is also an issue because the training signal is backpropagated to the word-level LSTM via the attention weights. Because the training algorithm cannot directly compare word attention weights as in \textsc{Model 0} or \textsc{Model 1}, it has trouble finding the best optimum.
 Additionally, we found empirically that Adagrad and Adam performed worse than SGD, which is unusual given that these methods are usually state-of-the-art.
 
-We observe that \textsc{Model 3} results are significantly worse than soft attention results. This is most likely due to a noisy gradient; even by using variance reduction techniques, the variance of the gradient estimator remains high. It may be too difficult to train the encoder (which forms a large part of the model) using such a noisy gradient.
+We observe that \textsc{Model 3} results are significantly worse than soft attention results. This is most likely due to a noisy gradient; even by using variance reduction techniques, the variance of the gradient estimator remains high. It may be too difficult to train the encoder (which forms a large part of the model) using such a noisy gradient. Even with soft attention pretraining (\textsc{+pretrain}) and alternating training (\textsc{+alternate}), \textsc{Model 3} fails to reach \textsc{Model 2} performance.
 %It is also easy to fall into local optima if the stochastic agent's policy does not sufficiently explore the state space (i.e., the sentence attention settles too early on a spurious sentence).
 
-We note that positional embeddings (\textsc{+Pos}) give a nontrivial boost to scores. This makes sense since the position of the sentence in the document should be relevant for determining its importance; for example, we would expect sentences near the start of the document to be more useful for summarization.
+We note that positional embeddings (\textsc{+pos}) give a nontrivial boost to scores. This makes sense since the position of the sentence in the document should be relevant for determining its importance; for example, we would expect sentences near the start of the document to be more useful for summarization.
 
 
-\begin{figure}
-\caption{Training curves for models.} % train, test curves for model 0-3
+\begin{figure}[t]
+\centering
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\textwidth]{images/train_curves}
+\end{subfigure}
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\textwidth]{images/valid_curves}
+\end{subfigure}
+
+\caption{Training and validation curves for models. Note that \textsc{Model 3} takes much longer to converge than the others, and also converges to a worse local optimum.} % train, test curves for model 0-3
 \label{fig:train_curves}
 \end{figure}
 
 
 \subsection{Training Curves} We examine training curves for our models in Figure~\ref{fig:train_curves}. We see that hard attention takes longer to converge on average, which likely is due to the noisy gradient.
-\todo{something about train vs val}
+If we include \textsc{+alternate}, \textsc{Model 3} training converges faster, and if we include \textsc{+pretrain}, the model reaches a better local optimum.
 
-
+Note also that train curves are well correlated with valid curves. Therefore, we see no signs of overfitting in our models.
 
 
 \subsection{Entropy}
@@ -1110,12 +1120,12 @@ We note that positional embeddings (\textsc{+Pos}) give a nontrivial boost to sc
 \toprule
 Model & & Entropy \\
 \midrule
-\textsc{Model 0} \\
-\textsc{Model 1} \\
-\textsc{Model 2 conv} \\
-\textsc{Model 2 BOW} \\
-\textsc{Model 2 conv +entropy}  \\
-\textsc{Model 2 conv +pos} \\
+\textsc{Model 0} & & \\
+\textsc{Model 1} & & \\
+\textsc{Model 2 conv} & & \\
+\textsc{Model 2 BOW} & & \\
+\textsc{Model 2 conv +entropy} & &  \\
+\textsc{Model 2 conv +pos} & & \\
 %\textsc{Model 2 sparsemax} \\
 \bottomrule
 \end{tabular}
@@ -1132,16 +1142,12 @@ We see that the entropy of \textsc{Model 0} attention is quite low, suggesting t
 
 
 
-We see that the attention is very spread out over sentences in the soft attention models. By examining word-level attention, we notice that the model focuses on stop words (e.g. punctuation marks, \texttt{</s>}) in the encoder. We posit this may be due to the LSTM ``saving'' information at these words, and so the soft attention model can best retrieve the information by averaging over these hidden states.
-
-Appendix~\ref{appendix:attn} contains a few more visualizations.
-
 % predicted examples
 \subsection{Predicted Summaries}
 We show some predicted summaries from the model in Figures~\ref{fig:predicted_summaries1}, \ref{fig:predicted_summaries2}, and \ref{fig:predicted_summaries3}.
 The source documents are truncated in these examples for clarity --- see Appendix~\ref{appendix:full_docs} for the full text.
 
-We notice that the generated summaries tend to be quite short and succint, and most are the result of copying or paraphrasing specific sentences. Clearly, the summaries are usually getting the basic gist of the articles. 
+We notice that the generated summaries tend to be quite short and succint, and most are the result of copying or paraphrasing specific sentences. Clearly, the summaries can usually get the basic gist of the articles. 
 
 While the summaries are mostly grammatical, they are occasional redundant (e.g. ``the message was posted on twitter and posted on twitter'') or have very little information content (e.g. ``new : death toll rises to \#\# , policy say''). In these cases, the model is most likely just sampling from the decoder language model without using the encoder very much.
 
@@ -1262,8 +1268,6 @@ war ' . \texttt{</s>} a mocked - up image of the site 's founder jack dorsey in 
 adding : ' your virtual war on us will cause a real war on you . \texttt{</s>} diatribe : an image of twitter founder jack dorsey in \texttt{<unk>} was posted alongside a rant in arabic \texttt{</s>} ... \\
 \midrule
 \textsc{Gold} & & diatribe in arabic posted anonymously yesterday and shared online \\
-%& & cnn 's kelly wallace wonders why women too often do n't lift each up in the workplace \\
-%& &  much of the start of the world 's most famous sled dog , the iditarod trail sled dog race , is covered in barren gravel \\
 \midrule
 \textsc{First} & &  isis supporters have vowed to murder twitter staff because they believe the site 's policy of shutting down their extremist pages is a ' virtual
 war ' . \\
@@ -1348,10 +1352,16 @@ The \textsc{Model 0} and \textsc{Model 1} heatmaps are produced by summing the w
 
 
 
+%We see that the attention is very spread out over sentences in the soft attention models. By examining word-level attention, we notice that the model focuses on stop words (e.g. punctuation marks, \texttt{</s>}) in the encoder. We posit this may be due to the LSTM ``saving'' information at these words, and so the soft attention model can best retrieve the information by averaging over these hidden states.
+
+Appendix~\ref{appendix:attn} contains a few more visualizations.
+
+
+
 % 5819
 \begin{figure}[p]
 \centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/1predsent}
+\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/0predsent}
 \caption{\textsc{Model 0}}
 \end{figure}
 
@@ -1409,7 +1419,7 @@ Despite the worse performance of \textsc{Model 2} and its hard counterpart \text
 Second, sampling multiple times with $k_{mul} > 1$ seems to do well, and only incurs a constant cost in computational complexity. By relaxing the constraint that we attend to a single sentence, we can build models with similar complexity but better training guarantees. 
 
 
-Third, we see that pretraining the hard attention model with soft attention significantly helps performance. While pretraining with soft attention on the task at hand defeats the purpose of conditional computation, we can imagine starting with a pretrained LSTM on the encoder side from another task to possibly achieve the same effect.
+Third, we see that pretraining the hard attention model with soft attention helps performance. While pretraining with soft attention on the task at hand defeats the purpose of conditional computation, we can imagine starting with a pretrained LSTM on the encoder side from another task to possibly achieve the same effect.
 In addition, we see that the fixed bag-of-words coarse attention performs almost as well as the higher powered convolutional model --- therefore, we can conclude that lower variance in the training process will lead to better performance. Transfer learning of a pretrained LSTM may partially solve this problem.
 
 Therefore, we conclude that while reinforcement learning methods have promise in building large-scale models with conditional computation, the noisiness of training is a difficult barrier to overcome. There are possible directions in reducing the burden of RL training (e.g., the aforementioned pretraining), but it would also be wise to consider alternative techniques for sparseness.
