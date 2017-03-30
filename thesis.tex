@@ -678,9 +678,7 @@ An RNN is given by a parametrizable function $f_{enc}$ and a hidden state $\bold
 where $\boldW, \boldU, b$ are learned parameters, and $\odot$ is the elementwise product. 
 Intuitively, $\boldc_t$ is the memory cell, $\boldf_t$ is the forget gate, $\boldi_t$ is the input gate, $\boldh_t$ is the output cell, and $\boldo_t$ is the output gate.
 
-LSTMs can be stacked on top of one another by treating the outputs $\boldh_t$ of one LSTM as the inputs to another LSTM.
-
-In stacked LSTMs, we will take the top sequence of hidden states $\boldh_1, \ldots, \boldh_n$ to form a single context vector.
+LSTMs can be stacked on top of one another by treating the outputs $\boldh_t$ of one LSTM as the inputs to another LSTM. In stacked LSTMs, we will take the top sequence of hidden states $\boldh_1, \ldots, \boldh_n$ to form the context hidden states.
 
 
 The decoder is another RNN $f_{dec}$ that generates output words $y_t \in \mathcal{V}$. It keeps hidden state $\boldh_t^{dec} \in \mathbb{R}^{d_{hid}}$ as $\boldh_t^{dec} = f_{dec}(y_{t-1}, \boldh_{t-1}^{dec})$ similar to the encoder RNN.
@@ -1002,7 +1000,7 @@ For \textsc{Model 2}, our default document arrangement is a 10 by 40 grid of wor
 %% fix batch size and other details, and also note we train until convergence (which is slightly longer for hard attn)
 We train with minibatch stochastic gradient descent (SGD) with batch size 20 for 20 epochs, renormalizing gradients below norm 5. We initialize the learning rate to 0.1 for the sentence encoder and 1 for the rest of the model, and begin decaying it by a factor of 0.5 each epoch after the validation perplexity stops decreasing.\footnote{We tried more complicated SGD optimization methods such as Adagrad \citep{Duchi2011} and Adam \citep{Kingma2015}, but found that they did not perform as well. This could be due to gradient norms that are too large.}
 
-We use 2 layer LSTMs with 500 hidden units, and we initialize word embeddings with 300-dimensional word2vec embeddings \citep{mikolov2013word2vec}. For convolutional layers, we use a kernel width of 6 and 600 filters. Positional embeddings have dimension 25.
+We use 2 layer LSTMs with 500 hidden units, and we initialize word embeddings with 300-dimensional word2vec embeddings \citep{mikolov2013word2vec}. We initialize all other parameters as uniform in the interval $[-0.1, 0.1]$. For convolutional layers, we use a kernel width of 6 and 600 filters. Positional embeddings have dimension 25. We use dropout \citep{Srivastava2014} between stacked LSTM hidden states and before the final word generator layer to regularize (we use dropout probability 0.3).
 
 % talk about LSTM soft attention?
 
@@ -1075,7 +1073,7 @@ With multiple gold summaries in the CNN/Dailymail highlights, we choose to take 
 Table~\ref{table:summary} shows summarization results. We see that our soft attention models comfortably beat the baselines, while hard attention falls slightly behind.
 For the most part, we see that PPL and ROUGE are properly correlated. 
 
-The \textsc{Berkeley} model ROUGE scores are surprisingly low. We attribute this due to the fact that our models usually produce a single summary, while the ILP system can produce multiple. The \textsc{Berkeley} model therefore has very high ROUGE recall, while suffering in precision. See Appendix~\ref{appendix:more_results} for numbers.
+The \textsc{Berkeley} model ROUGE scores are surprisingly low. We attribute this due to the fact that our models usually produce a single sentence as the summary, while the ILP system can produce multiple. The \textsc{Berkeley} model therefore has very high ROUGE recall, while suffering in precision. See Appendix~\ref{appendix:more_results} for numbers.
 
 Unfortunately, the \textsc{Model 0} sequence-to-sequence baseline proves to be difficult to beat. \textsc{Model 1} performs surprisingly poorly in ROUGE, despite its good perplexity.
 
@@ -1089,7 +1087,11 @@ Additionally, we found empirically that Adagrad and Adam performed worse than SG
 We observe that \textsc{Model 3} results are significantly worse than soft attention results. This is most likely due to a noisy gradient; even by using variance reduction techniques, the variance of the gradient estimator remains high. It may be too difficult to train the encoder (which forms a large part of the model) using such a noisy gradient. Even with soft attention pretraining (\textsc{+pretrain}) and alternating training (\textsc{+alternate}), \textsc{Model 3} fails to reach \textsc{Model 2} performance.
 %It is also easy to fall into local optima if the stochastic agent's policy does not sufficiently explore the state space (i.e., the sentence attention settles too early on a spurious sentence).
 
-We note that positional embeddings (\textsc{+pos}) give a nontrivial boost to scores. This makes sense since the position of the sentence in the document should be relevant for determining its importance; for example, we would expect sentences near the start of the document to be more useful for summarization.
+While taking a single sample performs quite poorly, we see that taking more than one sample gives a significant boost to scores (\textsc{+multi2}, \textsc{+multi3}). There seem to be diminishing returns as we take more samples.
+
+Finally, we note that positional embeddings (\textsc{+pos}) give a nontrivial boost to scores. This makes sense since the position of the sentence in the document should be relevant for determining its importance --- for example, we would expect sentences near the start of the document to be more useful for summarization.
+
+An extended table of results can be found in Appendix ???.
 
 
 \begin{figure}[t]
@@ -1131,7 +1133,7 @@ Model & & Entropy \\
 %\textsc{Model 2 sparsemax} \\
 \bottomrule
 \end{tabular}
-\caption{Entropy over sentence attention, averaged over all attention distributions in the validation set. For reference, uniform attention gives entropy $\approx 2.30$.}
+\caption{Entropy over sentence attention, averaged over all attention distributions in the validation set. Lower entropy means a more concentrated distribution. For reference, uniform attention in our case gives entropy $\approx 2.30$.}
 \label{table:entropy}
 \end{table}
 
@@ -1143,9 +1145,9 @@ We compute the entropy numbers by averaging over all generated words in the vali
 
 We see that the entropy of \textsc{Model 0} attention is quite low, suggesting that a factorization of attention into sentence-level and word-level is reasonable. However, our \textsc{Model 2} results have very high entropy --- it seems as if it uses attention to essentially average all of the encoder hidden states. We examine this more carefully in Section~\ref{sec:attn}.
 
-We attempted to reduce the entropy of \textsc{Model 2} by adding a penalty term with a scale factor of 0.01. We note that this effectively lowers the entropy, but unfortunately weakens the performance of the model.
+We attempted to reduce the entropy of \textsc{Model 2} by penalizing the entropy in training with a scale factor of 0.01. We note that this effectively lowers the entropy, but unfortunately weakens the performance of the model (see Appendix ???), so we did not experiment further.
 
-Finally, we note that the entropy of \textsc{Model 3} is very low (before taking the argmax at test time). This is exactly what we had hoped for --- we will see that the model in fact learns to focus on only a few sentences of the document over the course of generation. If we have multiple samples with \textsc{+multi2}, the model is allowed to use 2 sentences at a time, and so relaxes the entropy slightly.
+Finally, we note that the entropy of \textsc{Model 3} is very low (before taking the argmax at test time). This is exactly what we had hoped for --- we will see that the model in fact learns to focus on only a few sentences of the document over the course of generation. If we have multiple samples with \textsc{+multi2}, the model is allowed to use 2 sentences at a time, and so it relaxes the entropy slightly.
 
 
 
@@ -1353,17 +1355,31 @@ Source & & ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel
 
 %% attention figures 
 \subsection{Attention Heatmaps}
-We analyze the attention distributions produced by each model for the summaries in Figure~\ref{fig:predicted_summaries2}.
-In each figure, the rows are the sentences of each document (40 words), and the columns are the summary words produced.
-We limit our figures to sentence level here --- the full word-level attention is difficult to examine, but can be found in Appendix ???
-The \textsc{Model 0} and \textsc{Model 1} heatmaps are produced by summing the word-level attention weights in each row.
+\label{sec:attn}
 
+We visualize the attention distributions produced by each model for the summaries in Figure~\ref{fig:predicted_summaries2}.
 
+In each figure, the rows are the sentences of each document (40 words per row), and the columns are the summary words produced by the model. The intensity of each box for a given column represents the strength of the attention weight on that row. In particular, note that the column weights should sum to 1.
+For \textsc{Model 0} and \textsc{Model 1}, heatmaps are produced by summing the word-level attention weights in each row.
 
-%We see that the attention is very spread out over sentences in the soft attention models. By examining word-level attention, we notice that the model focuses on stop words (e.g. punctuation marks, \texttt{</s>}) in the encoder. We posit this may be due to the LSTM ``saving'' information at these words, and so the soft attention model can best retrieve the information by averaging over these hidden states.
+We limit our figures to sentence level here --- the full word-level attention is difficult to examine due to the length of the documents, but can be found in Appendix ???
 
-Appendix~\ref{appendix:attn} contains a few more visualizations.
+We see that the spread of the attention matches what we expect to see from the entropy numbers. In \textsc{Model 0} and \textsc{Model 1}, the model mostly attends to the right sentences at the right time --- for example, in \textsc{Model 1}, it copies ``a mocked-up image'' (with a change of word choice!), then proceeds to get ``jack dorsey'' from later in the document.
 
+On the other hand, in \textsc{Model 2}, the attention becomes washed out with much higher entropy. It seems that the model is essentially averaging all of the encoder hidden states instead of intelligently selecting the right ones. Nonetheless, there are parts of the document that seem slightly more heavily weighted than others.
+
+If we examine the word-level attention (not pictured here), we find that the model focuses on stop words (e.g. punctuation marks, \texttt{</s>}) in the encoder. We posit this may be due to the LSTM ``saving'' information at these words, and so the soft attention model can best retrieve the information by averaging over these hidden states.
+
+In \textsc{Model 3}, we see that we get very sharp attention on some sentences, as we had hoped. Unfortunately, for this example, the model has trouble deciding where to attend to, and oscillates between the first and second-to-last sentence. This seems to be one of the main weaknesses of hard attention models --- in case there is not clearly a single right sentence to pick to produce the summary, the model may become indecisive and spit out garbage.
+
+We partially alleviate this problem by allowing the model to attend to multiple sentences in hard attention. Indeed, with \textsc{+multi2}, the model actually produces a very coherent output by focusing attention on the first sentence --- we also see that it considered choosing the second-to-last sentence and decided against it.
+We believe that the improved result for this example is not only due to more flexibility in where to attend, but a better encoding model due to the training process (i.e. a better local optimum).
+
+\todo{don't forget to include the others once they finish running}
+
+Finally, we observe that \textsc{+pos} encourages the model to attend to sentences closer to the beginning of the document. This matches our intuition that the front of a news article has more information content.
+
+Appendix~\ref{appendix:attn} contains a few more attention visualizations.
 
 
 % 5819
@@ -1409,7 +1425,9 @@ Appendix~\ref{appendix:attn} contains a few more visualizations.
 %\caption{\textsc{Model 3 +multi2 +pos}}
 %\end{figure}
 
-\section{Discussion}
+
+
+\chapter{Discussion}
 
 As shown by the results, coarse-to-fine attention generally performs worse than standard sequence-to-sequence attention.
 
