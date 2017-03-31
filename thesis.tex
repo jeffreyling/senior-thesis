@@ -54,7 +54,7 @@
 \thispagestyle{empty}
 \vspace*{4cm}
 \begin{center}
- Dedicated to Leland and Brandon
+ Dedicated to Leland and Brandon, for whom the future is incredibly bright
 \end{center}
 \clearpage
 
@@ -75,7 +75,7 @@ and Yuntian Deng for his unyielding optimism that kept my experiments going.
 
 To my thesis readers, Profs. David Parkes and Stuart Shieber, for agreeing to review this incredibly long piece of writing.
 
-To the math library and my cohorts there. Silence is golden.
+To the math library and my cohorts there for a comfortable work environment. Silence is golden.
 
 To my peers for supporting a lively learning environment, especially Rachit for always having a moment for an interesting discussion.
 
@@ -411,21 +411,22 @@ Therefore, in order to scale seq2seq methods for this problem, we aim to prune d
 %The problem of full document summarization, however, is still very open. In order to make the models work, \cite{nallapati2016seq2seq} use a variety of tricks: limiting the decoder vocabulary to the document, the use of pointer attention for \texttt{<unk>} tokens, etc. Our goal in this paper is not necessarily to optimize performance, but to understand how to scale up existing seq2seq methods in an efficient way, and so we attempt to eliminate the use of these ad-hoc tricks whenever possible. We aim to find the best implementation of ``hard'' attention, in which a discrete subset of the source document is selected at any given time, to satisfy the scalability condition.
 
 
-Many techniques have been proposed in the literature to efficiently handle the problem of large inputs to deep neural networks, and we consider the particular framework of conditional computation.
+Many techniques have been proposed in the literature to efficiently handle the problem of large inputs to deep neural networks. Here, we discuss the particular framework of conditional computation.
 
 The term ``conditional computation'' was coined by \citet{BengioLC13} --- the idea is to only compute a subset of a network for a given input. 
-To this end, \citet{BengioLC13} propose the use of stochastic nodes in the network to implement discrete random variables, which serve as gates to turn on or off certain parts of the network for computation.
+To this end, \citet{BengioLC13} propose the use of discrete stochastic nodes, which serve as ``gates'' to turn on or off certain parts of the network.
 Unfortunately, discrete variables cannot be backpropagated through as they produce zero gradient, and so \citet{BengioLC13} suggest the naive \emph{straight-through} estimator for binary stochastic gates.
 In the forward step of the network, they simply sample from the stochastic gates, and backpropagate the gradient as if they had not sampled.
 
-Many alternative methods, some deterministic and some stochastic, have been proposed for conditional computation. 
+Many alternative methods, some stochastic and some deterministic, have been explored to extend the conditional computation idea.
 
-On the stochastic front, we usually want to sample from a multinomial distribution, i.e. select one choice out of multiple choices, to conditionally compute. In deep networks, the softmax function $\operatorname{softmax} : \reals^m \to [0,1]^m$ is used to produce a normalized probability distribution out of any vector of reals. For $\boldz \in \reals^m$,
+On the stochastic front, we usually want to sample from a multinomial (or categorical) distribution, i.e. select one choice out of multiple choices, to serve as our gate. In deep networks, the softmax function $\operatorname{softmax} : \reals^m \to [0,1]^m$ is used to produce a normalized probability distribution out of any vector of reals. For $\boldz \in \reals^m$,
 \begin{equation}
 \operatorname{softmax}(\boldz)_i = \frac{\exp(z_i)}{\sum_j \exp(z_j)}
 \end{equation}
-We can sample from this distribution to decide which parts of the network to compute. To train the model, we will require methods from reinforcement learning, which we cover in the next section. \citet{xu2015captioning} apply this technique in the form of ``hard'' attention --- while standard ``soft'' attention averages the representations of where the model attends to, in hard attention we discretely select a single location.
-This approach has also been applied by others for computer vision tasks \citep{mnih2014visualattention, ba2015visualattention}.
+We can sample from this distribution to decide which parts of the network to compute. \citet{xu2015captioning} apply this technique in the form of ``hard'' attention --- while standard ``soft'' attention averages the representations of where the model attends to, in hard attention we discretely select a single location.
+This approach has also been applied in various computer vision tasks \citep{mnih2014visualattention, ba2015visualattention}.
+ To train the model, we will require methods from reinforcement learning, which we will discuss in the next section.
 
 %As an alternative to reinforcement learning, \citet{Maddison2017} apply a smoothed version of the Gumbel max trick in order to approximate the sampling process. The Gumbel max trick is an alternative method for sampling multinomial random variables: by drawing i.i.d. uniform variables $U_i \sim \mathrm{Unif}(0,1)$, taking the argmax of $z_i - \log(-\log(U_i))$ gives us a sample with the correct probability. While this process is still discrete and has no gradient, \citet{Maddison2017} use a softmax instead of a max to obtain a smooth approximation that can be differentiated.
 
@@ -433,7 +434,7 @@ This approach has also been applied by others for computer vision tasks \citep{m
 On the deterministic front, \citet{rae2016sparsememory} use an approximate nearest neighbors approach for their ``sparse access memory'' model to train a large-scale neural Turing machine.
 \citet{Shazeer2017} introduce a mixture-of-experts model that deterministically chooses a subset of ``expert'' networks to train at any given time.
 The key-value memory networks of \citet{Miller2016} select subsets of text by computing word overlap; this process, however, is not learned.
- \citet{martins2016sparsemax} propose the \emph{sparsemax} function as a substitute for softmax, which projects a given vector of weights to the probability simplex. It turns out that this function is differentiable and also has sparse output; however, we are not guaranteed to have a one-hot vector as we get from sampling the multinomial distribution.
+ \citet{martins2016sparsemax} propose the \emph{sparsemax} function as a substitute for softmax, which projects a given vector of weights to the probability simplex. It turns out that this function is differentiable and usually has sparse output; however, we are not guaranteed to have a one-hot vector as we get from sampling the multinomial distribution.
 
 
 \section{Reinforcement Learning}
@@ -444,8 +445,8 @@ The traditional setup of reinforcement learning (RL) assumes some agent is navig
 We assume a state space $\mcS$, an action space $\mcA$, a reward function of state and action $R : \mcS \times \mcA \to \reals$, and a Markovian transition distribution $p(s' | s, a)$ for $s, s' \in \mcS$ and $a \in \mcA$.
 
 We suppose that at time $t$, the agent is in state $s_t \in \mcS$, makes an action $a_t \in \mcA$, earns a reward $r_t = R(s_t, a_t)$, and transitions probabilistically to the next state $s_{t+1}$. We suppose the agent has a \emph{policy function} $\pi : \mcS \to \mcA$ that it uses to make decisions. Then the agent wants to maximize total expected reward
-$$\mathbb{E}_{s_t, a_t} \left[\sum_{t=0}^\infty \gamma^t r_t \right]$$
-by finding the optimal policy $\pi$. Here, $\gamma \in (0,1)$ is a time discount factor for the reward, and we assume an infinite time horizon.
+$$\mathbb{E}_{s_t, a_t} \left[\sum_{t=0}^T \gamma^t r_t \right]$$
+by finding the optimal policy $\pi$. Here, $\gamma \in (0,1)$ discounts future rewards, and we assume a time horizon of length $T$ (which could be $\infty$).
 
 
 In general RL, we assume that we don't know the reward function $R(s,a)$ or the transition distribution $p(s_{t+1} | s_t, a_t)$. While the environment still gives us rewards for actions, finding the optimal policy requires predicting which states lead to those rewards.
@@ -453,7 +454,7 @@ Since we don't know ahead of time which states are best, we must explore the sta
 
 There are several methods for solving the general RL problem.
 %Some are model-based, which attempt to model the transition distribution $p(s_{t+1} | s_t, a_t)$; others are model-free, which directly attempt to learn actions based on states. One such is Q-learning \citep{Watkins1989}, which tries to learn the reward function for every pair $(s,a) \in \mcS \times \mcA$.
-We consider the approach of directly learning the policy function $\pi( \cdot ; \theta) : \mcS \to \mcA$, where $\pi$ is now parametrized by weights $\theta$. We can train $\pi$  to maximize expected reward through a gradient ascent method known as \emph{policy gradient}, or the REINFORCE algorithm \citep{williams1992reinforce}.
+We consider the approach of directly learning the policy function $\pi( \cdot ; \theta) : \mcS \to \mcA$, where $\pi$ is now parameterized by weights $\theta$. We can train $\pi$  to maximize expected reward through a gradient ascent method known as \emph{policy gradient}, or the REINFORCE algorithm \citep{williams1992reinforce}.
 
 REINFORCE can be used to train deep neural networks with stochastic units by a simple extension of the backpropagation algorithm. In the next chapter,  we derive the generalized training algorithm and connect it to our models.
 
@@ -513,7 +514,7 @@ REINFORCE can be used to train deep neural networks with stochastic units by a s
 \label{chap:algorithms}
 
 While reinforcement learning is an attractive framework for posing our models, the details of training are slightly complicated in the context of deep learning.
-In this chapter, we describe how both deep learning and reinforcement learning both fit into the rigorous model of stochastic computation graphs.
+In this chapter, we describe how deep learning and reinforcement learning both fit into the rigorous model of stochastic computation graphs.
 We then give the corresponding training algorithm in detail.
 
 \section{Stochastic Computation Graphs}
@@ -535,7 +536,6 @@ Note that the SCG formulation captures both supervised deep learning and RL poli
 \end{figure}
 
 Figure~\ref{fig:scg} shows examples of simple SCGs, along with their corresponding objectives. To optimize the objective, we want to perform gradient descent, and so for any parameter $\theta$, we need to derive an estimator of its gradient.
-
 We see in these special cases that there is an intuitive pattern to the gradient estimators. If there is a path from $\theta$ to the objective that goes through a stochastic node, we get a term for the derivative of the log probability multiplied by the objective. For paths through deterministic nodes, we get standard derivatives as in the chain rule from backpropagation.
 
 Next, we derive the gradient of the objective with respect to parameter input nodes in the general case.
@@ -559,12 +559,12 @@ Assume differentiability of all functions. Then the gradient of the objective wi
 where $\hat{C}_v = \sum_{c \in \mcC, ~v \prec c} \hat{c}$ is a random variable of the cost that stochastic node $v$ influences.
 \label{thm:gradient}
 \end{theorem}
-Before we give the proof, we note the intuition. The first term represents the gradient from the stochastic nodes, where we multiply the gradient of the log probability with the cost.
+Before we give the proof, we note the intuition. The first term represents the gradient from the stochastic nodes, where we multiply the gradient of the log probability with the influenced cost.
 The second term is the standard gradient we obtain from backpropagation, summed over all cost nodes that $\theta$ deterministically influences.
 \begin{proof}
-Due to linearity of expectation, we only need consider a single node $c \in \mcC$. Let $\mcL = \mathbb{E}[\hat{c}]$ be the loss function.
+Due to linearity of expectation, we only need consider a single node $c \in \mcC$. Let $\mathbb{E}[\hat{c}]$ be the loss function.
 
-We have stochastic nodes $v$ such that $\theta \prec^D v$ and $v \prec c$, i.e. there is a path from $\theta$ to $c$ through $v$. Let this set be $\mcS_\theta$, and denote the joint random variable of this set as $\hat{\boldv}$. Let $c(\hat{\boldv} ; \theta)$ explicitly denote $\hat{c}$.
+We have stochastic nodes $v$ such that $\theta \prec^D v$ and $v \prec c$, i.e. there is a path from $\theta$ to $c$ through $v$. Let the set of these nodes be $\mcS_\theta$, and denote the joint random variable of this set as $\hat{\boldv}$. Let $c(\hat{\boldv} ; \theta)$ explicitly denote $\hat{c}$.
 
 We compute the gradient:
 \begin{align*}
@@ -606,7 +606,7 @@ where $b_c$ is a scalar not influenced by any of the $v$ in the summation.
 \end{theorem}
 
 \begin{proof}
-Equation~\ref{eq:baseline_gradient} is identical to Equation~\ref{eq:gradient1}, except for the added terms
+Equation~\ref{eq:baseline_gradient} is identical to Equation~\ref{eq:gradient1}, except for the subtracted terms
 $$\mathbb{E}\left[ b_c \sum_{v\in \mcS, \theta \prec^D v, v \prec c}\frac{\partial}{\partial\theta} \log p(v | \on{par}(v) ; \theta) \right]$$
 Considering a single $c$, by linearity it suffices to show that
 \begin{equation*}
@@ -688,7 +688,7 @@ Note that the resulting algorithm can easily be implemented in standard autodiff
 Now that we understand the general definition of SCGs, we briefly overview how we will use them.
 
 
-In the NLP problems we are interested in, we have a sequential decision problem as in reinforcement learning. That is, we have a trajectory of states $s_t$ and we make actions $a_t$ at time $t$ based on some parameterized policy function. Each action leads to a reward $r_t$ and determines our next state $s_{t+1}$, thus influencing total future reward $\sum_{s=t}^T r_s$ for finite $T$. See Figure~\ref{fig:our_scg} for a diagram.
+In the NLP problems we are interested in, we have a sequential decision problem as in reinforcement learning. That is, we have a trajectory of states $s_t$ and we make actions $a_t$ at time $t$ based on some parameterized policy function. Each action leads to a reward $r_t$ and determines our next state $s_{t+1}$, thus influencing total future reward $\sum_{s=t}^T r_s$. See Figure~\ref{fig:our_scg} for a diagram.
 
 \begin{figure}[t]
 \begin{center}
@@ -730,7 +730,7 @@ In the NLP problems we are interested in, we have a sequential decision problem 
 \label{fig:our_scg}
 \end{figure}
 
-The resulting SCG will turn out to mirror the computation graph for sequence-to-sequence models with attention. There, $s_t$ will be the hidden state of our model when generating word $t$, and $r_t$ comes from our loss function during training. In that case, the stochasticity of $a_t$ can arise from a mechanism such as hard attention.
+The resulting SCG will turn out to mirror the computation graph for sequence-to-sequence models with attention. There, $s_t$ will be the hidden state of our model when generating word $t$, and $r_t$ comes from our loss function during training. While $a_t$ is normally deterministic in standard sequence-to-sequence models, hard attention mechanisms cause $a_t$ to be stochastic, and the resulting model fits into the RL framework.
 
 
 With this setup in mind, we describe our models in detail in the next chapter.
@@ -764,7 +764,7 @@ With this setup in mind, we describe our models in detail in the next chapter.
 \chapter{Models}
 \label{chap:models}
 
-In this chapter, we describe our models. We begin by introducing the standard sequence-to-sequence attention model, then describe our extensions of the basic architecture.
+In this chapter, we describe our models. We begin by describing the standard sequence-to-sequence attention model, then illustrate our extensions of the basic architecture.
 
 \section{Sequence-to-sequence (seq2seq)}
 
@@ -782,7 +782,7 @@ In the seq2seq model, an \emph{encoder} recurrent neural network (RNN) reads the
 
 More formally, suppose we have a vocabulary $\mcV$. A given input sentence $w_1, \ldots, w_n \in \mathcal{V}$ is transformed into a sequence of vectors $\boldx_1, \ldots, \boldx_n \in \mathbb{R}^{d_{in}}$ through a word embedding matrix $\boldE \in \mathbb{R}^{|\mathcal{V}| \times d_{in}}$ as $\boldx_t = \boldE w_t$.
 
-An RNN is given by a parametrizable function $f_{enc}$ and a hidden state $\boldh_t \in \mathbb{R}^{ d_{hid}}$ at each time step $t$ with $\boldh_t = f_{enc}(\boldx_t, \boldh_{t-1})$. For the LSTM, we keep an auxiliary state $\boldc_t$ along with $\boldh_t$, and we compute $f_{enc}$ as
+An RNN is given by a parameterizable function $f_{enc}$ and a hidden state $\boldh_t \in \mathbb{R}^{ d_{hid}}$ at each time step $t$ with $\boldh_t = f_{enc}(\boldx_t, \boldh_{t-1})$. For the LSTM, we keep an auxiliary state $\boldc_t$ along with $\boldh_t$, and we compute $f_{enc}$ as
 \begin{align}
 \boldf_t &= \sigma(\boldW^f \boldx_t + \boldU^f \boldh_t + b_f) \\
 \boldi_t &= \sigma(\boldW^i \boldx_t + \boldU^i \boldh_t + b_i) \\
@@ -796,16 +796,16 @@ Intuitively, $\boldc_t$ is the memory cell, $\boldf_t$ is the forget gate, $\bol
 LSTMs can be stacked on top of one another by treating the outputs $\boldh_t$ of one LSTM as the inputs to another LSTM. In stacked LSTMs, we will take the top sequence of hidden states $\boldh_1, \ldots, \boldh_n$ to form the context hidden states.
 
 
-The decoder is another RNN $f_{dec}$ that generates output words $y_t \in \mathcal{V}$. It keeps hidden state $\boldh_t^{dec} \in \mathbb{R}^{d_{hid}}$ as $\boldh_t^{dec} = f_{dec}(y_{t-1}, \boldh_{t-1}^{dec})$ similar to the encoder RNN.
+The decoder is another RNN $f_{dec}$ that generates output words $y_t \in \mathcal{V}$. It keeps hidden state $\boldh_t^{dec} \in \mathbb{R}^{d_{hid}}$ as $\boldh_t^{dec} = f_{dec}(y_t, \boldh_{t-1}^{dec})$ similar to the encoder RNN.
 A context vector is produced at each time step using an attention function $a$ that takes the encoded hidden states $[\boldh_1, \ldots, \boldh_n]$ and the current decoder hidden state $\boldh_t^{dec}$ and produces the context $\boldc_t \in \reals^{d_{ctx}}$:
 \begin{equation}
 \boldc_t = a([\boldh_1, \ldots, \boldh_n], \boldh_t^{dec})
 \end{equation}
-As in \citet{luong2015effective}, it is helpful to feed the context vector at time $t-1$ back into the decoder RNN at time $t$, i.e. $\boldh_t^{dec} = f_{dec}([y_{t-1}, \boldc_{t-1}], \boldh_{t-1}^{dec})$.
+As in \citet{luong2015effective}, it is helpful to feed the context vector at time $t-1$ back into the decoder RNN at time $t$, i.e. $\boldh_t^{dec} = f_{dec}([y_t, \boldc_{t-1}], \boldh_{t-1}^{dec})$.
 
-Finally, a linear projection produces a distribution over output words $y_t \in \mcV$:
+Finally, a linear projection and softmax (the generator) produces a distribution over output words $y_t \in \mcV$:
 \begin{equation}
-p(y_t | y_{t-1}, \ldots, y_1, [h_1, \ldots, h_n]) = \boldW^{out}\boldc_t + b^{out}
+p(y_t | y_{t-1}, \ldots, y_1, [\boldh_1, \ldots, \boldh_n]) = \on{softmax}(\boldW^{out}\boldc_t + \boldb^{out})
 \end{equation}
 
 Given document-summary pairs $\{ (\boldx^{(i)}, \boldy^{(i)}) \}_{i=1}^N$ for training, the models are trained to maximize the log probability of getting the sequences in the dataset correct, i.e. minimize the negative log-likelihood (NLL):
@@ -825,13 +825,9 @@ In \citet{bahdanau2014neural}, the function $a(\cdot)$ is implemented with an \e
 \balpha_t &= \mathrm{softmax}(\bbeta_t) \\
 \widetilde{\boldc}_t &= \sum_{i=1}^n \alpha_{t,i} \boldh_i
 \end{align}
-The idea behind attention is to select the most relevant words of the source (by assigning higher attention weights) when generating output word $y_t$ at time $t$.
+The idea behind attention is to select the most relevant words of the source (by assigning higher attention weights) when generating words at each time step.
 
-The $\mathrm{softmax}$ function, defined as
-\begin{equation}
-\mathrm{softmax}([\beta_1, \ldots, \beta_n])_i =  \frac{\exp(\beta_i)}{\sum_{j=1}^n \exp(\beta_j)}
-\end{equation}
-normalizes the $\alpha_i$ to sum to 1 over the source sentence words. This gives us a notion of probability distribution over the encoder words --- we can therefore write $\boldc_t$ as the expectation $\mathbb{E}_\alpha[\boldh]$, where we pick $\boldh_i$ with probability $\alpha_i$.
+The $\mathrm{softmax}$ function normalizes the $\alpha_i$ to sum to 1 over the source sentence words. This gives us a notion of probability distribution over the encoder words --- we can therefore write $\boldc_t$ as the expectation $\mathbb{E}_\alpha[\boldh]$, where we pick $\boldh_i$ with probability $\alpha_i$.
 
 Our final context vector is then
 \begin{equation}
@@ -861,19 +857,25 @@ Thinking about text at different levels of granularity is motivated by \citet{li
 %\citet{Sukhbaatar2015} demonstrate how coarse representations can be useful by using memory networks to access information for simple question-answering tasks.
 %by using low-level LSTMs on words to build sentence representations, then a high-level LSTM on the sentences for the final paragraph representation.
 
-Therefore, if we can make our model first use coarse attention to choose sentences, then use fine attention to choose words only from that sentence, then we avoid the computational cost of searching over the entire document.
-
 Specifically, suppose we have sentences $s_1, \ldots, s_m$ with words $w_{i,1}, \ldots, w_{i,n_i}$ for sentence $s_i$. We apply an RNN to each sentence separately to get corresponding hidden states $\boldh_{i,j}$ for $i = 1, \ldots, m$ and $j = 1, \ldots, n_i$, so that
 \begin{equation}
 \boldh_{i,j} = \on{RNN}(\boldh_{i,j-1}, w_{i,j})
 \end{equation}
-For attention, we then consider two options.
+
+
+Therefore, if we can make our model first use coarse hard attention to choose sentences, then use fine soft attention to choose words only from that sentence, then we avoid the computational cost of searching over the entire document.
+
+We consider two soft attention baselines before we discuss the hard attention option.
 
 \paragraph{Model 1} We can follow \textsc{Model 0} and compute attention weights $\alpha_{i,j}$ for each hidden state $\boldh_{i,j}$ by normalizing over all states.
 This is a slightly weakened version of \textsc{Model 0}; like \textsc{Model 0}, we normalize attention over all hidden states at once, but now our RNN hidden states do not share context between sentences. We call this \textsc{Model 1}.
 
-\paragraph{Model 2} Alternatively, rather than taking attention over the entire document, we can instead have a two-layered hierarchical attention mechanism: first, we have weights $\alpha_1^s, \ldots, \alpha_m^s$ for each sentence, and then for sentence $s_i$, we have another set of weights $\alpha_{i,1}^w, \ldots, \alpha_{i,n_i}^w$.
-Our final attention weight on word $w_{i,j}$ is then $\alpha_{i,j} = \alpha_i^s \cdot \alpha_{i,j}^w$.
+
+
+
+
+\paragraph{Model 2} Rather than taking attention over the entire document, we can instead have a two-layered hierarchical attention mechanism: first, we have weights $\alpha_1^s, \ldots, \alpha_m^s$ for each sentence, and then for sentence $s_i$, we have another set of weights $\alpha_{i,1}^w, \ldots, \alpha_{i,n_i}^w$.
+Our final attention weight on word $w_{i,j}$ is then $\alpha_{i,j} = \alpha_i^s \cdot \alpha_{i,j}^w$, so that the weights normalize to 1 over the whole document.
 
 In order to compute the sentence attention weights $\alpha_i^s$, we need to produce representations of each sentence; i.e., given the words $w_{i,1}, \ldots, w_{i, n_i}$ of the sentence, we produce a vector representation $\boldh^s_i \in \mathbb{R}^{d_{sent}}$. Figure~\ref{fig:sent_reps} shows diagrams of our sentence representation models.
 
@@ -924,10 +926,10 @@ With the previous models, we are required to compute hidden states over all word
 
 However, if we are able to perform conditional computation and only compute on $M^+$ of the sentences, we can reduce the complexity to $O(M^+N)$. If we are able to make $M^+$ constant or even 1, the complexity of attention becomes $O(N)$ --- an expression invariant of the length of the document!
 
-In our experiments, we will apply stochastic sampling to the attention distribution $\balpha$ in the spirit of ``hard attention'' \citep{xu2015captioning}.
+In our experiments, we will apply stochastic sampling to the attention distribution in the spirit of ``hard attention'' \citep{xu2015captioning}.
 Specifically, rather than computing the context $\widetilde{\boldc}$ as an expectation over $\balpha$ (i.e. $\widetilde{\boldc} = \sum_{i=1}^n \alpha_i \boldh_i$), we can sample from the probability distribution $\balpha$ to obtain a single state $\boldh_i$, and we set $\widetilde{\boldc} = \boldh_i$ as the sampled hidden state.
 
-In our case, we take \textsc{Model 2} and apply hard attention at the sentence level, but keep the word level attention per sentence as is. That is, we sample from the attention weights $\alpha_1^s, \ldots, \alpha_m^s$ to obtain a one-hot encoding for the sentence attention, and apply the same multiplication with this one-hot vector on the word-level attention weights $\alpha_{i,1}^w, \ldots, \alpha_{i,n_i}^w$ for all $i = 1, \ldots, m$. At test time, we take the max $\alpha_i^s$ for our one-hot encoding instead of sampling. We call this \textsc{Model 3}.
+In our case, we take \textsc{Model 2} and apply hard attention at the sentence level, but keep the word level attention per sentence as is. That is, we sample from the attention weights $\alpha_1^s, \ldots, \alpha_m^s$ to obtain a one-hot encoding for the sentence attention, and apply the same multiplication with this one-hot vector on the word-level attention weights $\alpha_{i,1}^w, \ldots, \alpha_{i,n_i}^w$ for all $i = 1, \ldots, m$. At test time, we take the max $\alpha_i^s$ for a one-hot encoding instead of sampling. We call this \textsc{Model 3}.
 
 
 Because the hard attention model loses the property of being end-to-end differentiable, we use reinforcement learning to train our network.
@@ -969,7 +971,7 @@ In addition to including a baseline, we also scale the rewards by a tuned hyperp
 \paragraph{\textsc{Alternate} training} \citet{xu2015captioning} explain that training hard attention with REINFORCE has very high variance, even when including a baseline. Thus, for every minibatch of training, they randomly use soft attention instead of hard attention with some probability (they use 0.5).
 The backpropagated gradient is then the standard soft attention gradient instead of the REINFORCE gradient. In our results, we label this as \textsc{+alternate}.
 
-While this method helps stabilize training, we would prefer not to use it. Our goal in coarse-to-fine attention is to reduce computation, but \textsc{alternate} training requires full attention computation for a subset of minibatches. However, this training method still allows for computational benefits at test time, and we include it in our experiments to test the feasibility of hard attention.
+While this method helps stabilize training, we would prefer not to use it. Our goal in coarse-to-fine attention is to reduce computation, but \textsc{alternate} training requires full attention computation for a subset of minibatches. However, this training method still allows for computational benefits at test time (as we still take the argmax), and we include it in our experiments to test the feasibility of hard attention.
 
 
 \paragraph{Multiple samples} 
@@ -1029,7 +1031,7 @@ While the dataset was created for a question-answering task, the dataset format 
 
 
 
-Train, validation, and test splits are provided along with document tokenization and sentence splitting. We do additional preprocessing by replacing all numbers with \# and appending end of sentence tokens \texttt{<s>} to each sentence. We limit our vocabulary size to the 50000 most frequent words, replacing the rest with \texttt{<unk>} tokens. We dropped the documents which had an empty source (which came from photo articles).
+Train, validation, and test splits are provided along with document tokenization and sentence splitting. We do additional preprocessing by replacing all numbers with \# and appending end of sentence tokens \texttt{</s>} to each sentence. We limit our vocabulary size to the 50000 most frequent words, replacing the rest with \texttt{<unk>} tokens. We dropped the documents which had an empty source (which came from photo articles).
 
  Table~\ref{table:data_stats} lists statistics for the CNN/Dailymail dataset. Figure~\ref{fig:data_examples} shows examples source and target pairs from the dataset.
 
@@ -1207,16 +1209,16 @@ Unfortunately, the \textsc{Model 0} sequence-to-sequence baseline proves to be d
 
 \textsc{Model 2} has worse performance, likely due to our assumption that we can factor the attention distribution into a coarse distribution and a fine distribution.
 This assumption is quite strong --- we hypothesize that our deficit then exists because either (1) our sentence representations are not sufficiently strong, or (2) we did not properly solve the optimization problem.
-We believe (1) may be true because with perfect modeling power, the model should be able to learn accurate representations of sentences such that it can attend to the right ones.
+We believe (1) is a potential issue because with perfect modeling power, the model should be able to learn accurate representations of sentences such that it can attend to the right ones. It is not clear if our models are sufficiently strong.
 We believe (2) is also an issue because the training signal is backpropagated to the word-level LSTM via the attention weights --- since the training algorithm cannot directly compare word attention weights as in \textsc{Model 0} or \textsc{Model 1}, it has trouble finding the best optimum.
-Additionally, we found empirically that Adagrad and Adam performed worse than SGD, which is unusual given that these methods are usually state-of-the-art.
+Additionally, we found empirically that Adagrad and Adam performed worse than SGD, which is unusual given that these optimization methods are usually state-of-the-art.
 
 We observe that \textsc{Model 3} results are significantly worse than soft attention results. This is most likely due to a noisy gradient; even by using variance reduction techniques, the variance of the gradient estimator remains high. It may be too difficult to train the encoder (which forms a large part of the model) using such a noisy gradient. Even with soft attention pretraining (\textsc{+pretrain}) and alternating training (\textsc{+alternate}), \textsc{Model 3} fails to reach \textsc{Model 2} performance.
 %It is also easy to fall into local optima if the stochastic agent's policy does not sufficiently explore the state space (i.e., the sentence attention settles too early on a spurious sentence).
 
 While taking a single sample performs quite poorly, we see that taking more than one sample gives a significant boost to scores (\textsc{+multi2}, \textsc{+multi3}). There seem to be diminishing returns as we take more samples.
 
-Finally, we note that positional embeddings (\textsc{+pos}) give a nontrivial boost to scores (except for \textsc{Model 3 +pos}). This makes sense since the position of the sentence in the document should be relevant for determining its importance --- for example, we would expect sentences near the start of the document to be more useful for summarization. In the exception, we believe this may be due to difficulty in training the embeddings.
+Finally, we note that positional embeddings (\textsc{+pos}) give a nontrivial boost to scores (except for \textsc{Model 3 +pos}). This makes sense since the position of the sentence in the document should be relevant for determining its importance --- for example, we would expect sentences near the start of the document to be more useful for summarization. The exception, \textsc{Model 3 + pos}, can be understood by examining the attention heatmaps (Section~\ref{sec:attn}).
 
 %An extended table of results can be found in Appendix~\ref{appendix:more_results}.
 
@@ -1256,6 +1258,7 @@ Model & & Entropy \\
 \textsc{Model 2 +pos} & & 2.06 \\
 %\textsc{Model 2  +entropy} & & 0.21 \\
 \textsc{Model 3 } & & 0.15 \\
+\textsc{Model 3 +pos} & & 0.00 \\
 \textsc{Model 3  +multi2} & & 0.59 \\
 \textsc{Model 3  +pos +multi2} & & 0.46 \\
 %\textsc{Model 2 sparsemax} \\
@@ -1273,9 +1276,13 @@ We compute the entropy numbers by averaging over all generated words in the vali
 
 We see that the entropy of \textsc{Model 0} attention is quite low, suggesting that a factorization of attention into sentence-level and word-level is reasonable. However, our \textsc{Model 2} results have very high entropy --- it seems as if it uses attention to essentially average all of the encoder hidden states. We examine this more carefully in Section~\ref{sec:attn}.
 
+
 %We attempted to reduce the entropy of \textsc{Model 2} by penalizing the entropy in training with a scale factor of 0.01. We note that this effectively lowers the entropy, but unfortunately weakens the performance of the model (see Appendix ???), so we did not experiment further.
 
-Finally, we note that the entropy of \textsc{Model 3} is very low (before taking the argmax at test time). This is exactly what we had hoped for --- we will see that the model in fact learns to focus on only a few sentences of the document over the course of generation. If we have multiple samples with \textsc{+multi2}, the model is allowed to use 2 sentences at a time, and so it relaxes the entropy slightly.
+We note that the entropy of \textsc{Model 3} is very low (before taking the argmax at test time). This is exactly what we had hoped for --- we will see that the model in fact learns to focus on only a few sentences of the document over the course of generation. If we have multiple samples with \textsc{+multi2}, the model is allowed to use 2 sentences at a time, which relaxes the entropy slightly.
+
+
+Finally, we observe that adding positional embeddings reduces the entropy --- this is extremely true in \textsc{Model 3 +pos}, which is making a hard decision at every time step. We believe this is because the model learns to place less attention on the later sentences thanks to the positional information.
 
 
 
@@ -1475,7 +1482,7 @@ Source & & ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel
 \textsc{Model 3 +pos +multi2} & & the man was killed in baton rouge , louisiana \\
 \bottomrule
 \end{tabular}
-\caption[Predicted Summaries 3]{Predicted summaries for each model, given a more difficult document.}
+\caption[Predicted Summaries 3]{Predicted summaries for each model, given another long document.}
 \label{fig:predicted_summaries3}
 \end{figure}
 
@@ -1488,7 +1495,7 @@ Source & & ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel
 
 For the document in Figure~\ref{fig:predicted_summaries2}, we visualize the attention distributions produced by each model in Figures~\ref{fig:first_attn} to \ref{fig:last_attn}.
 
-In each figure, the rows are the sentences of each document (40 words per row), and the columns are the summary words produced by the model. The intensity of each box for a given column represents the strength of the attention weight on that row. In particular, the column weights should sum to 1.
+In each figure, the rows are the sentences of each document (40 words per row), and the columns are the summary words produced by the model. The intensity of each box for a given column represents the strength of the attention weight on that row. In particular, the weights of each column should sum to 1.
 For \textsc{Model 0} and \textsc{Model 1}, heatmaps are produced by summing the word-level attention weights in each row.
 
 We limit our figures to sentence level attention --- the full word-level attention is difficult to examine due to the length of the documents.
@@ -1497,7 +1504,7 @@ We see that the spread of the attention matches what we expect to see from the e
 
 On the other hand, in \textsc{Model 2}, the attention becomes washed out with much higher entropy. It seems that the model is essentially averaging all of the encoder hidden states instead of intelligently selecting the right ones. Nonetheless, there are parts of the document that seem slightly more heavily weighted than others.
 
-If we examine the word-level attention (not pictured here), we find that the model focuses on stop words (e.g. punctuation marks, \texttt{</s>}) in the encoder. We posit this may be due to the LSTM ``saving'' information at these words, and so the soft attention model can best retrieve the information by averaging over these hidden states.
+If we examine the word-level attention (not pictured here), we find that the model focuses on stop words (e.g. punctuation marks, \texttt{</s>}) in the encoder. We posit this may be due to the LSTM ``saving'' information at these words, and so the soft attention model can best retrieve the information by averaging over these hidden states. Alternatively, the model may be ignoring the encoder and generating only from the decoder language model.
 
 In \textsc{Model 3}, we see that we get very sharp attention on some sentences, as we had hoped. Unfortunately, for this example, the model has trouble deciding where to attend to, and oscillates between the first and second-to-last sentence. This seems to be one of the main weaknesses of hard attention models --- in case there is not clearly a single right sentence to pick to produce the summary, the model may become indecisive and spit out garbage.
 
@@ -1568,22 +1575,22 @@ Appendix~\ref{appendix:attn} contains a few more attention visualizations.
 
 As shown by the results, coarse-to-fine attention generally performs worse than standard sequence-to-sequence attention.
 
-We first discuss the weakness of the soft attention model, i.e. \textsc{Model 2}. As we noted, we may be obtaining poor results because of an optimization problem. The low entropy of \textsc{Model 0} attention, as well as the attention visualization, both show that the model mainly focuses on one sentence at a time when generating the output. Thus, in theory there exists an attention distribution for the coarse-to-fine models to replicate, but the model is failing to learn it.
+We first discuss the weakness of the soft attention model, i.e. \textsc{Model 2}. As we noted, we may be obtaining poor results because of an optimization problem. The low entropy of \textsc{Model 0} and \textsc{Model 1} attention, as well as the attention visualization, both show that the model mainly focuses on one sentence at a time when generating the output. Thus, in theory there exists an attention distribution for the coarse-to-fine models to replicate, but the model is failing to learn it.
 
-Assuming we can learn the attention distribution, another possible cause for the worse performance of coarse-to-fine models is lower modeling power. Because we run the fine-grained LSTM across each sentence separately, it may not capture the full context as well as running the LSTM across the entire document as in \textsc{Model 0}.
-However, we found in additional experiments that even if we ran the LSTM over the full document for the fine-grained encoding, there was not a significant change in performance. This does not conclusively rule out this possibility, but only shows that the performance bottleneck is in the attention.
+Assuming our optimization algorithm are already optimal, a possible cause for the worse performance of coarse-to-fine models is lower modeling power. One such weakness may be in the fine-grained encoder: because we run the fine-grained LSTM across each sentence separately, it may not capture the full context as well as running the LSTM across the entire document as in \textsc{Model 0}. Indeed, we see that \textsc{Model 1} does much worse than \textsc{Model 0} when we remove the inter-sentence connections.
+However, for \textsc{Model 2}, we found in additional experiments that even if we ran the LSTM over the full document for the fine-grained encoding (i.e. connect hidden states between sentences), there was only a minor boost in performance. This does not conclusively rule out this possibility, but only shows that the performance bottleneck is in the attention.
 
-Another modeling issue is in the sentence representations. While bag-of-words and convolutional models are effective for simple tasks, we would be interested to see if more sophisticated representations can allow us to obtain better attention. There is some research on developing general sentence representations for transfer learning \citep{Bowman2016}, and we leave this area to future work.
+Another possible modeling weakness is in the sentence representations. While bag-of-words and convolutional models are effective for simple tasks, we would be interested to see if more sophisticated representations can allow us to obtain better attention. There is some research on developing general sentence representations for transfer learning \citep{Bowman2016}, and we leave this area to future work.
 
 
 %%%
-Despite the worse performance of \textsc{Model 2} and its hard counterpart \textsc{Model 3}, there are interesting aspects of the hard attention model. First, we see that the model does indeed learn to attend to a small subset of sentences. This suggests that the model may in fact be useful in large-scale conditional computation frameworks; however, this will definitely depend on how the performance scales as we increase the number of sentences.
+Despite the worse performance of \textsc{Model 2} and its hard counterpart \textsc{Model 3}, there are interesting aspects of the hard attention model. First, we see that the model does learn to attend to a small subset of sentences. This suggests that the model may in fact be useful in large-scale conditional computation frameworks; however, this will definitely depend on how the performance scales as we increase the size of the source.
 
-Second, sampling multiple times with $k_{mul} > 1$ seems to do well, and only incurs a constant cost in computational complexity. By relaxing the constraint that we attend to a single sentence, we can build models with similar complexity but better training guarantees. 
+Second, sampling multiple times with $k_{mul} > 1$ seems to do well, and only incurs a constant cost in computational complexity. By relaxing the constraint that we attend to a single sentence, we can build models with similar complexity but much better training guarantees. 
 
 
-Third, we see that pretraining the hard attention model with soft attention helps performance. While pretraining with soft attention on the task at hand defeats the purpose of conditional computation, we can imagine starting with a pretrained LSTM on the encoder side from another task to possibly achieve the same effect.
-In addition, we see that the fixed bag-of-words coarse attention performs almost as well as the higher powered convolutional model --- because the word embeddings were fixed in this case, we conclude that lower variance in the training process will lead to better performance. Transfer learning of a pretrained LSTM may partially solve this problem.
+Third, we see that pretraining the hard attention model with soft attention helps performance. While pretraining with soft attention on the task at hand defeats the purpose of conditional computation at train time, we can imagine starting with a pretrained encoder from another task to possibly achieve the same effect.
+In addition, we see that the bag-of-words coarse attention performs almost as well as the higher powered convolutional model --- because the word embeddings were fixed in this case, we conclude that lower variance in the training process will lead to better performance. We still need to understand to what extent we can control the variance of the RL training process, and we leave this investigation to future work.
 
 We conclude that while reinforcement learning has promise in building large-scale models with conditional computation, the noisiness of training is a difficult barrier to overcome. There are possible directions in reducing the burden of RL training (e.g., the aforementioned pretraining), but further research is needed.
 
@@ -1593,18 +1600,20 @@ We conclude that while reinforcement learning has promise in building large-scal
 We propose the following as concrete future work.
 
 We would like to explore alternative methods of sentence representation to improve the coarse attention. These methods would need to be able to encode a sentence faster than the fine-grained LSTM encoder, and as a bonus, should be trainable in an unsupervised way on an auxiliary text corpus (as in word2vec).
+
+We can try to find better optimization methods for reinforcement learning. For example, there is substantial literature in variance reduction techniques for RL \citep[e.g.][]{Schulman2015TRPO}, but these mostly address the low-dimensional parameter setting (which is common for robotics). If we can leverage these approaches to the high-dimensional deep learning problem, we can potentially improve performance.
 %Better optimization methods are also worth looking into, as our coarse-to-fine attention model seems to get stuck in local optima quite often.
 
 We may reconsider our approach to conditional computation. As we have seen, reinforcement learning is a very noisy training method, and has seen limited success in NLP so far.
 Alternative methods we can consider include approximate nearest neighbors (ANN) techniques \citep{rae2016sparsememory} and the key-value memory networks of \citet{Miller2016}.
-The latter approach is similar to our coarse-to-fine attention, as it selects paragraphs of text based on word overlap with a query. While they do not train this selection mechanism, this may in fact be an advantage due to 
-The former approachANN techniques would likely be more involved.
+The latter approach is similar to our coarse-to-fine attention, as it selects paragraphs of text based on word overlap with a query. While they do not train this selection mechanism, this may in fact be an advantage since we do not run into high variance issues.
+The ANN approach is a fairly different paradigm, but we would be interested in understanding how to apply it here.
 
-We also would like to scale up the summarization task. In our experiments, we use truncated news articles, and the sentence selection problem is relatively easy (choosing 1 sentence out of 10 in our experiments). 
-We would be interested to see if our techniques can be applied to larger documents, such as Wikipedia articles or scientific papers, without sacrificing too much in terms of performance. We hypothesize that this will probably not be possible without somehow pretraining the encoder.
-Unfortunately, another bottleneck we will likely run into is GPU memory. Experiments of scale will require a large amount of computational resources, but also gives us the opportunity to  fully test the complexity advantage of our coarse-to-fine method.
+Outside of improving our method, we would like to find new applications, such as scaling up the summarization task. In our experiments, we use truncated news articles, and the sentence selection problem is relatively easy (choosing 1 sentence out of 10 in our experiments). 
+We want to see if our techniques can be applied to larger documents, such as Wikipedia articles or scientific papers, without sacrificing too much in terms of performance. We hypothesize that this will probably not be possible without somehow pretraining the encoder.
+Unfortunately, another bottleneck we will likely run into is GPU memory. Experiments of scale will require a large amount of computational resources, but they also give us the opportunity to fully test the complexity advantage of our coarse-to-fine method.
 
-We would also be interested to see if our model can be applied to other text processing tasks such as question-answering (QA). QA is a more clearly posed problem than summarization --- answering a question correctly is much less ambiguous than producing an accurate summary, and the metrics tend to be more informative as well.
+Finally, we would be interested to see if our model can be applied to other text processing tasks such as question-answering (QA). QA is a more clearly posed problem than summarization --- answering a question correctly is much less ambiguous than producing an accurate summary, and the metrics tend to be more informative as well.
 Classical QA tasks have relied on the use of Knowledge Bases such as Freebase \citep{Bollacker2008}, but there has been work in using free-form text such as Wikipedia as an information source \citep{Miller2016}. While our model may have been designed for summarization, the coarse-to-fine attention mechanism is general and should be applicable to these problems.
 
 \chapter{Conclusion}
@@ -1612,19 +1621,19 @@ Classical QA tasks have relied on the use of Knowledge Bases such as Freebase \c
 
 In this thesis, we explored the problem of document summarization from a deep learning perspective. While summarization has a rich history of methods, very few are truly abstractive --- most require some form of extraction from the text, perhaps followed by minor transformations and paraphrasing.
 
-Deep learning, on the other hand, takes a truly generative approach. The sequence-to-sequence with attention model of NLP can read a document and produce a summary, all while acting on only vector space representations of the text. 
-
+Deep learning, on the other hand, takes a truly generative approach. The sequence-to-sequence attention model of NLP can read a document and produce a summary, all while acting on only vector space representations of the text. 
 While seq2seq models are state-of-the-art on several tasks including short text summarization, the computational cost is nontrivial, especially once we consider problems of scale such as document summarization.
+
 We saw that one of the biggest bottlenecks of seq2seq methods is the attention mechanism. The standard seq2seq model requires that we process the full input sequentially, and then repeatedly attend to all of it throughout the output generation process. Such a method is highly inefficient, especially since only a small fraction of the source is usually necessary for producing the output.
 
-Therefore, we develop a new coarse-to-fine attention architecture to reduce the computational complexity. By drawing on ideas of conditional computation from deep learning, we attend to subsets of the document at a time using coarse representations of the text.
-By employing hard attention at the coarse level to reduce the input size, we dramatically reduce the cost of computing the more expensive fine-grained representations.
+Therefore, we develop a new coarse-to-fine attention architecture to reduce the computational complexity. By drawing on ideas of conditional computation, we attend to subsets of the document at a time using coarse representations of the text.
+By employing hard attention at the coarse level to reduce the input size, we can dramatically reduce the cost of both train and test time computations.
 
 Due to its nondifferentiability, we train our model using methods from reinforcement learning. We explore the stochastic computation graph framework to rigorously understand the training algorithm, and note that the algorithm fits in naturally with existing deep learning frameworks.
 
-We experiment with our coarse-to-fine model on the CNN/Dailymail dataset. We find that it fails to beat the standard sequence-to-sequence model on metrics, but has the desired property of sharp attention on a small subset of the source. We therefore are hopeful that such an attention mechanism can scale up existing deep learning models to larger inputs.
+We then experiment with our coarse-to-fine model on the CNN/Dailymail dataset. We find that it fails to beat the standard sequence-to-sequence model on metrics, but has the desired property of sharp attention on a small subset of the source. We therefore are hopeful that such an attention mechanism can scale up existing deep learning models to larger inputs.
 
-While we have found promising results using coarse-to-fine attention, further research is necessary to fully understand its role. In future work, we propose to scale up the task to better understand the computational gains, and also to apply the model to other NLP tasks such as question-answering.
+While we have found promising results using coarse-to-fine attention, further research is necessary to make it practical, which will involve more investigation in deep learning and reinforcement learning techniques. In future work, we propose to scale up the task to better understand the computational gains, and also to apply the model to other NLP tasks such as question-answering.
 
 Our method is just one of many in the recent flood of deep learning ideas in NLP.
 Because the field is moving so incredibly fast, we are excited to integrate our model with the latest work and slowly push machines towards human-level natural language understanding.
@@ -1658,185 +1667,185 @@ Because the field is moving so incredibly fast, we are excited to integrate our 
 Here we show some more attention heatmaps from the models, including for the summaries from Figures~\ref{fig:predicted_summaries1} and~\ref{fig:predicted_summaries3}.
 
 % 4417
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/0predsent}
-%\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
-%\end{figure}
-%
-%% 1
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/0predsent}
-%\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/0predsent}
-%\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/0predsent}
-%\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/0predsent}
-%\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/0predsent}
-%\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/0predsent}
-%\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
-%\end{figure}
-%
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/0predsent}
+\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
+\end{figure}
+
+% 1
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/0predsent}
+\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/0predsent}
+\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/0predsent}
+\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/0predsent}
+\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/0predsent}
+\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/0predsent}
+\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
+\end{figure}
+
+%%%%
+% 369
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/1predsent}
+\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
+\end{figure}
+
+% 9251
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/1predsent}
+\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/1predsent}
+\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/1predsent}
+\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/1predsent}
+\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/1predsent}
+\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/1predsent}
+\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
+\end{figure}
+
+
+
+
 %%%%%
-%% 369
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/1predsent}
-%\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
-%\end{figure}
-%
-%% 9251
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/1predsent}
-%\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/1predsent}
-%\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/1predsent}
-%\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/1predsent}
-%\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/1predsent}
-%\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/1predsent}
-%\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
-%\end{figure}
-%
-%
-%
-%
+% 12931
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/saved/8predsent}
+\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/saved/8predsent}
+\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/saved/8predsent}
+\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/saved/8predsent}
+\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/saved/8predsent}
+\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/saved/8predsent}
+\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/saved/8predsent}
+\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
+\end{figure}
+
 %%%%%%
-%% 12931
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/saved/8predsent}
-%\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/saved/8predsent}
-%\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/saved/8predsent}
-%\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/saved/8predsent}
-%\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/saved/8predsent}
-%\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/saved/8predsent}
-%\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/saved/8predsent}
-%\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
-%\end{figure}
-%
-%%%%%%%
-%
-%%10613
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/saved/10predsent}
-%\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/saved/10predsent}
-%\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/saved/10predsent}
-%\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/saved/10predsent}
-%\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/saved/10predsent}
-%\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/saved/10predsent}
-%\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
-%\end{figure}
-%
-%\begin{figure}[p]
-%\centering
-%\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/saved/10predsent}
-%\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
-%\end{figure}
+
+%10613
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/saved/10predsent}
+\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/saved/10predsent}
+\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/saved/10predsent}
+\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/saved/10predsent}
+\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/saved/10predsent}
+\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/saved/10predsent}
+\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/saved/10predsent}
+\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
+\end{figure}
 
 \end{appendices}
 
