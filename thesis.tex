@@ -14,29 +14,88 @@
 \newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
 \newtheorem{theorem}{Theorem}
 
-\pagenumbering{roman}
-\title{Document Summarization (draft)}
-\author{Jeffrey Ling}
+
+
+
+%\title{Coarse-to-Fine Attention Models for Document Summarization}
+%\author{Jeffrey Ling}
 %\date{}
 \begin{document}
-\maketitle{}
+\pagenumbering{roman}
+
+
+\begin{titlepage}
+	\centering
+	\vspace*{2cm}
+	{\Huge\bfseries Coarse-to-Fine Attention Models for \\
+				Document Summarization \par}
+%	\includegraphics[width=0.15\textwidth]{example-image-1x1}\par\vspace{1cm}	\vspace{1cm}
+	\vfill
+	{\LARGE Jeffrey Ling\par}
+	\vspace{1cm}
+	{\Large A Senior Thesis for the \\
+		Joint Concentration in \\
+	Computer Science \& Mathematics\par}
+	\vspace{1cm}
+	{\Large Harvard College\par}
+	\vspace{1cm}
+	{\Large \today }
+
+	\vfill
+
+% Bottom of the page
+%	{\large \today\par}
+\end{titlepage}
+%\maketitle{}
 \onehalfspacing
 
-\begin{abstract} % needs work
-While humans are naturally able to produce high-level summaries upon reading paragraphs of text, computers still find such a task enormously difficult. Despite progress over the years, the general problem of document summarization remains intractable, and simple models prove to be hard to beat.
+% dedication
+\clearpage
+\thispagestyle{empty}
+\vspace*{4cm}
+\begin{center}
+ hello
+\end{center}
+\clearpage
 
-Inspired by recent work in deep learning, we apply the sequence-to-sequence model with attention to the summarization problem. While seq2seq models are successful in a variety of natural language processing tasks, the computation does not scale well to tasks with long sequences such as documents. To that end, we propose a novel coarse-to-fine attention method to reduce the computational complexity of the standard attention model.
+
+% acknowledgements
+\clearpage
+\thispagestyle{empty}
+\vspace*{2cm}
+\begin{center}
+\LARGE\bf Acknowledgements
+\end{center}
+\vspace{1cm}
+
+I would like to thank
+
+
+\clearpage % For letting the acknowledgements appear on a separate page
+
+
+\begin{abstract} % needs work
+While humans are naturally able to produce high-level summaries upon reading paragraphs of text, computers still find such a task enormously difficult. Despite progress over the years, the general problem of document summarization remains unsolved, and even simple models prove to be hard to beat.
+
+Inspired by recent work in deep learning, we apply the sequence-to-sequence model with attention to the summarization problem. While sequence-to-sequence models are successful in a variety of natural language processing tasks, the computation does not scale well to tasks with long sequences such as documents. To address this problem, we propose a novel coarse-to-fine attention model to reduce the computational complexity of the standard attention model.
 %By organizing the source sequence into a 2-dimensional image, we hierarchically apply attention, using a coarse mechanism for the first layer to select a row sequence, and a finer mechanism for the second soft attention layer. While the computation for training standard seq2seq models scales linearly with source sequence length, our method is invariant to length and thus can scale arbitrarily.
 
-We evaluate our model on the CNN/Dailymail document summarization dataset. Results...
+We evaluate our model on the CNN/Dailymail document summarization dataset. We find that while coarse-to-fine attention models lag behind sequence-to-sequence baselines, our method has several attractive properties. First, the model learns to select subsets of the document to generate its output, 
+%% FINISH
 \end{abstract}
 
 \tableofcontents{}
-\pagenumbering{arabic}
+
+\listoffigures
+
+\listoftables
+
 
 
 
 \chapter{Introduction}
+
+\pagenumbering{arabic}
 
 \section{Natural Language Processing}
 
@@ -67,7 +126,7 @@ In order to solve a language problem, we might begin by enriching the surface fo
 \begin{figure}[t]
 \centering
 \includegraphics[scale=0.5]{images/zipf}
-\caption{Zipf's law, indicating the relationship between English words and their frequency. The distribution approximately follows an inverse power law. Image from CS287.}
+\caption[Zipf's Law]{Zipf's law, indicating the relationship between English words and their frequency. The distribution approximately follows an inverse power law. Image from CS287.}
 \label{fig:zipf}
 \end{figure}
 
@@ -95,7 +154,7 @@ Extractive methods are by far more popular due to the simplicity of building an 
 
 \paragraph{Single- vs. multi-document} Summarization was originally posed as the problem of producing a summary for a single document. However, with the onset of the Internet, there are often multiple documents on the same topic, and so a summarization system should be able to use all of them to produce a summary.
 
-Interestingly, it has been noted that the multi-document problem is often easier due to redundant information across sources. 
+Interestingly, \citet{Nenkova2011} note that the multi-document problem is often easier due to redundant information across sources. 
 
 %\paragraph{Indicative (style) vs. informative (facts)} Indicative summaries provide a sense for what a certain document is about without necessarily giving all of its details, while informative summaries are meant to replace the original document in terms of content.
 
@@ -136,9 +195,9 @@ None of these methods directly address the grammaticality of the output. Aside f
 %It is important to highlight these differences to understand how people thought about the problem. The complexity of this taxonomy indicates that the summarization problem in its simplest formulation is very poorly defined. Indeed, query-focused summarization may well be a useful task, but it may be more accurate to classify it as question-answering rather than summarization.
 
 
-Going forward, we will limit our scope to the single-document and generic summarization case. We will explore a few different algorithms in extractive and abstractive summarization, and connect these approaches with recent trends in deep learning.
+Going forward, we will limit our scope to the single-document and generic summarization case. We will explore some related work in extractive and abstractive summarization, then connect these approaches with recent trends in deep learning.
 
-\section{Summarization Methods}
+\section{Related Work}
 
 One of the first treatises on automatically producing summaries was \citet{luhn1958automatic}, which considered the problem of producing abstracts for scientific articles. At the time, computers were still monolithic machines that ran on punch cards, so automating the summarization process was quite ahead of its time.
 
@@ -171,17 +230,16 @@ One key drawback of these trained extractive models, especially the deep ones, i
 
 \subsection{Abstractive} While extraction has proven to be successful, the method is inherently limited in its ability to summarize. The more challenging method, and also the closest to what humans do, is \emph{abstractive} summarization. Instead of strictly requiring the summary to be a subset of the source document, any coherent text is allowed.
 
-The main technique used to produce abstractive summaries is sentence compression, which first extracts sentences, then applies postprocessing to remove unneeded information. \citet{knight2002summarization} employ a noisy channel model and probabilistic context-free grammars to deduce the ``most probable'' compression.
+The main technique used to produce abstractive summaries is sentence compression, which first extracts sentences, then applies postprocessing to remove unneeded information.
+ \citet{knight2002summarization} employ a noisy channel model and probabilistic context-free grammars to deduce the ``most probable'' compression.
 %while \citet{clarke2008global} uses an integer linear program.
 %\citet{cohn2008sentence} extend the tree-based methods to allow for insertions and substitutions during compression, whereas prior methods were purely deletion based.
-\citet{zajic2004topiary} successfully use a sentence compression algorithm along with an unsupervised topic model on the DUC 2004 task.
-Recently, \citet{Durrett2016} apply an ILP approach, where they maximize a score based on textual and coreferent features with certain grammaticality and anaphora constraints.
+\citet{zajic2004topiary} combine a sentence compression algorithm with an unsupervised topic detection algorithm to achieve the best result on DUC 2004.
+Recently, \citet{Durrett2016} apply an integer linear programming (ILP) approach, to summarize documents where they extract phrases according to a feature-based scoring function and grammaticality constraints.
 
 %Fusion: align parse trees and combine phrases that are similar
-\todo{finish}
 
-
-Deep learning has also been successfully applied to abstractive summarization. \citet{rush2015neural} propose a completely data-driven model for headline generation by training an end-to-end model. More recently, \citet{nallapati2016seq2seq} apply the same approach on full documents.
+We note that these methods rely heavily on a strong extraction system, and so might not qualify as truly ``abstractive.'' Deep learning models, however, have been very successful at generating language from scratch, and have been applied to abstractive summarization. \citet{rush2015neural} propose a completely data-driven model for headline generation by training an end-to-end model. More recently, \citet{nallapati2016seq2seq} apply the same approach on full documents.
 
 As with deep learning methods for extraction, these models require a large amount of supervised training data. One advantage of the abstractive model is that data in the document-abstract format is more easily obtainable than labeled extractive data.
 
@@ -194,28 +252,31 @@ Smmry's algorithm is a simple extractive method. It counts word occurrences, spl
 
 \section{This Work}
 
-Inspired by advances in deep learning for NLP, we set out to build a deep model to abstractively generate summaries. Because deep learning is computationally expensive even for short lengths of text such as sentences, this creates a challenge for the general document summarization problem.
+Inspired by advances in deep learning for NLP, we set out to build a deep model to abstractively generate summaries for documents. Because deep learning is computationally expensive even for short lengths of text, this creates a challenge for the general document summarization problem.
 
-Hence, we will survey the literature for methods that alleviate the computation of training deep models. Along the way, we propose a new model architecture that extends the sequence-to-sequence model and attempts to reduce the computational complexity of the document summarization problem.
+Hence, we will survey the literature for methods that alleviate the computation of training deep models. Along the way, we propose a new model architecture that extends the popular sequence-to-sequence model and attempts to reduce the computational complexity of the document summarization problem.
 
 \section{Outline}
 
 
 We provide an outline for the rest of this thesis.
 
-In Chapter~\ref{chap:related}, we give a survey of deep learning and motivate its use in solving our problem.
-In Chapter~\ref{chap:background}, we provide the necessary background material for understanding our models and algorithms.
+In Chapter~\ref{chap:background}, we give a survey of deep learning and motivate its use in solving our problem. We also provide the necessary background material for understanding our models and algorithms.
 In Chapter~\ref{chap:algorithms}, we describe our training algorithm formally.
 In Chapter~\ref{chap:models}, we describe our models formally.
-In Chapter~\ref{chap:experiments}, we describe the experimental setup, including our dataset, baselines, and practical details for training our models.
+In Chapter~\ref{chap:experiments}, we describe the experimental setup, including our dataset and baselines. %, and practical details for training our models.
 In Chapter~\ref{chap:results}, we show results and analyze the outputs of our models.
 In Chapter~\ref{chap:discussion}, we discuss our results.
 Finally, we conclude in Chapter~\ref{chap:conclusion}.
 
 %%%%%%%%%%
 
-\chapter{Related Work}
-\label{chap:related}
+\chapter{Background}
+\label{chap:background}
+
+In this chapter, we give a brief primer on deep learning and representation learning in the context of NLP.
+
+Then, we set up the relevant background ideas for our models. We describe the popular sequence-to-sequence attention model at a high level, then survey the literature for methods in reducing the computation cost of deep models. Finally, we introduce the framework of reinforcement learning, which will provide the foundation for one of these methods.
 
 
 \section{Deep Learning}
@@ -227,28 +288,28 @@ The history of neural networks dates back to the perceptron \citep{Rosenblatt195
 Recently, neural networks have made a resurgence. In the ImageNet image classification competition in 2012, \citet{Krizhevsky2012} won using deep convolutional neural networks \citep{LeCun1995}, beating the competition by a significant margin. This led to a renewed wave of research, especially due to the advancement of GPU computing power, which can train networks at 10 to 20 times the speed of standard CPUs. Today, deep models are successfully used in image recognition \citep{Farabet2013}, speech recognition \citep{Hinton2012}, and Go playing \citep{Silver2016}, just to name a few.
 
 
-In NLP, one of the first successful neural models was \citet{Bengio2003}, which builds a neural language model using multi-layered perceptrons. Later, \citet{Collobert2011} demonstrate that neural models can be used to train end-to-end models without any of the preprocessing that was once considered necessary.
+In NLP,  \citet{Bengio2003} demonstrate the viability of deep models by building a neural language model using multi-layered perceptrons. Later, \citet{Collobert2011} show that neural models can be used to train end-to-end models without any of the preprocessing that was once considered necessary.
 
 Since the onset of deep learning, deep models have found their way into nearly every corner of NLP. Much of their success relies on the ubiquity of the \emph{long short-term memory} (LSTM) recurrent neural network \citep{hochreiter1997long}, a model used to both process and generate sequences of text.
 Several state-of-the-art algorithms are now based upon deep learning tools such as word vectors and LSTMs. While there is too much to cover here, \citet{goldberg2015primer} provides a concise summary of the models that have had the greatest impact on NLP. % weak
 
 \section{Representation Learning}
 
-While neural networks are often treated as black box classifiers, \citet{Zeiler2014} show that the intermediate layers of deep convolutional networks contain abstracted qualities of the input, such as patterns, textures, and objects of the input. This suggests that neural networks are discovering features of the input and building generalized \emph{representations} of their inputs.
+While neural networks are often treated as black box classifiers, \citet{Zeiler2014} show that the intermediate layers of deep convolutional networks contain abstracted qualities of the input, such as patterns, textures, and objects of the input. This suggests that neural networks are discovering latent features and building generalized \emph{representations} of their inputs.
 
-\begin{figure}
+\begin{figure}[p]
 \centering
-\includegraphics[trim={15cm 15cm 15cm 15cm},clip,width=\textwidth]{images/graph}
-\caption{A visualization of word2vec word vectors \citep{mikolov2013word2vec}, projected to two dimensional space using PCA. Words with similar semantic meaning tend to cluster together in the space. Image from CS287.}
+\includegraphics[trim={20cm 20cm 20cm 20cm},clip,width=\textwidth]{images/graph}
+\caption[Word2vec Clusters]{A visualization of word2vec word vectors \citep{mikolov2013word2vec}, projected to two dimensional space using PCA. Words with similar semantic meaning tend to cluster together in the space. Image from CS287.}
 \label{fig:word2vec}
 \end{figure}
 
 The idea of learning representations of the input also applies in NLP.
-\citet{mikolov2013word2vec} show that by training a neural network on a Google News text corpus, the network learned to map words in the English language to vectors of real numbers known as \emph{word embeddings}.
-These word embeddings are actually able to capture semantic properties of the words --- for example, taking the vectors for \emph{king}, \emph{man}, and \emph{woman}, we find that $v_{king} - v_{man} + v_{woman} \approx v_{queen}$, preserving the analogy that we usually make with text. Figure~\ref{fig:word2vec} shows some of the word2vec vectors when projected to two dimensional space.
+\citet{mikolov2013word2vec} show that by training an unsupervised neural network on a Google News text corpus, the network learns to map words in the English language to vectors of real numbers known as \emph{word embeddings}.
+These word embeddings are actually able to capture semantic properties of the words --- for example, taking the vectors for \emph{king}, \emph{man}, and \emph{woman}, we find that $v_{king} - v_{man} + v_{woman} \approx v_{queen}$, preserving the analogy that we usually make in English. Figure~\ref{fig:word2vec} shows some of the word2vec vectors when projected to two dimensional space.
 
-Representation learning has become a central topic in NLP. Word vectors trained on a general text corpus can successfully be applied to almost any NLP task \citep{mikolov2013word2vec, Pennington2014}.
-It remains to be seen whether it is possible to represent longer pieces of text, such as sentences, in a general way, and research in the area is active \citep{Bowman2016}.
+Representation learning has since become a central topic in NLP. Word vectors trained on a general text corpus can successfully be applied to almost any NLP task \citep{mikolov2013word2vec, Pennington2014}, and the task-invariant property of these vectors is highly attractive.
+It remains to be seen whether it's possible to represent longer pieces of text, such as sentences, in a general way, and research in the area is active \citep{Bowman2016}.
 
 %\section{Summary}
 %
@@ -271,8 +332,8 @@ It remains to be seen whether it is possible to represent longer pieces of text,
 
 Why deep models? There are currently two general approaches to solving problems in NLP: one is to use as much linguistic theory as possible to reduce the problem, and another is to apply black box learners such as deep neural networks.
 
-Deep models work fantastically well on many tasks, especially when it comes to lowering metrics. However, as big of a hammer as deep learning is, there must be nails available for the tool to hit.
-In order to further language understanding, datasets and tasks must be posed such that deep models can be applied; it is exactly in this domain that classical theory is still relevant.
+Deep models work fantastically well on many tasks, especially when it comes to improving on metrics. However, as big of a hammer as deep learning is, it is useless without nails to hit.
+That is, in order to further language understanding, datasets and tasks must be posed such that deep models can be applied; it is exactly in this domain that classical theory is still relevant.
 As \citet{Manning2016} argues, although neural models have come to dominate NLP papers, there will always be a need for domain experts to prepare the field so that deep learning can succeed.
 
 %On one hand, systems with handcrafted features can perform extremely well if domain specific knowledge can be built in.
@@ -282,52 +343,50 @@ With this caveat, there are many worthwhile reasons to study deep networks in NL
 
 Second, they are not mutually exclusive with standard feature extraction methods, and so can augment classical methods.
 
-Third, we find that trained models can discover latent structure in language automatically, which may reveal insights about how language is used. As an example, sequence-to-sequence models with attention \citep{bahdanau2014neural} learn the concept of a word alignment in translation without any direct supervision.
+Third, we find that trained models can discover latent structure in language automatically, which may reveal insights about how language is used. For example, word vectors tend to cluster around semantic concepts without any direct supervision.
+%As an example, sequence-to-sequence models with attention \citep{bahdanau2014neural} learn the concept of a word alignment in translation without any direct supervision.
 
 
 It is this third point upon which we base this thesis. Although they began as black-box optimizers, end-to-end deep models are slowly being dissected into more understandable parts. Our goal is to test the hypothesis that such parts are in fact interpretable and are functioning as we expect them to.
 
-With this goal in mind, we attempt to interpretably extend the attention mechanism of existing sequence-to-sequence models, and we analyze its performance on the task of document summarization. In the next chapter, we provide the background for how we will do this.
+With this goal in mind, we attempt to interpretably extend the attention mechanism of the popular \emph{sequence-to-sequence models}, and we analyze its performance on the task of document summarization. In the next section, we describe the sequence-to-sequence model informally.
 
 
-\todo{needs work} 
+%\todo{needs work} 
 
-%%%%%%%
-\chapter{Background}
-\label{chap:background}
 
-In this chapter, we set up the relevant background ideas for our models. We describe the sequence-to-sequence attention model at a high level, then survey the literature for methods in reducing the computation cost of deep models. Finally, we introduce the framework of reinforcement learning, which will provide the foundation for one of these methods.
 
 \section{Sequence-to-Sequence Attention Models}
 
-Many NLP problems can be posed as follows: given an input sequence of tokens $x_1, \ldots, x_n \in \mcV$, we train a model to produce an output sequence $y_1, \ldots, y_m \in \mcY$. We normally pose this as a probabilistic problem and model the conditional probabilities, so that we wish to find
+Many NLP problems can be posed as follows: given an input sequence of tokens $\boldx = x_1, \ldots, x_n$ with $x_i \in \mcX$, we train a model to produce an output sequence $\boldy = y_1, \ldots, y_m$ with $y_j \in \mcY$. We normally pose this as a probabilistic problem and model the conditional probabilities, so that we wish to find
 \begin{equation}
 \begin{split}
-&\argmax_{y_1, \ldots, y_n \in \mcY} p(y_1, \ldots, y_m | x_1, \ldots, x_n) \\
-= & \argmax_{y_1, \ldots, y_n} p(y_1 | x_1, \ldots, x_n)p(y_2 | y_1, x_1, \ldots, x_n) \cdots p(y_m | y_1, \ldots, y_{m-1}, x_1, \ldots, x_n)
+&\argmax_{\boldy \in \mcY^m} p(y_1, \ldots, y_m | x_1, \ldots, x_n) \\
+= & \argmax_{y_1, \ldots, y_m \in \mcY} p(y_1 | \boldx)p(y_2 | y_1, \boldx) \cdots p(y_m | y_1, \ldots, y_{m-1}, \boldx)
 \end{split}
 \end{equation}
 
-The sequence-to-sequence architecture \citep{sutskever2014sequence}, also known as the encoder-decoder architecture, neatly provides a solution to this framework. By encoding the input $x_1, \ldots, x_n$ into a fixed size vector which we call the \emph{context vector}, we can compute the conditional probabilities and hence generate $y_1, \ldots, y_m$ conditioned on this context vector.
+The sequence-to-sequence architecture of \citet{sutskever2014sequence}, also known as the encoder-decoder architecture or seq2seq, neatly provides a solution to this framework. By encoding the input $x_1, \ldots, x_n$ into a fixed size vector which we call the \emph{context vector}, we can compute the conditional probabilities and hence generate $y_1, \ldots, y_m$ conditioned on this context vector.
+This model has been used to great effect in a variety of NLP tasks, including machine translation \citep{sutskever2014sequence, bahdanau2014neural}, question answering \citep{Hermann2015}, dialogue \citep{li2016persona}, caption generation \citep{xu2015captioning}, and in particular summarization \citep{rush2015neural}.
 
-The model has been used to great effect in a variety of NLP tasks, including machine translation \citep{sutskever2014sequence, bahdanau2014neural}, question answering \citep{Hermann2015}, dialogue \citep{li2016persona}, caption generation \citep{xu2015captioning}, and in particular summarization \citep{rush2015neural}.
 
-
-A popular variant of sequence-to-sequence models are \emph{attention} models \citep{bahdanau2014neural}. The key idea is to keep an encoded representation of all parts of the input, attending to the relevant part each time we produce an output from the decoder. If we have a representation $\boldh_i \in \reals^d$ for input token $x_i$, we model this attention process by computing weights $\alpha_1, \ldots, \alpha_n$ such that $\sum_{i=1}^n \alpha_i = 1$. The resulting context vector is then the weighted average $\sum_{i=1}^n \alpha_i \boldh_i$.
-
-\citet{xu2015captioning} show how attention models can be used to ``summarize'' an image and produce a caption. 
-By analyzing where in the image their models attend to when generating each word of the caption, i.e. where $\alpha_i$ is highest in the image, they qualitatively find that the model is essentially describing an object of the image. 
-Figure~\ref{fig:caption} shows some examples.
+A popular variant of sequence-to-sequence models are \emph{attention} models \citep{bahdanau2014neural}. The key idea is to keep an encoded representation of each part of the input, attending to the relevant part each time we produce an output from the decoder. In practice, this means computing attention weights for the encoder hidden states, then taking the weighted average as our new context vector.
+%If we have a representation $\boldh_i \in \reals^d$ for input token $x_i$, we model this attention process by computing weights $\alpha_1, \ldots, \alpha_n$ such that $\sum_{i=1}^n \alpha_i = 1$. The resulting context vector is then the weighted average $\sum_{i=1}^n \alpha_i \boldh_i$.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\textwidth]{images/xucaption}
-\caption{Attention of a caption generating neural model \citep{xu2015captioning}. The model learns to highlight the correct object when generating words.}
+\caption[Attention for Image Captioning]{Attention of a caption generating neural model \citep{xu2015captioning}. The model learns to highlight the correct object when generating words.}
 \label{fig:caption}
 \end{figure}
 
+\citet{xu2015captioning} show how attention models can be used to ``summarize'' an image and produce a caption. 
+By analyzing where in the image their models attend to when generating each word of the caption, i.e. where the attention weights are highest in the image, they qualitatively find that the model is essentially describing an object of the image. 
+Figure~\ref{fig:caption} shows some examples.
 
-While successful, existing seq2seq methods are limited by the length of source and target sequences. For a problem such as document summarization, the source sequence of length $N$ requires $O(N)$ model computations to encode, where $N$ could potentially be very large. However, it makes sense intuitively that not every word of the document will be necessary for generating a summary, and so we would like to reduce the amount of necessary computations over the source document.
+
+
+While successful, existing seq2seq methods are limited by the length of source and target sequences. For a problem such as document summarization, the source sequence of length $N$ requires $O(N)$ model computations to encode, where $N$ could potentially be very large. However, it makes sense intuitively that not every word of the document will be necessary for generating a summary, and so we would like to reduce the amount of necessary computations over the source.
 
 Therefore, in order to scale seq2seq methods for this problem, we aim to prune down the length of the source sequence in an intelligent way. The natural solution is to force the model to only use a subset of the input rather than naively encoding the entire input. We investigate some related work in this area.
 
@@ -338,38 +397,26 @@ Therefore, in order to scale seq2seq methods for this problem, we aim to prune d
 %The problem of full document summarization, however, is still very open. In order to make the models work, \cite{nallapati2016seq2seq} use a variety of tricks: limiting the decoder vocabulary to the document, the use of pointer attention for \texttt{<unk>} tokens, etc. Our goal in this paper is not necessarily to optimize performance, but to understand how to scale up existing seq2seq methods in an efficient way, and so we attempt to eliminate the use of these ad-hoc tricks whenever possible. We aim to find the best implementation of ``hard'' attention, in which a discrete subset of the source document is selected at any given time, to satisfy the scalability condition.
 
 
-Many techniques have been proposed in the literature to handle the problem of large inputs to deep neural networks.
+Many techniques have been proposed in the literature to efficiently handle the problem of large inputs to deep neural networks, and we consider the particular framework of conditional computation.
 
-The term ``conditional computation'' was coined by \citet{BengioLC13}, where the idea is to compute a subset of units for a given network per input. This would have the advantage of being highly efficient, especially for networks that handle extremely large inputs as is common in vision and NLP.
+The term ``conditional computation'' was coined by \citet{BengioLC13} --- the idea is to only compute a subset of a network for a given input. 
+To this end, \citet{BengioLC13} propose the use of stochastic nodes in the network to implement discrete random variables, which serve as gates to turn on or off certain parts of the network for computation.
+Unfortunately, discrete variables cannot be backpropagated through as they produce zero gradient, and so \citet{BengioLC13} suggest the naive \emph{straight-through} estimator for binary stochastic gates.
+In the forward step of the network, they simply sample from the stochastic gates, and backpropagate the gradient as if they had not sampled.
 
+Many alternative methods, some deterministic and some stochastic, have been proposed for conditional computation. 
 
-Conditional computation in practice is usually implemented through the use of discrete units --- these can serve as gates to select certain parts of the network for computation.
-
-\todo{needs some reorganizing}
-
-Unfortunately, discrete variables cannot be backpropagated through as they are either not differentiable or produce zero gradient. Several techniques have been proposed to get around this problem.
-
-\citet{BengioLC13} propose the \emph{straight-through} estimator for binary stochastic gates. We simply sample from the stochastic gates in the forward step, and backpropagate the gradient as if we had not sampled. While this works empirically for simple binary gates, it is theoretically unjustified.
-
-
-In general, we may want to sample from multinomial distributions, i.e. select one choice out of multiple choices. In deep networks, the softmax function $\operatorname{softmax} : \reals^m \to [0,1]^m$ is used to produce a normalized probability distribution out of any vector of reals. For $\boldz \in \reals^m$,
+On the stochastic front, we usually want to sample from a multinomial distribution, i.e. select one choice out of multiple choices, to conditionally compute. In deep networks, the softmax function $\operatorname{softmax} : \reals^m \to [0,1]^m$ is used to produce a normalized probability distribution out of any vector of reals. For $\boldz \in \reals^m$,
 \begin{equation}
 \operatorname{softmax}(\boldz)_i = \frac{\exp(z_i)}{\sum_j \exp(z_j)}
 \end{equation}
-
-\citet{rae2016sparsememory} use an approximate nearest neighbors approach for their ``sparse access memory'' model to train a large-scale neural Turing machine. \citet{Shazeer2017} introduce a mixture-of-experts model that selectively chooses a subset of ``expert'' networks at any given time during training. In the spirit of conditional computation, they only train $K$ experts at a time using a sparse gating function.
-
-\citet{martins2016sparsemax} propose an alternative to softmax called the \emph{sparsemax} function. For a given $\boldz$, sparsemax projects the point to the probability simplex. It turns out that this function has a useful gradient while having a sparse output. The downside is that we are not guaranteed to have a one-hot vector as we get from sampling the multinomial distribution.
+We can sample from this distribution to decide which parts of the network to compute. To train the model, we will require methods from reinforcement learning, which we cover in the next section. \citet{xu2015captioning} apply this technique in the form of ``hard'' attention --- while standard ``soft'' attention averages the representations of where the model attends to, in hard attention we discretely select a single location.
+%As an alternative to reinforcement learning, \citet{Maddison2017} apply a smoothed version of the Gumbel max trick in order to approximate the sampling process. The Gumbel max trick is an alternative method for sampling multinomial random variables: by drawing i.i.d. uniform variables $U_i \sim \mathrm{Unif}(0,1)$, taking the argmax of $z_i - \log(-\log(U_i))$ gives us a sample with the correct probability. While this process is still discrete and has no gradient, \citet{Maddison2017} use a softmax instead of a max to obtain a smooth approximation that can be differentiated.
 
 
-
-\citet{Maddison2017} apply a smoothed version of the Gumbel max trick in order to approximate the sampling process. The Gumbel max trick is an alternative method for sampling multinomial random variables: by drawing i.i.d. uniform variables $U_i \sim \mathrm{Unif}(0,1)$, taking the argmax of $z_i - \log(-\log(U_i))$ gives us a sample with the correct probability. While this process is still discrete and has no gradient, \citet{Maddison2017} use a softmax instead of a max to obtain a smooth approximation that can be differentiated.
-
-
-Reinforcement learning has also been proposed as an approach to handling discrete units in a network.
-\citet{xu2015captioning} suggest ``hard'' attention as one possible discrete selection mechanism. While standard ``soft'' attention averages the representations of where the model attends to, for hard attention we make a hard decision and choose only one location. To train such models, we can use reinforcement learning.
-
-In the next section, we briefly overview reinforcement learning and explain how it can be applied to train the hard attention model.
+On the deterministic front, \citet{rae2016sparsememory} use an approximate nearest neighbors approach for their ``sparse access memory'' model to train a large-scale neural Turing machine.
+\citet{Shazeer2017} introduce a mixture-of-experts model that deterministically chooses a subset of ``expert'' networks to train at any given time.
+ \citet{martins2016sparsemax} propose the \emph{sparsemax} function as a substitute for softmax, which projects a given vector of weights to the probability simplex. It turns out that this function is differentiable and also has sparse output; however, we are not guaranteed to have a one-hot vector as we get from sampling the multinomial distribution.
 
 
 \section{Reinforcement Learning}
@@ -379,20 +426,19 @@ Standard backpropagation training of neural networks assumes that the output is 
 The traditional setup of reinforcement learning (RL) assumes some agent is navigating an environment and earning rewards.
 We assume a state space $\mcS$, an action space $\mcA$, a reward function of state and action $R : \mcS \times \mcA \to \reals$, and a Markovian transition distribution $p(s' | s, a)$ for $s, s' \in \mcS$ and $a \in \mcA$.
 
-We suppose that at time $t$, the agent is in state $s_t \in \mcS$, makes an action $a_t \in \mcA$, earns a reward $r_t = R(s_t, a_t)$, and transitions probabilistically to the next state $s_{t+1}$.
-Assuming the reward function is unknown, the agent wants to maximize total expected reward
-$$\mathbb{E}_{s_t, r_t} [\sum_{t=0}^\infty \gamma^t r_t]$$
-by finding an optimal action policy, i.e. finding the optimal policy $\pi : \mcS \to \mcA$ for states $s \in \mcS$. Here, $\gamma$ is a time discount factor for the reward.
+We suppose that at time $t$, the agent is in state $s_t \in \mcS$, makes an action $a_t \in \mcA$, earns a reward $r_t = R(s_t, a_t)$, and transitions probabilistically to the next state $s_{t+1}$. We suppose the agent has a \emph{policy function} $\pi : \mcS \to \mcA$ that it uses to make decisions. Then the agent wants to maximize total expected reward
+$$\mathbb{E}_{s_t, a_t} \left[\sum_{t=0}^\infty \gamma^t r_t \right]$$
+by finding the optimal policy $\pi$. Here, $\gamma \in (0,1)$ is a time discount factor for the reward, and we assume an infinite time horizon.
 
 
-In general RL, we assume that we don't know the reward function $R(s,a)$ and we don't know the transition distribution $p(s_{t+1} | s_t, a_t)$. While the environment still gives us rewards for actions, finding the optimal policy requires predicting which states lead to those rewards.
+In general RL, we assume that we don't know the reward function $R(s,a)$ or the transition distribution $p(s_{t+1} | s_t, a_t)$. While the environment still gives us rewards for actions, finding the optimal policy requires predicting which states lead to those rewards.
 Since we don't know ahead of time which states are best, we must explore the state space to find what actions lead to the best rewards.
 
-There are several methods for solving the general RL problem. Some are model-based, which attempt to model the transition distribution $p(s_{t+1} | s_t, a_t)$; others are model-free, which directly attempt to learn actions based on states. One such is Q-learning \citep{Watkins1989}, which estimates the reward for every pair $(s,a) \in \mcS \times \mcA$.
+There are several methods for solving the general RL problem.
+%Some are model-based, which attempt to model the transition distribution $p(s_{t+1} | s_t, a_t)$; others are model-free, which directly attempt to learn actions based on states. One such is Q-learning \citep{Watkins1989}, which tries to learn the reward function for every pair $(s,a) \in \mcS \times \mcA$.
+We consider the approach of directly learning the policy function $\pi( \cdot ; \theta) : \mcS \to \mcA$, where $\pi$ is now parametrized by weights $\theta$. We can train $\pi$  to maximize expected reward through a gradient ascent method known as \emph{policy gradient}, or the REINFORCE algorithm \citep{williams1992reinforce}.
 
-Another method is to learn a direct policy function $\pi( \cdot ; \theta) : \mcS \to \mcA$, where $\pi$ is parametrized by weights $\theta$. We can train $\pi$  to maximize expected reward through a gradient ascent method known as \emph{policy gradient}, or the REINFORCE algorithm \citep{williams1992reinforce}.
-
-It turns out that REINFORCE can be used to train deep neural networks with stochastic units by a simple extension of the backpropagation algorithm. In the next chapter, we connect reinforcement learning and deep learning, and we derive the training algorithm for these deep networks.
+It turns out that REINFORCE can be used to train deep neural networks with stochastic units by a simple extension of the backpropagation algorithm. In the next chapter, we connect reinforcement learning and deep learning, and we derive the generalized training algorithm.
 
 %When the transition distribution $p(s_{t+1} | s_t, a_t)$ and reward function $R(s,a)$ is known, our problem is also known as a Markov decision process (MDP), and can be 
 %
@@ -449,7 +495,7 @@ It turns out that REINFORCE can be used to train deep neural networks with stoch
 \chapter{Algorithms}
 \label{chap:algorithms}
 
-While reinforcement learning is an attractive framework for posing our models, the details of training become more complicated in the context of deep learning.
+While reinforcement learning is an attractive framework for posing our models, the details of training are slightly complicated in the context of deep learning.
 In this chapter, we describe how both deep learning and reinforcement learning both fit into the rigorous model of stochastic computation graphs.
 We then give the corresponding training algorithm in detail.
 
@@ -463,23 +509,25 @@ Neural networks with stochastic units are also known as \emph{stochastic computa
 \end{enumerate}
 We can formulate a training problem for SCGs by choosing certain terminal nodes and taking their sum as the objective function. If a node is stochastic, we take its expectation. That is, for a set of terminal nodes $\mcC$, we optimize $\sum_{c \in \mcC} \mathbb{E}[\hat{c}]$, where $\hat{c}$ denotes the random variable corresponding to node $c$.
 
-Note that the SCG formulation captures both supervised deep learning and RL policy functions. Deep neural networks are just SCGs with all deterministic nodes, and the loss function $\mcL$ of the task is the objective. The RL policy function is an SCG with actions at the stochastic nodes, and the expected reward $\mathbb{E}[r]$ is the objective. As we will see, SCGs will turn out to be a generalization of the REINFORCE algorithm.
+Note that the SCG formulation captures both supervised deep learning and RL policy functions. Deep neural networks are just SCGs with all deterministic nodes, and the loss function $\mcL$ of the task is the objective. The RL policy function $\pi$ is an SCG with actions at the stochastic nodes, and the expected reward $\mathbb{E}[r]$ is the objective.
 
 \begin{figure}[t]
 \includegraphics[width=\textwidth]{images/SCGs}
-\caption{Simple examples of stochastic computation graphs (SCGs), along with the objective and corresponding gradient estimator. Nodes in circles are stochastic, nodes in squares are deterministic, and the rest are input nodes. Diagrams from \citet{schulman2015backprop}.}
+\caption[Stochastic Computation Graphs]{Simple examples of stochastic computation graphs (SCGs), along with the objective and corresponding gradient estimator. Nodes in circles are stochastic, nodes in squares are deterministic, and the rest are input nodes. Diagrams from \citet{schulman2015backprop}.}
 \label{fig:scg}
 \end{figure}
 
-Figure~\ref{fig:scg} shows examples of simple SCGs, as well as the estimator of the objective gradient for the parameter $\theta$. Using the estimated gradient, we optimize the objective function using gradient descent.
+Figure~\ref{fig:scg} shows examples of simple SCGs, along with their corresponding objectives. To optimize the objective, we want to perform gradient descent, and so for any parameter $\theta$, we need to derive an estimator of its gradient.
 
-For these special cases, notice that for all stochastic nodes, the gradient estimator includes a term of the form $\partial \log p( - | -) / \partial \theta$. On the other hand, deterministic nodes lead to derivatives as in the chain rule from backpropagation.
+We see in these special cases that there is an intuitive pattern to the gradient estimators. If there is a path from $\theta$ to the objective that goes through a stochastic node, we get a term for the derivative of the log probability multiplied by the objective. For paths through deterministic nodes, we get standard derivatives as in the chain rule from backpropagation.
 
 Next, we derive the gradient of the objective with respect to parameter input nodes in the general case.
 
-We define for nodes $w,v$ the relation $w \prec v$ (pronounced $w$ influences $v$) if there exists a path from $w$ to $v$ in the SCG. We also say $w \prec^D v$ ($w$ deterministically influences $v$) if there exists a path that consists of only deterministic nodes.
+\section{Deriving the Gradients}
 
-Given an SCG, let $\mcS$ be the set of stochastic nodes, $\mcC$ the set of cost nodes that give the objective. For a given node $v$, let $\on{par}(v)$ denote its parents.
+We define for nodes $w,v$ the relation $w \prec v$ (pronounced ``$w$ influences $v$'') if there exists a path from $w$ to $v$ in the SCG. We also say $w \prec^D v$ (``$w$ deterministically influences $v$'') if there exists a path that consists of only deterministic nodes.
+
+Given an SCG, let $\mcS$ be the set of stochastic nodes and $\mcC$ the set of objective or cost nodes. For a given node $v$, let $\on{par}(v)$ denote its parents.
 
 For a given parameter $\theta$, we have the following:
 \begin{theorem}
@@ -495,15 +543,15 @@ where $\hat{C}_v = \sum_{c \in \mcC, ~v \prec c} \hat{c}$ is a random variable o
 \label{thm:gradient}
 \end{theorem}
 Before we give the proof, we note the intuition. The first term represents the gradient from the stochastic nodes, where we multiply the gradient of the log probability with the cost.
-The second term is the standard gradient we obtain from backpropagation.
+The second term is the standard gradient we obtain from backpropagation, summed over all cost nodes that $\theta$ deterministically influences.
 \begin{proof}
 Due to linearity of expectation, we only need consider a single node $c \in \mcC$. Let $\mcL = \mathbb{E}[\hat{c}]$ be the loss function.
 
-We have stochastic nodes $v$ such that $\theta \prec^D v$ and $v \prec c$. Let this set be $\mcS_\theta$, and denote the joint random variable of this set as $\hat{\boldv}$. Let $c(\hat{\boldv} ; \theta)$ explicitly denote $\hat{c}$.
+We have stochastic nodes $v$ such that $\theta \prec^D v$ and $v \prec c$, i.e. there is a path from $\theta$ to $c$ through $v$. Let this set be $\mcS_\theta$, and denote the joint random variable of this set as $\hat{\boldv}$. Let $c(\hat{\boldv} ; \theta)$ explicitly denote $\hat{c}$.
 
 We compute the gradient:
 \begin{align*}
-\frac{\partial }{\partial \theta}\mathbb{E}[c] &= \frac{\partial}{\partial \theta} \sum_{\hat{\boldv}} p(\hat{\boldv} | \on{par}(\boldv); \theta) \cdot c(\hat{\boldv}; \theta) \\
+\frac{\partial }{\partial \theta}\mathbb{E}[\hat{c}] &= \frac{\partial}{\partial \theta} \sum_{\hat{\boldv}} p(\hat{\boldv} | \on{par}(\boldv); \theta) \cdot c(\hat{\boldv}; \theta) \\
 & = \sum_{\hat{\boldv}} \frac{ \partial  p(\hat{\boldv} | \on{par}(\boldv); \theta) } {\partial \theta} \cdot c(\hat{\boldv} ; \theta) + p(\hat{\boldv} | \on{par}(\boldv); \theta) \cdot \frac{\partial}{\partial\theta} c(\hat{\boldv}; \theta) \\
 &= \sum_{\hat{\boldv}} \frac{ \partial  p(\hat{\boldv} | \on{par}(\boldv); \theta) } {\partial \theta} \cdot c(\hat{\boldv} ; \theta) + \mathbb{E}_{\boldv}\left[ \frac{\partial}{\partial\theta} c(\hat{\boldv}; \theta)  \right]
 \end{align*}
@@ -521,8 +569,8 @@ We have thus shown Equation~\ref{eq:gradient1}. Equation~\ref{eq:gradient2} foll
 
 \end{proof}
 
-Because the expectation in both gradient formulae are intractable in the general case, we use a single Monte Carlo sample.
-In practice, however, the variance of the Monte Carlo gradient can be very high.
+Because the expectations in both gradient formulae are intractable in the general case, we use a single Monte Carlo sample as our gradient estimator.
+This estimator is unbiased; however, the variance of the Monte Carlo gradient can be very high in practice.
 
 %The training problem can be formalized as an RL problem. We can treat a neural network as a stochastic agent, and its computation serves to define the parametrized policy function $\pi(\cdot; w) : \mcS \to \mcA$.
 %The states $\mcS$ are the inputs and the actions $\mcA$ are the possible outputs of each stochastic unit. The rewards are then negative loss (e.g. from regression or classification).
@@ -530,8 +578,9 @@ In practice, however, the variance of the Monte Carlo gradient can be very high.
 
 One of the simplest ways to reduce the variance of the gradient estimator is to introduce a baseline scalar $b \approx \mathbb{E}[\hat{c}]$ which we subtract from each cost term. That is, we have:
 \begin{theorem}
-The gradient from Theorem~\ref{thm:gradient} can also be written as
+The gradient of Equation~\ref{eq:gradient1} from Theorem~\ref{thm:gradient} can also be written as
 \begin{equation}
+\label{eq:baseline_gradient}
 \frac{\partial}{\partial \theta} \mathbb{E}\left[ \sum_{c \in \mcC} \hat{c} \right] = \mathbb{E}\left[\sum_{c \in \mcC} (\hat{c} - b_c) \sum_{v \in \mcS,~\theta \prec^D v, ~v \prec c }  \frac{\partial}{\partial\theta} \log p(v | \on{par}(v) ; \theta )  +
  \sum_{c\in \mcC,~\theta \prec^D c} \frac{\partial}{\partial \theta} \hat{c}
 \right] 
@@ -540,7 +589,9 @@ where $b_c$ is a scalar not influenced by any of the $v$ in the summation.
 \end{theorem}
 
 \begin{proof}
-The proof boils down to a trick with the log probability. Considering a single $c$, by linearity it suffices to show that
+Equation~\ref{eq:baseline_gradient} is identical to Equation~\ref{eq:gradient1}, except for the added terms
+$$\mathbb{E}\left[ b_c \sum_{v\in \mcS, \theta \prec^D v, v \prec c}\frac{\partial}{\partial\theta} \log p(v | \on{par}(v) ; \theta) \right]$$
+Considering a single $c$, by linearity it suffices to show that
 \begin{equation*}
 \mathbb{E} \left[ \frac{\partial}{\partial\theta} \log p(v | \on{par}(v) ; \theta) \right] = 0, \qquad \forall v \in \mcS_\theta
 \end{equation*}
@@ -557,7 +608,7 @@ Thus, the gradient with baseline is unbiased.
 
 Including a baseline is proven to reduce the variance of the estimator \citep{Weaver2001}. There are several different methods for producing baselines, such as taking the average of all previously seen cost terms, and we will not cover all of them here.
 
-\subsection{Training}
+\section{Training}
 \label{sec:algorithm}
 
 In order to compute the gradients of SCGs in practice, we make a slight tweak to the backpropagation algorithm.
@@ -572,9 +623,11 @@ where $\eta$ is a learning rate.
 
 Algorithm~\ref{alg:reinforce} gives the complete algorithm for gradient descent on SCGs.
 
+Note that the resulting algorithm can easily be implemented in standard autodifferentiation packages for neural networks (e.g. Tensorflow, Torch). We only need to broadcast the costs $\hat{C}_v$ to each stochastic node, and implement the gradients accordingly.
 
 
-\begin{algorithm}
+
+\begin{algorithm}[t]
 \caption{Gradient Descent for SCGs}
 \label{alg:reinforce}
 \begin{algorithmic}
@@ -587,7 +640,7 @@ Algorithm~\ref{alg:reinforce} gives the complete algorithm for gradient descent 
 \State Compute $\hat{C}_v \gets \sum_{c \in \mcC, ~v \prec c} \hat{c}$ \Comment{Aggregated costs}
 \EndFor
 
-\For{$v$ in \textsc{ReverseTopologicalOrder}(SCG)}
+\For{$v$ in \textsc{ReverseTopologicalOrder}(SCG)} \Comment{Backpropagation}
 \For{$w \in \on{par}(v)$}
 \If{\textbf{not} \textsc{IsStochastic}($w$)}
 \If{\textsc{IsStochastic}($v$)}
@@ -610,7 +663,12 @@ Algorithm~\ref{alg:reinforce} gives the complete algorithm for gradient descent 
 %w^{(t+1)} \gets w^{(t)} + \eta \mathbb{E}_{a_t} \left[ (R_t - b) \frac{\partial \log p(a_t | s_t; w)}{\partial w} \right]
 %\end{equation}
 
-While SCGs are a very useful and general framework, the language of reinforcement learning is more intuitive and easy to understand.
+
+
+
+\section{Relation to REINFORCE}
+
+While SCGs are a very useful and general framework, we will phrase our problems in the more intuitive language of reinforcement learning.
 
 We will be most interested in the sequential decision problem of RL. That is, suppose we have a trajectory of states $s_t$ and we make actions $a_t$ at time $t$ based on some parameterized policy function. Each action leads to a reward $r_t$, and influences total future reward $\sum_{s=t}^T r_s$ where $T < \infty$ is the time horizon.
 
@@ -623,10 +681,6 @@ which fits neatly in with Algorithm~\ref{alg:reinforce}. We will use this RL set
 \todo{diagram?}
 
 
-
-
-\section{Reinforcement Learning in NLP}
-\todo{needs some organizing}
 
 Even before the concept of SCGs were formalized, reinforcement learning and deep learning have successfully been combined to play Go \citep{Silver2016}, 
 control robots \citep{Levine2016}, and play Atari games from pixels \citep{deepatari2015}.
@@ -661,7 +715,7 @@ In the seq2seq model, an \emph{encoder} recurrent neural network (RNN) reads the
 
 \begin{figure}[t]
 \includegraphics[width=\textwidth]{images/seq2seq}
-\caption{Model architecture for sequence-to-sequence with attention, or \textsc{Model 0}. The yellow hidden states are the encoder, the blue hidden states are the decoder, and the red hidden states are the generator. The decoder hidden state at each time step determines the attention weights, which we use to average the encoder hidden states to produce a context vector. The result feeds into the generator.}
+\caption[Sequence-to-Sequence Model]{Model architecture for sequence-to-sequence with attention, or \textsc{Model 0}. The yellow hidden states are the encoder, the blue hidden states are the decoder, and the red hidden states are the generator. The decoder hidden state at each time step determines the attention weights, which we use to average the encoder hidden states to produce a context vector. The result feeds into the generator.}
 \label{fig:seq2seq}
 \end{figure}
 
@@ -676,7 +730,7 @@ An RNN is given by a parametrizable function $f_{enc}$ and a hidden state $\bold
 \boldc_t &= \boldf_t \odot \boldc_{t-1}  + \boldi_t \odot \tanh(\boldW^c \boldx_t + \boldU^c \boldh_{t-1} + b_c) \\
 \boldh_t &= \boldo_t \odot \tanh(\boldc_t)
 \end{align}
-where $\boldW, \boldU, b$ are learned parameters, and $\odot$ is the elementwise product. 
+where $\boldW, \boldU, b$ are learned parameters, $\sigma$ is the sigmoid function, and $\odot$ is the elementwise product. 
 Intuitively, $\boldc_t$ is the memory cell, $\boldf_t$ is the forget gate, $\boldi_t$ is the input gate, $\boldh_t$ is the output cell, and $\boldo_t$ is the output gate.
 
 LSTMs can be stacked on top of one another by treating the outputs $\boldh_t$ of one LSTM as the inputs to another LSTM. In stacked LSTMs, we will take the top sequence of hidden states $\boldh_1, \ldots, \boldh_n$ to form the context hidden states.
@@ -701,7 +755,7 @@ Given document-summary pairs $\{ (\boldx^{(i)}, \boldy^{(i)}) \}_{i=1}^N$ for tr
 \end{align*}
 As the model is fully differentiable with respect to its parameters, we can train it end-to-end with stochastic gradient descent and the backpropagation algorithm.
 
-We note that we have great flexibility in how our attention function $a(\cdot)$ combines the encoder context and the current decoder hidden state. In the next few sections, we explain standard choices for $a(\cdot)$ as well as our proposed model of \emph{coarse-to-fine attention}.
+We note that we have great flexibility in how our attention function $a(\cdot)$ combines the encoder context and the current decoder hidden state. In the next few sections, we explain standard choices for $a(\cdot)$ as well as our proposed model of coarse-to-fine attention.
 
 \section{Model 0: Standard Attention}
 
@@ -732,18 +786,17 @@ Going forward, we call this instantiation of the attention function \textsc{Mode
 
 \begin{figure}
 \includegraphics[width=\textwidth]{images/coarse_to_fine.pdf}
-\caption{Model architecture for sequence-to-sequence with coarse-to-fine attention. The left side is the encoder that reads the document, and the right side is the decoder that produces the output sequence. On the encoder side, the green hidden states (sentence-level) are used for the coarse attention weights, while the yellow hidden states (word-level) are used for the fine attention weights. The context vector is then produced by averaging the word-level states. In \textsc{Model 2}, we average over the coarse attention weights, thus requiring computation of all word-level hidden states. In \textsc{Model 3}, we make a hard decision for which sentence to use, and so we only need to compute word-level hidden states for one sentence.}
+\caption[Coarse-to-Fine Attention Model]{Model architecture for sequence-to-sequence with coarse-to-fine attention. The left side is the encoder that reads the document, and the right side is the decoder that produces the output sequence. On the encoder side, the green hidden states (sentence-level) are used for the coarse attention weights, while the yellow hidden states (word-level) are used for the fine attention weights. The context vector is then produced by averaging the word-level states. In \textsc{Model 2}, we average over the coarse attention weights, thus requiring computation of all word-level hidden states. In \textsc{Model 3}, we make a hard decision for which sentence to use, and so we only need to compute word-level hidden states for one sentence.}
 \label{fig:coarsetofine}
 \end{figure}
 
-We can also leverage sequence-to-sequence for text summarization. However, the attention step becomes computationally expensive --- for each word we generate, we need to compare it to every word of the document in order to determine which part to attend to. Intuitively, we should only need to attend to a few important sentences of the document instead of all of it. Therefore, we propose a hierarchical method of attending to the document by first attending to sentences, then to the words within sentences. We call this method \emph{coarse-to-fine attention}
-\footnote{The term coarse-to-fine attention has previously been introduced in the literature \citep{mei2016}. However, their idea is different: they use coarse attention to reweight the fine attention computed over the entire input. This idea has also been called hierarchical attention \citep{nallapati2016seq2seq}.}.
+The attention network of \textsc{Model 0} is computationally expensive for long sentences --- for each hidden state of the decoder, we need to compare it to every hidden state of the encoder in order to determine where to attend to.
+This seems unnecessary for a problem such as document summarization; intuitively, we only need to attend to a few important sentences at a time. Therefore, we propose a hierarchical method of attending to the document by first attending to sentences, then to the words within sentences. We call this method \emph{coarse-to-fine attention}\footnote{The term coarse-to-fine attention has previously been introduced in the literature \citep{mei2016}. However, their idea is different: they use coarse attention to reweight the fine attention computed over the entire input. This idea has also been called hierarchical attention \citep{nallapati2016seq2seq}.}.
 
 
 
 To be able to attend to both sentences and words in a hierarchical manner, we need to construct encodings of the document at both levels. For the coarse-grained sentence representations, we use a simple encoding model (e.g. bag of words), and for the fine-grained representations, we run an LSTM encoder on the words of a sentence.
-
-Thinking about text at different levels of granularity has been previously considered. \citet{li2015autoencoder} use the idea of a hierarchical representation of text to develop a two-layer LSTM autoencoder for paragraph representation.
+Thinking about text at different levels of granularity is motivated by \citet{li2015autoencoder}, who use the idea of a hierarchical representation of text to develop an autoencoder for paragraph representation.
 
 %\citet{Sukhbaatar2015} demonstrate how coarse representations can be useful by using memory networks to access information for simple question-answering tasks.
 %by using low-level LSTMs on words to build sentence representations, then a high-level LSTM on the sentences for the final paragraph representation.
@@ -756,26 +809,27 @@ Specifically, suppose we have sentences $s_1, \ldots, s_m$ with words $w_{i,1}, 
 \end{equation}
 For attention, we then consider two options.
 
-\paragraph{Model 1} We can follow \textsc{Model 0} and compute attention weights $\alpha_{i,j}$ for each hidden state $\boldh_{i,j}$ by normalizing over all states. We call this \textsc{Model 1}.
+\paragraph{Model 1} We can follow \textsc{Model 0} and compute attention weights $\alpha_{i,j}$ for each hidden state $\boldh_{i,j}$ by normalizing over all states.
+This is a slightly weakened version of \textsc{Model 0}; like \textsc{Model 0}, we normalize attention over all hidden states at once, but now our RNN hidden states do not share context between sentences. We call this \textsc{Model 1}.
 
 \paragraph{Model 2} Alternatively, rather than taking attention over the entire document, we can instead have a two-layered hierarchical attention mechanism: first, we have weights $\alpha_1^s, \ldots, \alpha_m^s$ for each sentence, and then for sentence $s_i$, we have another set of weights $\alpha_{i,1}^w, \ldots, \alpha_{i,n_i}^w$.
 Our final attention weight on word $w_{i,j}$ is then $\alpha_{i,j} = \alpha_i^s \cdot \alpha_{i,j}^w$.
 
-In order to compute the sentence attention weights $\alpha_i^s$, we need to produce representations of each sentence; i.e., given the words $w_{i,1}, \ldots, w_{i, n_i}$ of the sentence, we produce a vector representation $\boldh^s_i \in \mathbb{R}^{d_{sent}}$.
+In order to compute the sentence attention weights $\alpha_i^s$, we need to produce representations of each sentence; i.e., given the words $w_{i,1}, \ldots, w_{i, n_i}$ of the sentence, we produce a vector representation $\boldh^s_i \in \mathbb{R}^{d_{sent}}$. Figure~\ref{fig:sent_reps} shows diagrams of our sentence representation models.
 
 \begin{figure}[t]
 \centering
 \begin{subfigure}{0.45\textwidth}
 	\includegraphics[width=\textwidth]{images/bow_encoder_bow}
-	\caption{Bag-of-words}
+  \caption[Bag of Words Encoder]{Bag-of-words}
 	\label{fig:bow_encoder_bow}
 \end{subfigure}
 \begin{subfigure}{0.45\textwidth}
 	\includegraphics[width=\textwidth]{images/bow_encoder_conv}
-	\caption{Convolution}
+  \caption[Convolutional Encoder]{Convolution}
 	\label{fig:bow_encoder_conv}
 \end{subfigure}
-\caption{Options for producing sentence representations from the word embeddings. We can either use a bag of words by summing the embeddings, or apply convolutions and max-over-time pooling. }
+\caption[Sentence Representation Encoders]{Options for producing sentence representations from the word embeddings. We can either use a bag of words by summing the embeddings, or apply convolutions and max-over-time pooling. The output is a sentence representation in $\reals^{d_{sent}}$. }
 \label{fig:sent_reps}
 \end{figure}
 
@@ -794,13 +848,13 @@ Our final output is given by
 \begin{equation}
 \boldh^s = \max_j(\tanh(\boldu_j))
 \end{equation}
-where the max-over-time takes the maximum along the word indexing dimension. See Figure~\ref{fig:sent_reps} for diagrams of the sentence representation models.
+where the max-over-time takes the maximum along the word indexing dimension.
 
 As an addition to any sentence representation method, we can include \emph{positional embeddings}. In general, we expect the order of sentences in the document to matter for summarization --- for example, the first few sentences are usually important.
 We therefore include the option to concatenate a small fixed-dimensional embedding of the sentence's position to the existing representation.
 
-Thus, using the sentence representations, we can compute attention over the sentences.
-For the words in each sentence, we run an LSTM over each sentence separately, and create attention weights over each sentence in the same way as \textsc{Model 0}. Using attention on word $w_{i,j}$ as  $\alpha_{i,j} = \alpha_i^s \cdot \alpha_{i,j}^w$, we can proceed exactly as in \textsc{Model 0} by computing the weighted average over hidden states $\boldh_{i,j}$.
+Thus, using the sentence representations, we can compute attention $\alpha_i^s$ over the sentences.
+For the words in each sentence, we run an LSTM over each sentence separately, and create attention weights $\alpha_{i,j}^w$ over the words in each sentence in the same way as \textsc{Model 0}. Using attention on word $w_{i,j}$ as  $\alpha_{i,j} = \alpha_i^s \cdot \alpha_{i,j}^w$, we can proceed exactly as in \textsc{Model 0} by computing the weighted average over hidden states $\boldh_{i,j}$.
 
 We call this method of attention \textsc{Model 2}.
 
@@ -808,12 +862,12 @@ We call this method of attention \textsc{Model 2}.
 
 With the previous models, we are required to compute hidden states over all words and sentences in the document, so that if we have $M$ sentences and $N$ words per sentence, the computational complexity is $O(MN)$ for each attention step.
 
-However, if we are able to perform conditional computation and only compute on $M^+$ of the sentences, we can reduce the complexity to $O(M^+N)$. If we are able to make $M^+$ constant or even 1, this would give significant benefits to our overall complexity at both train and test time.
+However, if we are able to perform conditional computation and only compute on $M^+$ of the sentences, we can reduce the complexity to $O(M^+N)$. If we are able to make $M^+$ constant or even 1, the complexity of attention becomes $O(N)$ --- an expression invariant of the length of the document!
 
-In our experiments, we will apply stochastic sampling to the attention distribution $\balpha$ in the spirit of \citet{xu2015captioning} and ``hard attention''.
-Specifically, rather than computing the context $\widetilde{\boldc}$ as an expectation over $\balpha$ (i.e. $\boldc = \sum_{i=1}^n \alpha_i \boldh_i$), we can sample from the probability distribution $\balpha$ to obtain a single state $\boldh_i$, and we set $\widetilde{\boldc} = h_i$ as the sampled hidden state.
+In our experiments, we will apply stochastic sampling to the attention distribution $\balpha$ in the spirit of ``hard attention'' \citep{xu2015captioning}.
+Specifically, rather than computing the context $\widetilde{\boldc}$ as an expectation over $\balpha$ (i.e. $\widetilde{\boldc} = \sum_{i=1}^n \alpha_i \boldh_i$), we can sample from the probability distribution $\balpha$ to obtain a single state $\boldh_i$, and we set $\widetilde{\boldc} = \boldh_i$ as the sampled hidden state.
 
-In our case, we take \textsc{Model 2} and apply hard attention at the sentence level, but keep the word level attention per sentence as is. That is, we sample from the attention weights $\alpha_1^s, \ldots, \alpha_m^s$ to obtain a one-hot encoding for the sentence attention, and apply the same multiplication with this one-hot vector on the word-level attention weights $\alpha_{i,1}^w, \ldots, \alpha_{i,n_i}^w$ for all $i = 1, \ldots, m$. We call this \textsc{Model 3}.
+In our case, we take \textsc{Model 2} and apply hard attention at the sentence level, but keep the word level attention per sentence as is. That is, we sample from the attention weights $\alpha_1^s, \ldots, \alpha_m^s$ to obtain a one-hot encoding for the sentence attention, and apply the same multiplication with this one-hot vector on the word-level attention weights $\alpha_{i,1}^w, \ldots, \alpha_{i,n_i}^w$ for all $i = 1, \ldots, m$. At test time, we take the max $\alpha_i^s$ for our one-hot encoding instead of sampling. We call this \textsc{Model 3}.
 
 
 Because the hard attention model loses the property of being end-to-end differentiable, we use reinforcement learning to train our network.
@@ -848,29 +902,29 @@ In addition to including a baseline, we also scale the rewards by a tuned hyperp
 \paragraph{\textsc{Alternate} training} \citet{xu2015captioning} explain that training hard attention with REINFORCE has very high variance, even when including a baseline. Thus, for every minibatch of training, they randomly use soft attention instead of hard attention with some probability (they use 0.5).
 The backpropagated gradient is then the standard soft attention gradient instead of the REINFORCE gradient. In our results, we label this as \textsc{+alternate}.
 
-While this method helps stabilize training, it requires soft attention at train time. Our goal in coarse-to-fine attention is to reduce computation over the encoded hidden states, while this method requires that we perform the full amount of computation as soft attention for a random subset of minibatches. However, this training method still allows for test time benefits, and we include it in our experiments to test the feasibility of hard attention.
+While this method helps stabilize training, we would prefer not to use it. Our goal in coarse-to-fine attention is to reduce computation, but \textsc{alternate} training requires full attention computation for a subset of minibatches. However, this training method still allows for test time computational benefits, and we include it in our experiments to test the feasibility of hard attention.
 
 
 \paragraph{Multiple samples} 
-From our initial experiments with \textsc{Model 3}, we found that taking a single sample was not very effective. However, we discovered that sampling multiple times from the distribution $\alpha$ improves performance.
+From our initial experiments with \textsc{Model 3}, we found that taking a single sample was not very effective. However, we discovered that sampling multiple times from the attention distribution $\balpha^s$ improves performance.
 
-To be precise, we sample based on the multinomial distribution $\mathrm{Mult}(k_{mul}, \{\alpha_i\}_{i=1}^n)$ to produce the sentence-level attention vector $\balpha_t$ at time $t$, with $\alpha_i = x_i / k_{mul}$, where $x_i$ is the $i$th entry of the multinomial sample. $k_{mul}$ is a hyperparameter which can be tuned (standard hard attention is $k_{mul} = 1$). In our results, we label this as \textsc{+multi}.
+To be precise, we fix a number $k_{mul}$ for the number of times we sample from $\balpha^s$. Then, we sample based on the multinomial distribution $\bmu \sim \mathrm{Mult}(k_{mul}, \{\alpha_i\}_{i=1}^m)$ to produce the new sentence-level attention vector $\widetilde{\balpha}^s$, with $\widetilde{\alpha}_i^s = \mu_i / k_{mul}$. In our results, we label this as \textsc{+multi}.
 
 Intuitively, $k_{mul}$ is the number of sentences we select to produce the context. With higher $k_{mul}$, the hard attention model more closely approximates the soft attention model, and hence leads to better performance. This, however, incurs a cost in computational complexity.
 
-\section{Beam Search}
-
-Once we have our trained model, we use beam search at test time to produce the output summaries.
-
-In beam search, we keep a beam of $k$ hypotheses at every time step $t$. \todo{finish}
-
-\begin{algorithm}[b]
-\caption{Beam Search}
-\label{alg:beam_search}
-\begin{algorithmic}
-\State todo
-\end{algorithmic}
-\end{algorithm}
+%\section{Beam Search}
+%
+%Once we have our trained model, we use beam search at test time to produce the output summaries.
+%
+%In beam search, we keep a beam of $k$ hypotheses at every time step $t$. \todo{finish}
+%
+%\begin{algorithm}[b]
+%\caption{Beam Search}
+%\label{alg:beam_search}
+%\begin{algorithmic}
+%\State todo
+%\end{algorithmic}
+%\end{algorithm}
 
 
 
@@ -897,6 +951,8 @@ In beam search, we keep a beam of $k$ hypotheses at every time step $t$. \todo{f
 \chapter{Experiments}
 \label{chap:experiments}
 
+In this chapter, we describe our experimental setup.
+
 \section{Data}
 
 \subsection{CNN/Dailymail}
@@ -922,13 +978,13 @@ Dataset  & CNN & Dailymail & Combined\\
 Train size & 90266 & 196961 & 287227\\
 Valid size & 1220 & 12148 & 13368\\
 Test size & 1093 & 10397 & 11490 \\
-Avg. \# words per doc. & 794 & 832\\
-Avg. \# sent. per doc. & 21 & 29\\
-Avg. \# words per sent. & 36 & 27\\
-Avg. \# words per summary & 13 & 15 \\
+Avg. \# words per doc. & 794 & 831 & 819\\
+Avg. \# sent. per doc. & 21 & 29 & 26\\
+Avg. \# words per sent. & 36 & 27 & 29\\
+Avg. \# words per summary & 13 & 14 & 14\\
 \bottomrule
 \end{tabular}
-\caption{Statistics for CNN/Dailymail data.}
+\caption[CNN/Dailymail Statistics]{Statistics for CNN/Dailymail data. Numbers are collected over the training data.}
 \label{table:data_stats}
 \end{table}
 
@@ -953,7 +1009,7 @@ much of the start of the world 's most famous sled dog race is covered in barren
 %( cnn ) the american civil liberties union is challenging an alabama law that will force those under \#\# seeking an abortion to go through an adversarial process that 's akin to a trial . \texttt{</s>} generally , laws in the united states require parental consent for a minor to obtain an abortion . but for some children , parental consent is impossible or even dangerous . this class of minors must seek a judicial bypass . while the bypass is a common feature of abortion laws in other states , this alabama law may have gone too far . here are the suspect provisions of this " bypass by trial " : \texttt{</s>} alabama has turned what is supposed to be an informal , child - centered hearing into more of a trial . \texttt{</s>} the court can appoint a guardian ad litem -- normally an appointed lawyer for a child in , say , a divorce proceeding or a hearing involving unfit parents -- for the fetus . \texttt{</s>} the minor may be cross-examined by the district attorney and possibly the minor 's parents . \texttt{</s>} information about the minor 's pregnancy may be disclosed to her family , friends and employers , and they might even be brought to court to testify -- against the minor . \texttt{</s>} ... & & cevallos : alabama may go too far in the process used to decide if a teenager can have an abortion without parental consent \\
 \bottomrule
 \end{tabular}
-\caption{Examples of source and target for the CNN/Dailymail dataset. Data is shown after preprocessing. In the first example, the summary is from a quote later on in the document. The second example is similar, but the start of the document has low information content. In the third, the summary is almost identical to the first sentence. See Appendix~\ref{appendix:full_docs} for the full documents.}
+\caption[CNN/Dailymail Examples]{Examples of source and target for the CNN/Dailymail dataset. Data is shown after preprocessing. In the first example, the summary is from a quote later on in the document. The second example is similar, but the start of the document has low information content. In the third, the summary is almost identical to the first sentence. See Appendix~\ref{appendix:full_docs} for the full documents.}
 \label{fig:data_examples}
 \end{figure}
 
@@ -1065,7 +1121,7 @@ With multiple gold summaries in the CNN/Dailymail highlights, we choose to take 
 \textsc{Model 3 +alternate} & & 23.6 & 31.1 & 15.4 & 28.8 \\
  \bottomrule
 \end{tabular}
-\caption{Summarization results for CNN/Dailymail on the test set. The ROUGE numbers are balanced F-scores. Lower PPL is better, higher ROUGE is better.}
+\caption[CNN/Dailymail Results]{Summarization results for CNN/Dailymail on the test set. The ROUGE numbers are balanced F-scores. Lower PPL is better, higher ROUGE is better.}
 \label{table:summary}
 \end{table}
 
@@ -1076,7 +1132,7 @@ With multiple gold summaries in the CNN/Dailymail highlights, we choose to take 
 Table~\ref{table:summary} shows summarization results. We see that our soft attention models comfortably beat the baselines, while hard attention falls slightly behind.
 For the most part, we see that PPL and ROUGE are properly correlated. 
 
-The \textsc{Berkeley} model ROUGE scores are surprisingly low. We attribute this due to the fact that our models usually produce a single sentence as the summary, while the ILP system can produce multiple. The \textsc{Berkeley} model therefore has very high ROUGE recall, while suffering in precision. See Appendix~\ref{appendix:more_results} for numbers.
+The \textsc{Berkeley} model ROUGE scores are surprisingly low. We attribute this due to the fact that our models usually produce a single sentence as the summary, while the ILP system can produce multiple. The \textsc{Berkeley} model therefore has comparatively high ROUGE recall while suffering in precision. 
 
 Unfortunately, the \textsc{Model 0} sequence-to-sequence baseline proves to be difficult to beat. \textsc{Model 1} performs surprisingly poorly in ROUGE, despite its good perplexity.
 
@@ -1084,7 +1140,7 @@ Unfortunately, the \textsc{Model 0} sequence-to-sequence baseline proves to be d
 \textsc{Model 2} has worse performance, likely due to our assumption that we can factor the attention distribution into a coarse distribution and a fine distribution.
 This assumption is quite strong --- we hypothesize that our deficit then exists because either (1) our sentence representations are not sufficiently strong, or (2) we did not properly solve the optimization problem.
 We believe (1) may be true because with perfect modeling power, the model should be able to learn accurate representations of sentences such that it can attend to the right ones.
-We believe (2) is also an issue because the training signal is backpropagated to the word-level LSTM via the attention weights. Because the training algorithm cannot directly compare word attention weights as in \textsc{Model 0} or \textsc{Model 1}, it has trouble finding the best optimum.
+We believe (2) is also an issue because the training signal is backpropagated to the word-level LSTM via the attention weights --- since the training algorithm cannot directly compare word attention weights as in \textsc{Model 0} or \textsc{Model 1}, it has trouble finding the best optimum.
 Additionally, we found empirically that Adagrad and Adam performed worse than SGD, which is unusual given that these methods are usually state-of-the-art.
 
 We observe that \textsc{Model 3} results are significantly worse than soft attention results. This is most likely due to a noisy gradient; even by using variance reduction techniques, the variance of the gradient estimator remains high. It may be too difficult to train the encoder (which forms a large part of the model) using such a noisy gradient. Even with soft attention pretraining (\textsc{+pretrain}) and alternating training (\textsc{+alternate}), \textsc{Model 3} fails to reach \textsc{Model 2} performance.
@@ -1094,7 +1150,7 @@ While taking a single sample performs quite poorly, we see that taking more than
 
 Finally, we note that positional embeddings (\textsc{+pos}) give a nontrivial boost to scores (except for \textsc{Model 3 +pos}). This makes sense since the position of the sentence in the document should be relevant for determining its importance --- for example, we would expect sentences near the start of the document to be more useful for summarization. In the exception, we believe this may be due to difficulty in training the embeddings.
 
-An extended table of results can be found in Appendix ???.
+%An extended table of results can be found in Appendix~\ref{appendix:more_results}.
 
 
 \begin{figure}[t]
@@ -1106,7 +1162,7 @@ An extended table of results can be found in Appendix ???.
 \includegraphics[width=\textwidth]{images/valid_curves}
 \end{subfigure}
 
-\caption{Training and validation curves for models. Note that \textsc{Model 3} takes much longer to converge than the others, and also converges to a worse local optimum.} % train, test curves for model 0-3
+\caption[Training Curves]{Training and validation curves for models. Note that \textsc{Model 3} takes much longer to converge than the others, and also converges to a worse local optimum.} % train, test curves for model 0-3
 \label{fig:train_curves}
 \end{figure}
 
@@ -1130,14 +1186,14 @@ Model & & Entropy \\
 \textsc{Model 2} & & 2.14\\
 \textsc{Model 2 BOW} & & 2.12 \\
 \textsc{Model 2 +pos} & & 2.06 \\
-\textsc{Model 2  +entropy} & & 0.21 \\
+%\textsc{Model 2  +entropy} & & 0.21 \\
 \textsc{Model 3 } & & 0.15 \\
 \textsc{Model 3  +multi2} & & 0.59 \\
 \textsc{Model 3  +pos +multi2} & & 0.46 \\
 %\textsc{Model 2 sparsemax} \\
 \bottomrule
 \end{tabular}
-\caption{Entropy over sentence attention, averaged over all attention distributions in the validation set. Lower entropy means a more concentrated distribution. For reference, uniform attention in our case gives entropy $\approx 2.30$.}
+\caption[Sentence Attention Entropy]{Entropy over sentence attention, averaged over all attention distributions in the validation set. Lower entropy means a more concentrated distribution. For reference, uniform attention in our case gives entropy $\approx 2.30$.}
 \label{table:entropy}
 \end{table}
 
@@ -1149,7 +1205,7 @@ We compute the entropy numbers by averaging over all generated words in the vali
 
 We see that the entropy of \textsc{Model 0} attention is quite low, suggesting that a factorization of attention into sentence-level and word-level is reasonable. However, our \textsc{Model 2} results have very high entropy --- it seems as if it uses attention to essentially average all of the encoder hidden states. We examine this more carefully in Section~\ref{sec:attn}.
 
-We attempted to reduce the entropy of \textsc{Model 2} by penalizing the entropy in training with a scale factor of 0.01. We note that this effectively lowers the entropy, but unfortunately weakens the performance of the model (see Appendix ???), so we did not experiment further.
+%We attempted to reduce the entropy of \textsc{Model 2} by penalizing the entropy in training with a scale factor of 0.01. We note that this effectively lowers the entropy, but unfortunately weakens the performance of the model (see Appendix ???), so we did not experiment further.
 
 Finally, we note that the entropy of \textsc{Model 3} is very low (before taking the argmax at test time). This is exactly what we had hoped for --- we will see that the model in fact learns to focus on only a few sentences of the document over the course of generation. If we have multiple samples with \textsc{+multi2}, the model is allowed to use 2 sentences at a time, and so it relaxes the entropy slightly.
 
@@ -1161,11 +1217,12 @@ Finally, we note that the entropy of \textsc{Model 3} is very low (before taking
 We show some predicted summaries from the model in Figures~\ref{fig:predicted_summaries1}, \ref{fig:predicted_summaries2}, and \ref{fig:predicted_summaries3}.
 The source documents are truncated in these examples for clarity --- see Appendix~\ref{appendix:full_docs} for the full text.
 
-We notice that the generated summaries tend to be quite short and succint, and most are the result of copying or paraphrasing specific sentences. Clearly, the summaries can usually get the basic gist of the articles. 
+We note that the \textsc{Berkeley} system, which extracts sentences first, produces long summaries. In contrast, the generated summaries tend to be quite succint, and most are the result of copying or paraphrasing specific sentences. Clearly, the summaries can usually get the basic gist of the articles. 
 
 While the summaries are mostly grammatical, they are occasional redundant (e.g. ``the message was posted on twitter and posted on twitter'') or have very little information content (e.g. ``new : death toll rises to \#\# , policy say''). In these cases, the model is most likely just sampling from the decoder language model without using the encoder very much.
 
-Appendix ??? shows some more predicted summaries.
+It is difficult to definitively say which models output the best summaries from this small sample, illustrating the ambiguity of summary metrics. Anecdotally, we note that the models with higher ROUGE scores seem to have qualitatively more grammatical output.
+
 
 \begin{figure}[p]
 \centering
@@ -1174,7 +1231,7 @@ Appendix ??? shows some more predicted summaries.
 \toprule
 Model & & \\
 \midrule
-Source & & jasmine coleman , \#\# , has been found safe and well some \#\# miles from her home a \#\# - year - old girl who went missing from her family home at \#am amid fears she was driven away by an ' older man ' has been found safe and well . jasmine coleman was reported as missing this morning after disappearing from her home in \texttt{<unk>} , west sussex . the child was found this afternoon following a police appeal some \#\#miles away in croydon , south east london . police feared she may have been driven to london by an older man when they launched an appeal for information this morning .  ... \\
+Source & & jasmine coleman , \#\# , has been found safe and well some \#\# miles from her home a \#\# - year - old girl who went missing from her family home at \#am amid fears she was driven away by an ' older man ' has been found safe and well . jasmine coleman was reported as missing this morning after disappearing from her home in \texttt{<unk>} , west sussex . the child was found this afternoon following a police appeal some \#\#miles away in croydon , south east london ... \\
 \midrule
 \textsc{Gold} & & jasmine coleman disappeared from her home at around \#am this morning \\
 %the fugitive who killed the marshal was " extremely dangerous , " u.s. marshals service director says \\
@@ -1216,7 +1273,7 @@ Source & & jasmine coleman , \#\# , has been found safe and well some \#\# miles
 \textsc{Model 3 +pos +multi2} & &  jasmine coleman disappeared from her home in \texttt{<unk>} , west london\\
 \bottomrule
 \end{tabular}
-\caption{Predicted summaries for each model, given a short document (an easier example).}
+\caption[Predicted Summaries 1]{Predicted summaries for each model, given a short document (an easier example).}
 \label{fig:predicted_summaries1}
 \end{figure}
 
@@ -1305,7 +1362,7 @@ Islamic State militants have swept through huge tracts of Syria and Iraq , murde
 \textsc{Model 3 +pos +multi2} & & twitter users say they believe site 's policy of closure is a ' media war ' \\
 \bottomrule
 \end{tabular}
-\caption{Predicted summaries for each model, given a longer document.}
+\caption[Predicted Summaries 2]{Predicted summaries for each model, given a longer document.}
 \label{fig:predicted_summaries2}
 \end{figure}
 
@@ -1350,22 +1407,23 @@ Source & & ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel
 \textsc{Model 3 +pos +multi2} & & the man was killed in baton rouge , louisiana \\
 \bottomrule
 \end{tabular}
-\caption{Predicted summaries for each model, given a more difficult document.}
+\caption[Predicted Summaries 3]{Predicted summaries for each model, given a more difficult document.}
 \label{fig:predicted_summaries3}
 \end{figure}
 
 
+\pagebreak
 
 %% attention figures 
 \subsection{Attention Heatmaps}
 \label{sec:attn}
 
-We visualize the attention distributions produced by each model for the summaries in Figure~\ref{fig:predicted_summaries2}.
+For the document in Figure~\ref{fig:predicted_summaries2}, we visualize the attention distributions produced by each model in Figures~\ref{fig:first_attn} to \ref{fig:last_attn}.
 
-In each figure, the rows are the sentences of each document (40 words per row), and the columns are the summary words produced by the model. The intensity of each box for a given column represents the strength of the attention weight on that row. In particular, note that the column weights should sum to 1.
+In each figure, the rows are the sentences of each document (40 words per row), and the columns are the summary words produced by the model. The intensity of each box for a given column represents the strength of the attention weight on that row. In particular, the column weights should sum to 1.
 For \textsc{Model 0} and \textsc{Model 1}, heatmaps are produced by summing the word-level attention weights in each row.
 
-We limit our figures to sentence level here --- the full word-level attention is difficult to examine due to the length of the documents, but can be found in Appendix ???
+We limit our figures to sentence level attention --- the full word-level attention is difficult to examine due to the length of the documents.
 
 We see that the spread of the attention matches what we expect to see from the entropy numbers. In \textsc{Model 0} and \textsc{Model 1}, the model mostly attends to the right sentences at the right time --- for example, in \textsc{Model 1}, it copies ``a mocked-up image'' (with a change of word choice!), then proceeds to get ``jack dorsey'' from later in the document.
 
@@ -1378,9 +1436,8 @@ In \textsc{Model 3}, we see that we get very sharp attention on some sentences, 
 We partially alleviate this problem by allowing the model to attend to multiple sentences in hard attention. Indeed, with \textsc{+multi2}, the model actually produces a very coherent output by focusing attention on the first sentence --- we also see that it considered choosing the second-to-last sentence and decided against it.
 We believe that the improved result for this example is not only due to more flexibility in where to attend, but a better encoding model due to the training process (i.e. a better local optimum).
 
-\todo{don't forget to include the others once they finish running}
 
-Finally, we observe that \textsc{+pos} encourages the model to attend to sentences closer to the beginning of the document. This matches our intuition that the front of a news article has more information content.
+Finally, we observe that \textsc{+pos} encourages the model to attend to sentences closer to the beginning of the document. This matches our intuition that the front of a news article has more information content. This is taken to an extreme by \textsc{Model 3 +pos}, which only attends to the first sentence --- we believe that during training, the model becomes heavily biased towards attending to the first sentence, and fails to explore the remaining ones.
 
 Appendix~\ref{appendix:attn} contains a few more attention visualizations.
 
@@ -1388,44 +1445,52 @@ Appendix~\ref{appendix:attn} contains a few more attention visualizations.
 % 5819
 \begin{figure}[p]
 \centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/0predsent}
-\caption{\textsc{Model 0}}
+\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/saved/1predsent}
+\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
+\label{fig:first_attn}
 \end{figure}
 
 \begin{figure}[p]
 \centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/1predsent}
-\caption{\textsc{Model 1}}
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/saved/1predsent}
+\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
 \end{figure}
 
 \begin{figure}[p]
 \centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/1predsent}
-\caption{\textsc{Model 2}}
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/saved/1predsent}
+\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
 \end{figure}
 
 \begin{figure}[p]
 \centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/1predsent}
-\caption{\textsc{Model 2 +pos}}
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/saved/1predsent}
+\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
 \end{figure}
 
 \begin{figure}[p]
 \centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/1predsent}
-\caption{\textsc{Model 3}}
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/saved/1predsent}
+\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
 \end{figure}
 
 \begin{figure}[p]
 \centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/1predsent}
-\caption{\textsc{Model 3 +multi2}}
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent/saved/1predsent}
+\caption[\textsc{Model 3 +pos} Attention]{\textsc{Model 3 +pos}}
 \end{figure}
 
 \begin{figure}[p]
 \centering
-\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/1predsent}
-\caption{\textsc{Model 3 +multi2 +pos}}
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/saved/1predsent}
+\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/saved/1predsent}
+\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
+\label{fig:last_attn}
 \end{figure}
 
 
@@ -1435,22 +1500,22 @@ Appendix~\ref{appendix:attn} contains a few more attention visualizations.
 
 As shown by the results, coarse-to-fine attention generally performs worse than standard sequence-to-sequence attention.
 
-We first discuss the weakness of the soft attention model, i.e. \textsc{Model 2}. As we noted, we may be obtaining poor results because of an optimization problem. The low entropy of \textsc{Model 0} attention, as well as the attention visualization, both show that the model mainly focuses on one sentence at a time when generating the output. Thus, in theory there exists an attention distribution for the coarse-to-fine models to replicate --- the fact that they do not is most likely due to bad optimization.
+We first discuss the weakness of the soft attention model, i.e. \textsc{Model 2}. As we noted, we may be obtaining poor results because of an optimization problem. The low entropy of \textsc{Model 0} attention, as well as the attention visualization, both show that the model mainly focuses on one sentence at a time when generating the output. Thus, in theory there exists an attention distribution for the coarse-to-fine models to replicate, but the model is failing to learn it.
 
-Assuming we can learn the attention distribution, another possible cause for the worse performance of coarse-to-fine models is lower modeling power. Because we run the encoder LSTM across each sentence separately, it may not capture the full context in same way as running the LSTM across the entire document as in \textsc{Model 0}.
-However, we found in additional experiments that even if we run an LSTM over the full document to encode, and then learn the word-level attention over it, there was not a significant change in performance. This does not conclusively rule out this possibility, but only shows that the performance bottleneck is in learning the attention.
+Assuming we can learn the attention distribution, another possible cause for the worse performance of coarse-to-fine models is lower modeling power. Because we run the fine-grained LSTM across each sentence separately, it may not capture the full context as well as running the LSTM across the entire document as in \textsc{Model 0}.
+However, we found in additional experiments that even if we ran the LSTM over the full document for the fine-grained encoding, there was not a significant change in performance. This does not conclusively rule out this possibility, but only shows that the performance bottleneck is in the attention.
 
 Another modeling issue is in the sentence representations. While bag-of-words and convolutional models are effective for simple tasks, we would be interested to see if more sophisticated representations can allow us to obtain better attention. There is some research on developing general sentence representations for transfer learning \citep{Bowman2015}, and we leave this area to future work.
 
 
 %%%
-Despite the worse performance of \textsc{Model 2} and its hard counterpart \textsc{Model 3}, there are interesting aspects of the hard attention model. First, we see that the model does indeed learn to attend to a small subset of sentences, which is encouraging. This suggests that the model may be useful in large-scale conditional computation frameworks; however, this will definitely depend on how the performance scales as we increase the number of sentences.
+Despite the worse performance of \textsc{Model 2} and its hard counterpart \textsc{Model 3}, there are interesting aspects of the hard attention model. First, we see that the model does indeed learn to attend to a small subset of sentences. This suggests that the model may in fact be useful in large-scale conditional computation frameworks; however, this will definitely depend on how the performance scales as we increase the number of sentences.
 
 Second, sampling multiple times with $k_{mul} > 1$ seems to do well, and only incurs a constant cost in computational complexity. By relaxing the constraint that we attend to a single sentence, we can build models with similar complexity but better training guarantees. 
 
 
 Third, we see that pretraining the hard attention model with soft attention helps performance. While pretraining with soft attention on the task at hand defeats the purpose of conditional computation, we can imagine starting with a pretrained LSTM on the encoder side from another task to possibly achieve the same effect.
-In addition, we see that the fixed bag-of-words coarse attention performs almost as well as the higher powered convolutional model --- because the word embeddings were fixed in this case, we can conclude that lower variance in the training process will lead to better performance. Transfer learning of a pretrained LSTM may partially solve this problem.
+In addition, we see that the fixed bag-of-words coarse attention performs almost as well as the higher powered convolutional model --- because the word embeddings were fixed in this case, we conclude that lower variance in the training process will lead to better performance. Transfer learning of a pretrained LSTM may partially solve this problem.
 
 We conclude that while reinforcement learning has promise in building large-scale models with conditional computation, the noisiness of training is a difficult barrier to overcome. There are possible directions in reducing the burden of RL training (e.g., the aforementioned pretraining), but further research is needed.
 
@@ -1462,51 +1527,243 @@ We propose the following as concrete future work.
 We would like to explore alternative methods of sentence representation to improve the coarse attention. These methods would need to be able to encode a sentence faster than the fine-grained LSTM encoder, and as a bonus, should be trainable in an unsupervised way on an auxiliary text corpus (as in word2vec).
 %Better optimization methods are also worth looking into, as our coarse-to-fine attention model seems to get stuck in local optima quite often.
 
-We can reconsider our approach to conditional computation. As we have seen, reinforcement learning is a very noisy training method, and it is especially difficult to use for NLP \citep{}.
-Alternative methods we can consider include approximate nearest neighbors (ANN) techniques \citep{rae2016sparsememory}, the key-value memory networks of \citet{Miller2016}, or sparsemax \citep{martins2016sparsemax}.
+We may reconsider our approach to conditional computation. As we have seen, reinforcement learning is a very noisy training method, and has seen limited success in NLP so far.
+Alternative methods we can consider include approximate nearest neighbors (ANN) techniques \citep{rae2016sparsememory}, the key-value memory networks of \citet{Miller2016}, or sparsemax \citep{martins2016sparsemax}. The latter two should be relatively straightforward to test with our existing implementation, but applying ANN techniques would likely be more involved.
 
-We also would like to scale up the summarization task. In our experiments, we use truncated news articles, and the sentence selection problem is relatively easy (choosing 1 out of 10 in our experiments). 
+We also would like to scale up the summarization task. In our experiments, we use truncated news articles, and the sentence selection problem is relatively easy (choosing 1 sentence out of 10 in our experiments). 
 We would be interested to see if our techniques can be applied to larger documents, such as Wikipedia articles or scientific papers, without sacrificing too much in terms of performance.
 Unfortunately, we then hit the bottleneck of GPU memory, so this would require either a large amount of computational resources or more clever training techniques.
 
 Along these lines, we would also be interested to see if our model can be applied to question-answering tasks (QA). QA is a more clearly posed problem than summarization, and the metrics tend to be less ambiguous.
-Classical QA tasks have relied on the use of Knowledge Bases such as Freebase \citep{Bollacker2008}, but there has been work in using free-form text such as Wikipedia as an information source \citep{Miller2016}.
+Classical QA tasks have relied on the use of Knowledge Bases such as Freebase \citep{Bollacker2008}, but there has been work in using free-form text such as Wikipedia as an information source \citep{Miller2016}. While our model may have been designed for summarization, the coarse-to-fine attention mechanism is fairly general and should be applicable to these problems.
 
 \chapter{Conclusion}
 \label{chap:conclusion}
 
-In this work, we develop a new coarse-to-fine architecture.
+In this thesis, we have explored the problem of document summarization from a deep learning perspective. While summarization has a rich history of methods, very few are truly abstractive --- most require some form of extraction from the text, perhaps followed by minor transformations and paraphrasing.
 
-We train it using methods from reinforcement learning.
+Deep learning, however, may provide a solution. The sequence-to-sequence with attention model of NLP can read a document and produce a summary, all while acting on only vector space representations of the text. Such a model can truly be called abstractive, and has been shown to be state-of-the-art on several tasks including short text summarization.
 
-We experiment with it on the CNN/Dailymail dataset.
+While we would like to scale up these models to problems like full document summarization, the primary bottleneck of sequence-to-sequence methods is in its attention mechanism. The model processes the full input sequentially, and so we have a very inefficient algorithm for training and producing summaries.
 
-\bibliographystyle{plainnat}
+Therefore, we develop a new coarse-to-fine attention architecture to reduce the computational complexity. By drawing on ideas of conditional computation from deep learning, we attend to subsets of the document at a time using coarse representations of the text.
+By employing hard attention at the coarse level to reduce the input size, we are free to use a more computationally expensive fine-grained representation.
+
+Due to its nondifferentiability, we train our model using methods from reinforcement learning. We explore the stochastic computation graph framework to rigorously understand the training algorithm, and note that the algorithm fits in naturally with existing deep learning frameworks.
+
+We then experiment with our coarse-to-fine model on the CNN/Dailymail dataset. We find that it fails to beat the standard sequence-to-sequence model on metrics, but produces very sharp attention. We therefore are hopeful that such an attention mechanism has potential in scaling up deep learning models, especially as we attempt to scale tasks to larger inputs.
+
+While we have found promising results using coarse-to-fine attention, further research is necessary to fully understand its role. Today, deep learning in NLP is moving incredibly fast, and it remains to be seen which methods will stick around in the long term.
+
+\bibliographystyle{plainnatnourl}
 \bibliography{../papers/Mendeley/library}
 
 
 \begin{appendices}
 
-\chapter{Attention Visualizations}
-\label{appendix:attn}
-hi
 
 \chapter{Full Source Documents}
 \label{appendix:full_docs}
 
-% ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel in baton rouge , louisiana , has died , brittany stewart in the east baton rouge coroner 's office said wednesday . </s> the cause of death is pending autopsy , she said . </s> jamie croom , ## , was wounded in a shootout with deputy u.s. marshal josie wells . </s> it can be one of the most dangerous tasks for a law enforcement officer : serving an arrest warrant to a fugitive murder suspect . when wells tried to do that tuesday , he lost his life . </s> " wells was part of a team executing arrest warrants on a fugitive wanted for double homicide in baton rouge , " the u.s. marshals service said in a news release . " the team engaged in gunfire with the fugitive and wells was shot . he was immediately transported to lane regional medical center in zachary , louisiana , where he died . " </s> wells , ## , was trying to arrest croom , who is suspected in the deaths of a brother and sister in new roads , louisiana , cnn affiliate wafb said . </s> " our deputies and law enforcement partners face untold dangers every day in the pursuit of justice in cities nationwide , " said u.s. marshals service director stacia a. hylton said in a news release . " the fugitive who killed deputy wells was extremely dangerous , wanted for double homicide and intentionally evaded justice . ... when a public servant dies in the line of duty , it is an immeasurable tragedy felt by all . our thoughts and prayers are with deputy wells ' family , friends and colleagues . " </s> officials would not elaborate on exactly what happened , but the advocate newspaper in baton rouge said there was a shootout . authorities said croom shot and killed wells at a baton rouge motel . </s> wells , ## , was based in mississippi but was on temporary assignment in the baton rouge area , the sun herald newspaper said . he was married and came from a law enforcement family . </s> despite the risks , wells loved his job . </s> " it was his passion , " longtime friend alex mcgee told the paper . " i tipped my hat to him because he knew the dangers and wanted to do the job anyway . " </s> croom , the suspect , was taken to a hospital after he was wounded , wafb said . </s> he was wanted in the shooting deaths of the two siblings in february and was also on probation for firearms charges . </s> that double homicide stemmed from a feud over a loan made to one of the victim 's relatives as well as an alleged break - in at the suspect 's grandmother 's house , croom 's older sister latonia croom duncan told cnn . </s> duncan said the family reported threats and a shooting at her grandmother 's house to police , but said there was never any follow - up . </s> she said her brother called her the night of the homicides , which took place at a nightclub . </s> " he called me and said he loved me and that he 'd be gone , " duncan said . " he said he was n't going back to jail . before he 'd go back to jail , he said , he 'd rather be dead . " </s> cnn 's devon m. sayers , john newsome , sam stringer and eliott c. mclaughlin contributed to this report . </s>
+\paragraph{Document 1, Figure~\ref{fig:data_examples}} ( cnn ) the man suspected of killing a deputy u.s. marshal at a motel in baton rouge , louisiana , has died , brittany stewart in the east baton rouge coroner 's office said wednesday . \texttt{</s>} the cause of death is pending autopsy , she said . \texttt{</s>} jamie croom , \#\# , was wounded in a shootout with deputy u.s. marshal josie wells . \texttt{</s>} it can be one of the most dangerous tasks for a law enforcement officer : serving an arrest warrant to a fugitive murder suspect . when wells tried to do that tuesday , he lost his life . \texttt{</s>} " wells was part of a team executing arrest warrants on a fugitive wanted for double homicide in baton rouge , " the u.s. marshals service said in a news release . " the team engaged in gunfire with the fugitive and wells was shot . he was immediately transported to lane regional medical center in zachary , louisiana , where he died . " \texttt{</s>} wells , \#\# , was trying to arrest croom , who is suspected in the deaths of a brother and sister in new roads , louisiana , cnn affiliate wafb said . \texttt{</s>} " our deputies and law enforcement partners face untold dangers every day in the pursuit of justice in cities nationwide , " said u.s. marshals service director stacia a. hylton said in a news release . " the fugitive who killed deputy wells was extremely dangerous , wanted for double homicide and intentionally evaded justice . ... when a public servant dies in the line of duty , it is an immeasurable tragedy felt by all . our thoughts and prayers are with deputy wells ' family , friends and colleagues . " \texttt{</s>} officials would not elaborate on exactly what happened , but the advocate newspaper in baton rouge said there was a shootout . authorities said croom shot and killed wells at a baton rouge motel . \texttt{</s>} wells , \#\# , was based in mississippi but was on temporary assignment in the baton rouge area , the sun herald newspaper said . he was married and came from a law enforcement family . \texttt{</s>} despite the risks , wells loved his job . \texttt{</s>} " it was his passion , " longtime friend alex mcgee told the paper . " i tipped my hat to him because he knew the dangers and wanted to do the job anyway . " \texttt{</s>} croom , the suspect , was taken to a hospital after he was wounded , wafb said . \texttt{</s>} he was wanted in the shooting deaths of the two siblings in february and was also on probation for firearms charges . \texttt{</s>} that double homicide stemmed from a feud over a loan made to one of the victim 's relatives as well as an alleged break - in at the suspect 's grandmother 's house , croom 's older sister latonia croom duncan told cnn . \texttt{</s>} duncan said the family reported threats and a shooting at her grandmother 's house to police , but said there was never any follow - up . \texttt{</s>} she said her brother called her the night of the homicides , which took place at a nightclub . \texttt{</s>} " he called me and said he loved me and that he 'd be gone , " duncan said . " he said he was n't going back to jail . before he 'd go back to jail , he said , he 'd rather be dead . " \texttt{</s>} cnn 's devon m. sayers , john newsome , sam stringer and eliott c. mclaughlin contributed to this report . \texttt{</s>}
 
-%isis supporters have vowed to murder twitter staff because they believe the site 's policy of shutting down their extremist pages is a ' virtual war ' . </s> a mocked - up image of the site 's founder jack dorsey in cross-hairs was posted yesterday alongside a diatribe written in arabic , which claimed twitter employees ' necks are ' a target for the soldiers of the caliphate ' . </s> addressing mr dorsey personally , it claimed twitter was taking sides in a ' media war ' which allowed ' slaughter ' , adding : ' your virtual war on us will cause a real war on you . </s> diatribe : an image of twitter founder jack dorsey in cross-hairs was posted alongside a rant in arabic </s> it is nine years since mr dorsey launched the site , which is trying to avoid being a vehicle for jihadi videos </s> ' how will you protect your employees and supporters , helpless jack , when their necks officially become a target for the soldiers of the caliphate ? ' </s> it also claimed killing employees ' outside a neighbourhood pub ' would be no more preventable than the massacres of charlie hebdo killer amedy coulibaly and copenhagen shooter omar el - hussein . </s> it then said men and women , young and old , would all be targeted and closed by saying nothing would prevent the ' delivery of the holy mission to the world ' . the rant was written anonymously and posted on the text sharing service pastebin yesterday before being shared by isis supporters , including on twitter . </s> a twitter spokesman told buzzfeed law enforcement officials had been made aware of the rant and will assess whether it poses a genuine threat . </s> killers : the message compared its threat to the murders carried out in paris by amedy coulibaly ( left ) and in copenhagen by omar el - hussein ( right ) . so - called ' lone wolf ' attackers are encouraged by online messages </s> islamic state militants have swept through huge tracts of syria and iraq , murdering thousands of people and forcing others to conform to an extreme interpretation of sunni islam . </s> also known as isis and isil , they use social media a major propaganda tool in their bid to radicalise young muslims and persuade them to fight in iraq and syria . </s> last year home secretary theresa may said ### brits had gone to fight in the two countries , with cases emerging since then of schoolgirls fleeing to become jihadi brides . the terror group has posted gruesome videos and images of murder , including beheadings , on mainstream sites such as twitter and youtube alongside the hidden parts of the web . </s> both sites have a policy of taking down extremist content and blocking users who upload it , but usually by the time an account is shut down the content has spread halfway around the world . </s>
+\paragraph{Document 2, Figure~\ref{fig:data_examples}}  ( cnn ) there have been a few times in my career when i 've been thoroughly disappointed -- even disgusted -- with my fellow women in the workplace . \texttt{</s>} no , i certainly do n't expect all my female colleagues to go out of their way for me and sing " kumbaya " together in the office , but i 'm always stunned when a woman who could have been helpful to me was n't , when a woman who could have been a mentor chose not to be , when a woman tried to hurt me because of her own fear , anxiety or what have you . \texttt{</s>} i 'd love to say more about each of the women i 've met along the way who fit those descriptions , but my point is not to single anyone out . my goal is to ask the question , " why ? " \texttt{</s>} obviously , not all women are like this and there are plenty of men guilty of the same behavior , but why do so many women try to tear each other down instead of lift each other up ? \texttt{</s>} i figured this would be a perfect question for sophia nelson , author of a new self - help book for women called " the woman code , " and she did n't disappoint . \texttt{</s>} unlocking ' the woman code ' : \# tips to know your value \texttt{</s>} " from the time we 're little girls , we 're taught to compete , " said nelson during a recent conversation at cnn . " i need to be prettier , taller , smarter , my hair needs to be straighter , curlier , whatever it is . i need to get the better looking guy . i need to always be better than because we 're taught to come from a place of lack as women . " \texttt{</s>} the way nelson , an award - winning author and journalist , radio and television personality and motivational speaker , sees it , we women need to start operating like the boys . \texttt{</s>} men " operate from a sense of , there 's this whole pie , and i want my piece , and i do n't care if he gets his piece , and maybe we even have to work together to start that business , start that company , " said nelson . \texttt{</s>} of course , it 's easier for a man not to worry " if he gets his piece " since there are plenty of pieces of pie available for men in terms of management positions in corporate america , but that is n't the case for women . today , just \# \% of s\&p \#\#\# chief executives are women and only \#\# \% of the top five senior leadership positions at those companies are held by women , according to a cnn money analysis . \texttt{</s>} sheryl sandberg teams up with nba to get men to \# leanin \texttt{</s>} decades ago , the situation was even worse . when i was just starting my television news career in \#\#\#\# , women who were in their \#\#s and were in high - level positions were the only women in a position of influence . naturally , many of them often viewed other women as threats who could take their job . \texttt{</s>} " because they did n't think there could be ten of them , they only thought there could be one of them , " said nelson . " fast forward \#\# years later . now there ... are a number of women partners at big firms , a number of women in congress . i could keep going on and on so ... there is a place for more of us . " \texttt{</s>} which means we can lift as we climb , we can help our younger sisters and even our cohorts while still moving up and on in our careers , says nelson . \texttt{</s>} " how exactly do we do that ? " i had to ask . nelson came armed with five tips on how women can work with as opposed to against each other . \texttt{</s>} first , nelson says be mindful of the people you surround yourself with and careful about " who 's in your row . " \texttt{</s>} " if you hear another woman say , and i 've heard this , ' i do n't do women friends , i do n't have women friends , ' believe her and leave her alone . i mean that , listen to me now , " said nelson . \texttt{</s>} there are too many women who believe in the sisterhood of women , so do n't invest any time , if possible , with people who do n't , she says . \texttt{</s>} if you are in a meeting and you have a great idea , do n't feel like you have to hoard it to yourself , said nelson . " collaborate , share , collaborate . ... so you lift other women as you climb by collaborating versus competing . " \texttt{</s>} competition is healthy and we can compete , but we ought to take a page from our male colleagues ' playbook , she said . " the guys collaborate better than we do because they operate from a place of ' i want the dollars . i want to win the contract . i want to get the business . ' we have to get in that same mindset . " \texttt{</s>} we 're all busy but we 've got to slow down and mentor , said nelson . \texttt{</s>} " we have to build a bench , " she said . " men do this well again . you 've seen it in corporate , i 've seen it . the guys go out and golf . they do things together and they 're building up the next young man leader . whatever field we 're in ... we 're less likely to do it because we 're busy . we 've got to mentor . " \texttt{</s>} when you lift other women as you climb , said nelson , you realize it 's reciprocal . " it 's not all about you . " \texttt{</s>} we women win when more women are in executive roles in organizations , i added . \texttt{</s>} " the right women , " said nelson . " i want to caveat that . and again , i do n't mean to be mean or catty but ... i know a lot of women in power positions that do n't help other women but there are a lot of women in power positions that do . " \texttt{</s>} this is a tough one for us , says nelson . we need to be willing to say to another woman that we did n't like something she did or said and do it in a respectful and private way where we are still building her up , not pulling her down . \texttt{</s>} " do n't go tell \#\# of your friends not to like her . you 'd be amazed at how silly we can be . we 're still in kindergarten some of us , " said nelson . \texttt{</s>} " gossip is still one of the most rampant , nasty things we do as women to each other . and it hurts . it really damages women . " \texttt{</s>} why do you think women too often tear each other down instead of help each other in the workplace ? share your thoughts with kelly wallace on twitter @ kellywallacetv or cnn living on facebook . \texttt{</s>}
 
-%jasmine coleman , ## , has been found safe and well some ## miles from her home a ## - year - old girl who went missing from her family home at #am amid fears she was driven away by an ' older man ' has been found safe and well . jasmine coleman was reported as missing this morning after disappearing from her home in lancing , west sussex . the child was found this afternoon following a police appeal some ##miles away in croydon , south east london . police feared she may have been driven to london by an older man when they launched an appeal for information this morning . the schoolgirl had not been seen since ##.##pm on friday night . sussex police said she may have been talking with someone on facetime before disappearing at around #am . the force launched a public appeal for information on her whereabouts on saturday morning . in it , she was described as fair with long , blonde hair and as having possibly been wearing black riding trousers and a polo shirt or a paisley pattern dress . on saturday afternoon the force confirmed she had been found safe and well in croydon but could not confirm the circumstances under which police located her . no one has been arrested in connection with her disappearance . shortly after #pm a spokesman said : ' jasmine coleman , the ## - year - old girl from lancing reported missing from home during the early hours of saturday ( ## march ) was found safe and well later the same day in croydon . ' police would like to thank the media and members of the public for help given during efforts to trace her . ' west sussex police ( headquarters pictured above ) confirmed the child was found on saturday afternoon </s>
+\paragraph{Document 3, Figure~\ref{fig:data_examples}}  much of the start of the world 's most famous sled dog race is covered in barren gravel , forcing iditarod organizers to move the start further north where there is snow and ice . \texttt{</s>} a weather pattern that buried the eastern u.s. in snow has left alaska fairly warm and relatively snow - free this winter , especially south of the alaska range . \texttt{</s>} ' if i have one more person say to me to move the iditarod to boston , i 'm going to shake my head , ' said race director mark nordman . \texttt{</s>} scroll down for video in this photo taken on thursday , there are bare patches of grass and mud on sled dog trails in anchorage , alaska which is unsuitable for the iditarod \texttt{</s>} the iditarod trail sled dog race starts saturday with a ceremonial run through anchorage . but the official start two days later has been moved \#\#\# miles ( \#\#\# kilometers ) north , over the alaska range , to fairbanks to avoid the area that left many mushers bruised and bloodied last year . iditarod officials said the conditions are worse this year . \texttt{</s>} the race 's chief executive officer , stan hooley , called the conditions ' pretty miserable . ' and last year was no picnic . \texttt{</s>} one musher last year was taken out by a rescue helicopter after making it through the dalzell gorge only to hit his head on a tree stump in the farewell burn . knocked unconscious for at least an hour , scott janssen got back on the trail after waking up . but shortly after , he broke his ankle while walking on ice trying to corral a loose dog . \texttt{</s>} mush ! : aliy zirkle 's team runs across willow lake during the iditarod trail sled dog race in willow lake , alaska last year when the terrain was snowy enough ' as an outdoorsman , to have to be rescued from the trail is n't a wonderful thing , ' janssen said . \texttt{</s>} this year 's race will feature \#\# mushers , including six former champions and \#\# rookies . the winner is expected in nome in about \#\# days . \texttt{</s>} alaskans can thank the jet stream , which has been delivering warm air from the pacific , said dave snider , a meteorologist with the national weather service in anchorage . \texttt{</s>} ' that position of the jet has been pretty stagnant , or at least in the general same position for a long period of time . while that 's allowing a lot of cold air to flow out of the arctic into the midwest and the eastern seaboard , we 're locked into the warmer part of that pattern , and we 've continued to see those warm pushes for a fairly long period over the winter , ' he said . \texttt{</s>} anchorage gets about \#\# inches ( \#\#\# centimeters ) of snow in a normal year ; this year only about \#\# inches ( \#\# centimeters ) have fallen . \texttt{</s>} the new route , which puts mushers on river ice for about \#\#\# miles , could level the playing field . \texttt{</s>} there are bare patches of grass and mud on sled dog trails in anchorage , alaska making it not ideal to hold the world famous dog sled race \texttt{</s>} ' nobody has a plan , ' nordman said . ' you 're not going to be stopping and putting your snow hook into the same tree you had the last \#\# years . it 's a whole new ballgame . ' \texttt{</s>} brent sass of eureka , alaska , is running his third iditarod , and is coming off a win in last month 's \#,\#\#\# - mile ( \#,\#\#\# - kilometer ) yukon quest international sled dog race . \texttt{</s>} ' it does n't hurt a guy like me who has only run the race a couple of times , ' he said of the route change . ' for the guys that have run the race \#\# times , it 's not just the normal routine so it might throw them off a little bit . ' \texttt{</s>} among the veterans in this year 's race is the defending champion , dallas seavey , and the \#\#\#\# bizarre finish will be remembered as much as the poor trail conditions . \texttt{</s>} stan hooley , the chief executive officer of the iditarod trail sled dog race , is silhouetted as video of a musher wiping out in the \#\#\#\# race plays behind him during a meeting in anchorage , alaska , ahead of the \#\#\#\# race \texttt{</s>} a sudden blizzard blew four - time champion and race leader jeff king out of the race when he was about \#\# miles ( \#\# kilometers ) from the finish line of the nearly \#,\#\#\# - mile race . \texttt{</s>} then aliy zirkle , who was solidly in second place , waited out the storm at the last checkpoint , \#\# miles ( \#\# kilometers ) from nome , for two hours , \#\# minutes . she got back on the trail when seavey blew through the checkpoint , but lost the race by two minutes , \#\# seconds . it was her third straight runner - up finish with no wins . \texttt{</s>} the route change eliminates the mountainous terrain and treacherous gorge , but it could present mushers with a whole new set of problems with a flat trail on unpredictable river ice . plus , because it 's an entirely new route , mushers say they ca n't rely much on information , even something as simple as the mileage between village checkpoints , provided by iditarod officials . \texttt{</s>} by removing the alaska range , mushers may assume it will be a very fast race , seavey said . \texttt{</s>} ' just because it 's a flat trail does not mean your dogs can all of a sudden do \#\# times what they 've been able to do in the past , ' said seavey , a two - time champion . ' i feel that is a trap that will catch a lot of people . ' \texttt{</s>} ' in the end , this race will not be won on tricks or gimmicks . it will be won on good dogmanship , ' he said . \texttt{</s>} too warm : in this photo taken on wednesday , stan hooley , the chief executive officer of the iditarod trail sled dog race , speaks in anchorage , alaska , ahead of the \#\#\#\# race \texttt{</s>}
 
-%( cnn ) there have been a few times in my career when i 've been thoroughly disappointed -- even disgusted -- with my fellow women in the workplace . </s> no , i certainly do n't expect all my female colleagues to go out of their way for me and sing " kumbaya " together in the office , but i 'm always stunned when a woman who could have been helpful to me was n't , when a woman who could have been a mentor chose not to be , when a woman tried to hurt me because of her own fear , anxiety or what have you . </s> i 'd love to say more about each of the women i 've met along the way who fit those descriptions , but my point is not to single anyone out . my goal is to ask the question , " why ? " </s> obviously , not all women are like this and there are plenty of men guilty of the same behavior , but why do so many women try to tear each other down instead of lift each other up ? </s> i figured this would be a perfect question for sophia nelson , author of a new self - help book for women called " the woman code , " and she did n't disappoint . </s> unlocking ' the woman code ' : # tips to know your value </s> " from the time we 're little girls , we 're taught to compete , " said nelson during a recent conversation at cnn . " i need to be prettier , taller , smarter , my hair needs to be straighter , curlier , whatever it is . i need to get the better looking guy . i need to always be better than because we 're taught to come from a place of lack as women . " </s> the way nelson , an award - winning author and journalist , radio and television personality and motivational speaker , sees it , we women need to start operating like the boys . </s> men " operate from a sense of , there 's this whole pie , and i want my piece , and i do n't care if he gets his piece , and maybe we even have to work together to start that business , start that company , " said nelson . </s> of course , it 's easier for a man not to worry " if he gets his piece " since there are plenty of pieces of pie available for men in terms of management positions in corporate america , but that is n't the case for women . today , just # % of s&p ### chief executives are women and only ## % of the top five senior leadership positions at those companies are held by women , according to a cnn money analysis . </s> sheryl sandberg teams up with nba to get men to # leanin </s> decades ago , the situation was even worse . when i was just starting my television news career in #### , women who were in their ##s and were in high - level positions were the only women in a position of influence . naturally , many of them often viewed other women as threats who could take their job . </s> " because they did n't think there could be ten of them , they only thought there could be one of them , " said nelson . " fast forward ## years later . now there ... are a number of women partners at big firms , a number of women in congress . i could keep going on and on so ... there is a place for more of us . " </s> which means we can lift as we climb , we can help our younger sisters and even our cohorts while still moving up and on in our careers , says nelson . </s> " how exactly do we do that ? " i had to ask . nelson came armed with five tips on how women can work with as opposed to against each other . </s> first , nelson says be mindful of the people you surround yourself with and careful about " who 's in your row . " </s> " if you hear another woman say , and i 've heard this , ' i do n't do women friends , i do n't have women friends , ' believe her and leave her alone . i mean that , listen to me now , " said nelson . </s> there are too many women who believe in the sisterhood of women , so do n't invest any time , if possible , with people who do n't , she says . </s> if you are in a meeting and you have a great idea , do n't feel like you have to hoard it to yourself , said nelson . " collaborate , share , collaborate . ... so you lift other women as you climb by collaborating versus competing . " </s> competition is healthy and we can compete , but we ought to take a page from our male colleagues ' playbook , she said . " the guys collaborate better than we do because they operate from a place of ' i want the dollars . i want to win the contract . i want to get the business . ' we have to get in that same mindset . " </s> we 're all busy but we 've got to slow down and mentor , said nelson . </s> " we have to build a bench , " she said . " men do this well again . you 've seen it in corporate , i 've seen it . the guys go out and golf . they do things together and they 're building up the next young man leader . whatever field we 're in ... we 're less likely to do it because we 're busy . we 've got to mentor . " </s> when you lift other women as you climb , said nelson , you realize it 's reciprocal . " it 's not all about you . " </s> we women win when more women are in executive roles in organizations , i added . </s> " the right women , " said nelson . " i want to caveat that . and again , i do n't mean to be mean or catty but ... i know a lot of women in power positions that do n't help other women but there are a lot of women in power positions that do . " </s> this is a tough one for us , says nelson . we need to be willing to say to another woman that we did n't like something she did or said and do it in a respectful and private way where we are still building her up , not pulling her down . </s> " do n't go tell ## of your friends not to like her . you 'd be amazed at how silly we can be . we 're still in kindergarten some of us , " said nelson . </s> " gossip is still one of the most rampant , nasty things we do as women to each other . and it hurts . it really damages women . " </s> why do you think women too often tear each other down instead of help each other in the workplace ? share your thoughts with kelly wallace on twitter @ kellywallacetv or cnn living on facebook . </s>
+\paragraph{Document of Figure~\ref{fig:predicted_summaries1}} jasmine coleman , \#\# , has been found safe and well some \#\# miles from her home a \#\# - year - old girl who went missing from her family home at \#am amid fears she was driven away by an ' older man ' has been found safe and well . jasmine coleman was reported as missing this morning after disappearing from her home in lancing , west sussex . the child was found this afternoon following a police appeal some \#\#miles away in croydon , south east london . police feared she may have been driven to london by an older man when they launched an appeal for information this morning . the schoolgirl had not been seen since \#\#.\#\#pm on friday night . sussex police said she may have been talking with someone on facetime before disappearing at around \#am . the force launched a public appeal for information on her whereabouts on saturday morning . in it , she was described as fair with long , blonde hair and as having possibly been wearing black riding trousers and a polo shirt or a paisley pattern dress . on saturday afternoon the force confirmed she had been found safe and well in croydon but could not confirm the circumstances under which police located her . no one has been arrested in connection with her disappearance . shortly after \#pm a spokesman said : ' jasmine coleman , the \#\# - year - old girl from lancing reported missing from home during the early hours of saturday ( \#\# march ) was found safe and well later the same day in croydon . ' police would like to thank the media and members of the public for help given during efforts to trace her . ' west sussex police ( headquarters pictured above ) confirmed the child was found on saturday afternoon \texttt{</s>}
 
-% much of the start of the world 's most famous sled dog race is covered in barren gravel , forcing iditarod organizers to move the start further north where there is snow and ice . </s> a weather pattern that buried the eastern u.s. in snow has left alaska fairly warm and relatively snow - free this winter , especially south of the alaska range . </s> ' if i have one more person say to me to move the iditarod to boston , i 'm going to shake my head , ' said race director mark nordman . </s> scroll down for video in this photo taken on thursday , there are bare patches of grass and mud on sled dog trails in anchorage , alaska which is unsuitable for the iditarod </s> the iditarod trail sled dog race starts saturday with a ceremonial run through anchorage . but the official start two days later has been moved ### miles ( ### kilometers ) north , over the alaska range , to fairbanks to avoid the area that left many mushers bruised and bloodied last year . iditarod officials said the conditions are worse this year . </s> the race 's chief executive officer , stan hooley , called the conditions ' pretty miserable . ' and last year was no picnic . </s> one musher last year was taken out by a rescue helicopter after making it through the dalzell gorge only to hit his head on a tree stump in the farewell burn . knocked unconscious for at least an hour , scott janssen got back on the trail after waking up . but shortly after , he broke his ankle while walking on ice trying to corral a loose dog . </s> mush ! : aliy zirkle 's team runs across willow lake during the iditarod trail sled dog race in willow lake , alaska last year when the terrain was snowy enough ' as an outdoorsman , to have to be rescued from the trail is n't a wonderful thing , ' janssen said . </s> this year 's race will feature ## mushers , including six former champions and ## rookies . the winner is expected in nome in about ## days . </s> alaskans can thank the jet stream , which has been delivering warm air from the pacific , said dave snider , a meteorologist with the national weather service in anchorage . </s> ' that position of the jet has been pretty stagnant , or at least in the general same position for a long period of time . while that 's allowing a lot of cold air to flow out of the arctic into the midwest and the eastern seaboard , we 're locked into the warmer part of that pattern , and we 've continued to see those warm pushes for a fairly long period over the winter , ' he said . </s> anchorage gets about ## inches ( ### centimeters ) of snow in a normal year ; this year only about ## inches ( ## centimeters ) have fallen . </s> the new route , which puts mushers on river ice for about ### miles , could level the playing field . </s> there are bare patches of grass and mud on sled dog trails in anchorage , alaska making it not ideal to hold the world famous dog sled race </s> ' nobody has a plan , ' nordman said . ' you 're not going to be stopping and putting your snow hook into the same tree you had the last ## years . it 's a whole new ballgame . ' </s> brent sass of eureka , alaska , is running his third iditarod , and is coming off a win in last month 's #,### - mile ( #,### - kilometer ) yukon quest international sled dog race . </s> ' it does n't hurt a guy like me who has only run the race a couple of times , ' he said of the route change . ' for the guys that have run the race ## times , it 's not just the normal routine so it might throw them off a little bit . ' </s> among the veterans in this year 's race is the defending champion , dallas seavey , and the #### bizarre finish will be remembered as much as the poor trail conditions . </s> stan hooley , the chief executive officer of the iditarod trail sled dog race , is silhouetted as video of a musher wiping out in the #### race plays behind him during a meeting in anchorage , alaska , ahead of the #### race </s> a sudden blizzard blew four - time champion and race leader jeff king out of the race when he was about ## miles ( ## kilometers ) from the finish line of the nearly #,### - mile race . </s> then aliy zirkle , who was solidly in second place , waited out the storm at the last checkpoint , ## miles ( ## kilometers ) from nome , for two hours , ## minutes . she got back on the trail when seavey blew through the checkpoint , but lost the race by two minutes , ## seconds . it was her third straight runner - up finish with no wins . </s> the route change eliminates the mountainous terrain and treacherous gorge , but it could present mushers with a whole new set of problems with a flat trail on unpredictable river ice . plus , because it 's an entirely new route , mushers say they ca n't rely much on information , even something as simple as the mileage between village checkpoints , provided by iditarod officials . </s> by removing the alaska range , mushers may assume it will be a very fast race , seavey said . </s> ' just because it 's a flat trail does not mean your dogs can all of a sudden do ## times what they 've been able to do in the past , ' said seavey , a two - time champion . ' i feel that is a trap that will catch a lot of people . ' </s> ' in the end , this race will not be won on tricks or gimmicks . it will be won on good dogmanship , ' he said . </s> too warm : in this photo taken on wednesday , stan hooley , the chief executive officer of the iditarod trail sled dog race , speaks in anchorage , alaska , ahead of the #### race </s>
+\paragraph{Document of Figure~\ref{fig:predicted_summaries2}} isis supporters have vowed to murder twitter staff because they believe the site 's policy of shutting down their extremist pages is a ' virtual war ' . \texttt{</s>} a mocked - up image of the site 's founder jack dorsey in cross-hairs was posted yesterday alongside a diatribe written in arabic , which claimed twitter employees ' necks are ' a target for the soldiers of the caliphate ' . \texttt{</s>} addressing mr dorsey personally , it claimed twitter was taking sides in a ' media war ' which allowed ' slaughter ' , adding : ' your virtual war on us will cause a real war on you . \texttt{</s>} diatribe : an image of twitter founder jack dorsey in cross-hairs was posted alongside a rant in arabic \texttt{</s>} it is nine years since mr dorsey launched the site , which is trying to avoid being a vehicle for jihadi videos \texttt{</s>} ' how will you protect your employees and supporters , helpless jack , when their necks officially become a target for the soldiers of the caliphate ? ' \texttt{</s>} it also claimed killing employees ' outside a neighbourhood pub ' would be no more preventable than the massacres of charlie hebdo killer amedy coulibaly and copenhagen shooter omar el - hussein . \texttt{</s>} it then said men and women , young and old , would all be targeted and closed by saying nothing would prevent the ' delivery of the holy mission to the world ' . the rant was written anonymously and posted on the text sharing service pastebin yesterday before being shared by isis supporters , including on twitter . \texttt{</s>} a twitter spokesman told buzzfeed law enforcement officials had been made aware of the rant and will assess whether it poses a genuine threat . \texttt{</s>} killers : the message compared its threat to the murders carried out in paris by amedy coulibaly ( left ) and in copenhagen by omar el - hussein ( right ) . so - called ' lone wolf ' attackers are encouraged by online messages \texttt{</s>} islamic state militants have swept through huge tracts of syria and iraq , murdering thousands of people and forcing others to conform to an extreme interpretation of sunni islam . \texttt{</s>} also known as isis and isil , they use social media a major propaganda tool in their bid to radicalise young muslims and persuade them to fight in iraq and syria . \texttt{</s>} last year home secretary theresa may said \#\#\# brits had gone to fight in the two countries , with cases emerging since then of schoolgirls fleeing to become jihadi brides . the terror group has posted gruesome videos and images of murder , including beheadings , on mainstream sites such as twitter and youtube alongside the hidden parts of the web . \texttt{</s>} both sites have a policy of taking down extremist content and blocking users who upload it , but usually by the time an account is shut down the content has spread halfway around the world . \texttt{</s>}
 
-\chapter{Extended Results}
-\label{appendix:more_results}
-Ideas for what to put here: more experiments, ROUGE recall and precision
+
+
+
+\chapter{Attention Visualizations}
+\label{appendix:attn}
+
+Here we list a few more attention heatmaps from the models, including for the summaries from Figures~\ref{fig:predicted_summaries1} and~\ref{fig:predicted_summaries3}.
+
+% 4417
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/0predsent}
+\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
+\end{figure}
+
+% 1
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/0predsent}
+\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/0predsent}
+\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/0predsent}
+\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/0predsent}
+\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/0predsent}
+\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/0predsent}
+\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
+\end{figure}
+
+%%%%
+% 369
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/1predsent}
+\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
+\end{figure}
+
+% 9251
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/1predsent}
+\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/1predsent}
+\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/1predsent}
+\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/1predsent}
+\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/1predsent}
+\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/1predsent}
+\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
+\end{figure}
+
+
+
+
+%%%%%
+% 12931
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/saved/8predsent}
+\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/saved/8predsent}
+\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/saved/8predsent}
+\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/saved/8predsent}
+\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/saved/8predsent}
+\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/saved/8predsent}
+\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/saved/8predsent}
+\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
+\end{figure}
+
+%%%%%%
+
+%10613
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_400_model0/saved/10predsent}
+\caption[\textsc{Model 0} Attention]{\textsc{Model 0}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_model1/saved/10predsent}
+\caption[\textsc{Model 1} Attention]{\textsc{Model 1}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_reduce_lr_model2/saved/10predsent}
+\caption[\textsc{Model 2} Attention]{\textsc{Model 2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_posembedssent/saved/10predsent}
+\caption[\textsc{Model 2 +pos} Attention]{\textsc{Model 2 +pos}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_r03_e0_rerun/saved/10predsent}
+\caption[\textsc{Model 3} Attention]{\textsc{Model 3}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_multi2/saved/10predsent}
+\caption[\textsc{Model 3 +multi2} Attention]{\textsc{Model 3 +multi2}}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{../summary/output/all_stories_no_pad_10x40_conv_model2_hard_posembedssent_multi2/saved/10predsent}
+\caption[\textsc{Model 3 +multi2 +pos} Attention]{\textsc{Model 3 +multi2 +pos}}
+\end{figure}
+
 \end{appendices}
 
 \end{document}
